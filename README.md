@@ -25,6 +25,8 @@ Kuvissa on keksittyä esimerkkitietoa (kuvitteellinen korjaamo, autot ja asiakka
 
 ![Etusivu: autolista](docs/screenshots/etusivu.png)
 
+![Huoltotilanne ja ennuste: ennakkovaroitus lähestyvistä huolloista](docs/screenshots/huoltotilanne.png)
+
 ![Auton sivu: mittarilukema ja vuosikulut](docs/screenshots/auto.png)
 
 ![Huoltohistoria](docs/screenshots/huoltohistoria.png)

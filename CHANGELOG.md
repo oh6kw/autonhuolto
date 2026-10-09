@@ -4,6 +4,13 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 12.
 
+## 1.0.2
+
+Dokumentaatiopäivitys; ohjelman toiminta ei muutu.
+
+- **README.md:** kuvakaappauksiin lisätty "Huoltotilanne ja ennuste" -näkymä (`docs/screenshots/huoltotilanne.png`), jossa näkyvät ennakkovaroitus, jäljellä olevat kilometrit ja päivät sekä arvioitu huoltopäivä. Kuva on otettu kuvitteellisesta esimerkkikorjaamosta.
+- Versio 1.0.2. Ei tietokantamuutoksia (skeema 12).
+
 ## 1.0.1
 
 Dokumentaatiopäivitys; ohjelman toiminta ei muutu.
