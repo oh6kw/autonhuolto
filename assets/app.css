@@ -56,7 +56,7 @@ html[data-theme="light"]{--bg:#edf1f5;--panel:#fff;--panel2:#f5f7f9;--line:#cfd7
 .service-title>.badge{align-self:flex-start;white-space:nowrap}
 
 /* 0.8.55: varastosivu */
-.badge-btn{font:inherit;cursor:pointer;appearance:none}
+.badge-btn{font:inherit;color:var(--text);cursor:pointer;appearance:none}
 .badge-btn:hover{border-color:var(--accent)}
 .badge #inventoryValueBadge{margin-left:.3em}
 .inventory-shelf{width:172px}

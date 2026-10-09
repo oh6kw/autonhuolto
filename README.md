@@ -31,6 +31,16 @@ Kuvissa on keksittyä esimerkkitietoa (kuvitteellinen korjaamo, autot ja asiakka
 
 ![Huoltohistoria](docs/screenshots/huoltohistoria.png)
 
+![Huoltotilanne ja ennuste tulostettuna / PDF-muodossa](docs/screenshots/huoltotilanne-tuloste.png)
+
+![Huoltoa kirjatessa ohjelma ehdottaa osan ottamista varastosta ja näyttää saldon](docs/screenshots/huoltolomake.png)
+
+![Varaosavarasto: saldot, hyllypaikat ja varoitusrajat](docs/screenshots/varasto.png)
+
+![Lasku](docs/screenshots/lasku.png)
+
+![Lasku tulostettuna / PDF-muodossa](docs/screenshots/lasku-pdf.png)
+
 ## Vaatimukset
 
 PHP 8.2 tai uudempi, laajennukset `pdo_sqlite` ja `mbstring` (suositeltu myös `zip` ja `gd`) sekä Apache tai Nginx. HTTPS on vahvasti suositeltu.

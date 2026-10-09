@@ -4,6 +4,12 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 12.
 
+## 1.0.3
+
+- **Korjaus:** varastosivun "⚠️ N varoitusrajalla" -merkin teksti oli tummalla tummaa taustaa vasten (selaimen oletusväri painikkeelle). Merkki käyttää nyt teeman tekstiväriä (`assets/`-tyylitiedosto, `.badge-btn`).
+- **README.md:** kuvakaappauksiin lisätty huoltotilanteen tuloste, huoltolomake varastoehdotuksineen, varaosavarasto sekä lasku näytöllä ja PDF-tulosteena (`docs/screenshots/`). Kuvat on otettu kuvitteellisesta esimerkkikorjaamosta.
+- Versio 1.0.3. Ei tietokantamuutoksia (skeema 12).
+
 ## 1.0.2
 
 Dokumentaatiopäivitys; ohjelman toiminta ei muutu.
