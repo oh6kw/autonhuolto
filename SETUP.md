@@ -69,6 +69,7 @@ autonhuolto/
 ├── assets/
 │   ├── app.css          Ulkoasu ja teemat
 │   └── app.js           Selaimen toiminnot (lomakkeet, lajittelu, laskurit, varaston +/− ja lisäysdialogit)
+├── docs/screenshots/    Esimerkkikuvakaappaukset README:tä varten (keksittyä tietoa; ei tarvita palvelimella)
 ├── LICENSE              GNU AGPL v3 -lisenssi
 ├── README.md            Lyhyt esittely (GitHubin etusivu)
 ├── SECURITY.md          Tietoturvailmoitusten ohje
@@ -367,7 +368,7 @@ Käytä `.backup`-komentoa, älä tavallista tiedoston kopiointia, koska tietoka
 
 1. **Ota SQLite-varmuuskopio** (ja mielellään täysi ZIP) ja lataa se omalle koneelle.
 2. Pura uuden version ZIP omalla koneellasi.
-3. Kopioi uudet `index.php`, `app/`, `assets/`, `views/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE` ja `SECURITY.md` palvelimella vanhojen päälle. **Älä koske** tietokantaan, `kuvat/`-kansioon tai omaan `.htaccess`-tiedostoosi.
+3. Kopioi uudet `index.php`, `app/`, `assets/`, `views/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE`, `SECURITY.md` ja `docs/` palvelimella vanhojen päälle. **Älä koske** tietokantaan, `kuvat/`-kansioon tai omaan `.htaccess`-tiedostoosi.
 4. Varmista oikeudet: `sudo chown -R www-data:www-data kansio` ja `sudo find kansio -type f -exec chmod 644 {} \;` (tietokanta pysyy 600).
 5. Avaa ohjelma ja tarkista versionumero sivun alatunnisteesta. Lue muutokset tiedostosta `CHANGELOG.md`.
 

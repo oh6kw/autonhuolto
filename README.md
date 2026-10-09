@@ -19,6 +19,16 @@ Kevyt, itse ajettava **huoltokirja- ja pienkorjaamo-ohjelma** autoille. Sopii ha
 - Tietojen tarkistus, SQLite- ja täysi ZIP-varmuuskopio sekä palautus selaimesta
 - Ei ulkoisia kirjastoja: yksi PHP-sovellus ja yksi SQLite-tiedosto
 
+## Kuvakaappauksia
+
+Kuvissa on keksittyä esimerkkitietoa (kuvitteellinen korjaamo, autot ja asiakkaat).
+
+![Etusivu: autolista](docs/screenshots/etusivu.png)
+
+![Auton sivu: mittarilukema ja vuosikulut](docs/screenshots/auto.png)
+
+![Huoltohistoria](docs/screenshots/huoltohistoria.png)
+
 ## Vaatimukset
 
 PHP 8.2 tai uudempi, laajennukset `pdo_sqlite` ja `mbstring` (suositeltu myös `zip` ja `gd`) sekä Apache tai Nginx. HTTPS on vahvasti suositeltu.

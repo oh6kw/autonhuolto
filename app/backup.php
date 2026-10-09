@@ -44,7 +44,7 @@ function backupApplicationTreeEntries(string $root): array {
 /* Palautus koskee vain ohjelman omia tiedostoja. Muut tiedostot (esim. oma .htaccess, robots.txt, toinen sivusto samassa kansiossa)
    jätetään rauhaan: niitä ei kirjoiteta eikä poisteta. Kun ohjelmaan lisätään uusia kansioita, lisää ne tähän. */
 const BACKUP_MANAGED_ROOT_FILES = ['index.php','CHANGELOG.md','BACKUP.md','SETUP.md','README.md','LICENSE','SECURITY.md','.gitignore'];
-const BACKUP_MANAGED_DIRS       = ['app','assets','views','kuvat'];
+const BACKUP_MANAGED_DIRS       = ['app','assets','views','kuvat','docs'];
 const BACKUP_KEEP_DAYS          = 30;
 function backupRestoreManaged(string $relative): bool {
     $relative=ltrim(str_replace('\\','/',$relative),'/');
@@ -57,6 +57,8 @@ function backupRestoreManaged(string $relative): bool {
         $base=end($parts);
         return (bool)preg_match('/\.(?:jpe?g|png|webp)$/i',$base)||$base==='index.html';
     }
+    /* docs/ sisältää vain esimerkkikuvia ja ohjeita: ei koskaan ajettavaa koodia. */
+    if($parts[0]==='docs')return (bool)preg_match('/\.(?:png|jpe?g|webp|md)$/i',(string)end($parts));
     return true;
 }
 function backupPathInKuvat(string $relative): bool { return $relative==='kuvat'||str_starts_with($relative,'kuvat/'); }

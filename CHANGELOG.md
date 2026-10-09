@@ -4,6 +4,15 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 12.
 
+## 1.0.1
+
+Dokumentaatiopäivitys; ohjelman toiminta ei muutu.
+
+- **README.md:** lisätty osio "Kuvakaappauksia" kolmella kuvalla (`docs/screenshots/`: etusivu, auton sivu, huoltohistoria). Kuvat on otettu kuvitteellisesta esimerkkikorjaamosta (keksityt autot, nimet ja rekisterinumerot); niissä ei ole oikeita henkilö- tai ajoneuvotietoja.
+- **Palautus:** `docs/` lisätty palautuksen hallinnoimiin kansioihin (`BACKUP_MANAGED_DIRS`), jotta täyden ZIP:n palautus ei ilmoita kuvia ohitetuiksi. Sinne palautetaan vain kuvia (`.png`, `.jpg`, `.jpeg`, `.webp`) ja `.md`-ohjeita, ei koskaan ajettavaa koodia (sama periaate kuin `kuvat/`-kansiossa).
+- `SETUP.md` ja `BACKUP.md`: tiedostopuu ja päivitysohje mainitsevat `docs/`-kansion.
+- Versio 1.0.1. Ei tietokantamuutoksia (skeema 12).
+
 ## 1.0.0 – ensimmäinen julkinen julkaisu
 
 Ohjelma julkaistu avoimena lähdekoodina (GNU AGPL v3): https://github.com/oh6kw/autonhuolto
