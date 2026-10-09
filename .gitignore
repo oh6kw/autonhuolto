@@ -1,0 +1,27 @@
+# Tietokanta ja sen apu- ja varmuuskopiotiedostot: EI KOSKAAN versionhallintaan
+*.sqlite3
+*.sqlite3-*
+*.sqlite3.*
+*.sqlite
+*.db
+.autohuolto-*
+.pre-restore-*
+.restore-*
+autohuolto-*backup*
+
+# Käyttäjien lataamat kuvat ja logot
+/kuvat/
+
+# Paikalliset varmuuskopiot ja työtiedostot
+*.zip
+*.bak
+*.orig
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Palvelinkohtaiset asetukset (eivät kuulu ohjelmaan)
+.htaccess
+.env
