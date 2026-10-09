@@ -323,7 +323,7 @@ Auton sivulta ja Varasto-sivulta löytyvät 🖨-napit (huoltotilanne, koko huol
 | **⬇ SQLite** | Vain tietokanta: käyttäjät, salasanatiivisteet, roolit, huollot, laskut, varasto, asetukset | Pieni ja nopea. Ota säännöllisesti, ainakin ennen jokaista päivitystä |
 | **⬇ Täysi ZIP + kuvat** | Tietokanta, ohjelmatiedostot ja kuvat | Siirto toiselle palvelimelle ja viikoittainen kokovarmuuskopio |
 
-Molemmat otetaan kohdasta **Asetukset → Turva → Backup & Restore**. Tiedoston nimessä on ohjelman versio ja päivämäärä, esimerkiksi `autohuolto-db-backup-v0.8.66-dev-2026-10-09.sqlite3`.
+Molemmat otetaan kohdasta **Asetukset → Turva → Backup & Restore**. Tiedoston nimessä on ohjelman versio ja päivämäärä, esimerkiksi `autohuolto-db-backup-v1.0.0-2026-10-09.sqlite3`.
 
 Täyteen ZIP:iin tulevat vain ohjelman omat tiedostot: `index.php`, `app/`, `assets/`, `views/`, `kuvat/` sekä ohjetiedostot. Palvelimen muut tiedostot, kuten oma `.htaccess` tai toisen sivuston tiedostot samassa kansiossa, **eivät** tule mukaan.
 
