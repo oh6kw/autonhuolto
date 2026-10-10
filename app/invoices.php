@@ -21,6 +21,64 @@ function invoiceReference(string $invoiceNumber): string {
 function invoiceReferenceFormatted(string $reference): string {
     return $reference===''?'':strrev(trim(chunk_split(strrev($reference),5,' ')));
 }
+/** Code 128 -symbolien palkki-/välileveydet (arvot 0–106; 106 = lopetus, 7 elementtiä). */
+const CODE128_PATTERNS=['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+/**
+ * Suomalaisen pankkiviivakoodin (versio 4) numerosarja, 54 numeroa. Tyhjä, jos tiedoista ei saa kelvollista koodia:
+ * IBAN pitää olla suomalainen (FI + 16 numeroa), viite 4–20 numeroa, summa 0,01–999 999,99 €.
+ * Rakenne: 4 + IBAN:n 16 numeroa + euroina 6 + sentteinä 2 + 000 + viite 20 (nollilla täytetty) + eräpäivä VVKKPP (000000, jos ei ole).
+ */
+function invoiceBarcodeDigits(string $iban,float $gross,string $reference,string $dueDateIso): string {
+    $iban=strtoupper(preg_replace('/\s+/','',$iban)??'');
+    if(!preg_match('/^FI\d{16}$/',$iban)||!preg_match('/^\d{4,20}$/',$reference))return '';
+    $cents=(int)round($gross*100);if($cents<1||$cents>99999999)return '';
+    $due=preg_match('/^(\d{4})-(\d{2})-(\d{2})$/',$dueDateIso,$m)?substr($m[1],2).$m[2].$m[3]:'000000';
+    $digits='4'.substr($iban,2).str_pad((string)$cents,8,'0',STR_PAD_LEFT).'000'.str_pad($reference,20,'0',STR_PAD_LEFT).$due;
+    return strlen($digits)===54?$digits:'';
+}
+/** Code 128 -viivakoodi (merkistö C, parillinen määrä numeroita) SVG:nä. Tyhjä, jos syöte ei kelpaa. */
+function code128cSvg(string $digits,float $moduleMm=0.33,float $heightMm=14.0): string {
+    if($digits===''||strlen($digits)%2!==0||!ctype_digit($digits))return '';
+    $values=[105];for($i=0;$i<strlen($digits);$i+=2)$values[]=(int)substr($digits,$i,2);
+    $sum=105;for($i=1;$i<count($values);$i++)$sum+=$values[$i]*$i;$values[]=$sum%103;$values[]=106;
+    $x=10;$rects='';
+    foreach($values as $v){$bar=true;foreach(str_split(CODE128_PATTERNS[$v]) as $w){$w=(int)$w;if($bar)$rects.='<rect x="'.$x.'" y="0" width="'.$w.'" height="50"/>';$x+=$w;$bar=!$bar;}}
+    $total=$x+10;
+    return '<svg class="barcode" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$total.' 50" width="'.round($total*$moduleMm,1).'mm" height="'.$heightMm.'mm" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="'.h(t('print.barcode_aria')).'"><rect x="0" y="0" width="'.$total.'" height="50" fill="#fff"/><g fill="#000">'.$rects.'</g></svg>';
+}
+/** Laskun pankkiviivakoodi SVG:nä (tyhjä, jos asetus on pois päältä tai laskulta puuttuu kelvollinen IBAN/viite/summa). */
+function invoiceBarcodeSvg(array $app,array $inv,float $gross): string {
+    if(($app['invoice_barcode']??'1')!=='1')return '';
+    return code128cSvg(invoiceBarcodeDigits((string)($inv['seller_iban']??''),$gross,invoiceReference((string)$inv['invoice_number']),(string)($inv['due_date']??'')));
+}
+/** Tilisiirtolomake (tulosteen alareunaan): saaja, IBAN/BIC, maksaja, viite, eräpäivä, summa ja pankkiviivakoodi. Kaksikielinen kiinteä teksti (fi/sv). */
+function invoiceGiroHtml(array $app,array $inv,float $gross): string {
+    $ref=invoiceReference((string)$inv['invoice_number']);
+    $payer=trim((string)$inv['customer_name']);if(trim((string)$inv['customer_address'])!=='')$payer.="\n".trim((string)$inv['customer_address']);
+    $payee=trim((string)$inv['seller_name']);if(trim((string)$inv['seller_address'])!=='')$payee.="\n".trim((string)$inv['seller_address']);
+    $barcode=invoiceBarcodeSvg($app,$inv,$gross);
+    $c=fn(string $k)=>t('print.giro_'.$k);
+    $lab=fn(string $k)=>'<div class="giro-label">'.$c($k).'</div>';
+    ob_start();?>
+<div class="giro-wrap"><div class="giro-cut"><span>✂</span></div><div class="giro">
+<div class="g g-lab g-r1"><?=$lab('payee_account')?></div>
+<div class="g g-r1 g-iban"><span class="g-tiny">IBAN</span><strong><?=h(trim(chunk_split(strtoupper(preg_replace('/\s+/','',(string)$inv['seller_iban'])),4,' ')))?></strong></div>
+<div class="g g-r1 g-bic"><span class="g-tiny">BIC</span><strong><?=h($inv['seller_bic'])?></strong></div>
+<div class="g g-lab g-r2"><?=$lab('payee')?></div>
+<div class="g g-r2 g-payee"><?=nl2br(h($payee))?></div>
+<div class="g g-msg"><span class="g-tiny"><?=$c('message')?></span><div><?=h(t('print.giro_invoice_ref',['number'=>$inv['invoice_number']]))?></div></div>
+<div class="g g-lab g-r3"><div class="giro-vert"><?=$c('title')?></div><div class="giro-lab-top"><?=$lab('payer')?></div><div class="giro-lab-bottom"><?=$lab('signature')?></div></div>
+<div class="g g-r3 g-payer"><div><?=nl2br(h($payer))?></div><div class="giro-sign"></div></div>
+<div class="g g-lab g-ref"><?=$lab('reference')?></div>
+<div class="g g-ref g-refval"><strong><?=h(invoiceReferenceFormatted($ref))?></strong></div>
+<div class="g g-lab g-r4"><?=$lab('from_account')?></div>
+<div class="g g-r4 g-from"></div>
+<div class="g g-lab g-r4 g-duelab"><?=$lab('due')?></div>
+<div class="g g-r4 g-dueval"><strong><?=h(fiDate((string)$inv['due_date']))?></strong></div>
+<div class="g g-r4 g-sum"><span class="g-tiny"><?=$c('sum')?></span><strong><?=h(number_format($gross,2,',',' ').' EUR')?></strong></div>
+</div><div class="giro-foot"><div class="giro-barcode"><?=$barcode?></div><div class="giro-legal"><?=$c('legal_fi')?><br><?=$c('legal_sv')?><div class="giro-bank">PANKKI BANKEN</div></div></div></div>
+<?php return (string)ob_get_clean();
+}
 function nextInvoiceNumber(PDO $db): string {
     $year=date('Y');
     $st=$db->prepare("SELECT invoice_number FROM invoices WHERE invoice_number LIKE ? ORDER BY id DESC");

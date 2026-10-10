@@ -14,4 +14,6 @@ return [
 /* --- views/layout_bottom.php: alatunniste --- */
 'layout.source_code'=>'Lähdekoodi (AGPL v3)',
 'lang.name'=>'Suomi',
+'layout.footer_schema'=>'tietokanta v{n}',
+'layout.footer_images'=>'kuvat {size}',
 ];

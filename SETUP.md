@@ -307,6 +307,8 @@ Asiakkaat-sivulla voi lisätä, muokata ja hakea asiakkaita. Asiakkaalle voi lii
 
 Huollosta voi muodostaa laskun (**🧾 Muodosta lasku**). Laskut numeroidaan automaattisesti, ja Laskut-sivulla on yhteenveto kuukausittain ja vuosittain sekä lista muodostetuista laskuista. Laskun tilaa voi muuttaa (esim. maksettu). Laskulle tulostuu korjaamon tiedot ja maksutiedot; ne täytetään Asetukset → Korjaamon / laskuttajan ja maksutapojen tiedot. Lasku, josta on olemassa maksutieto, voidaan poistaa vain ylläpitäjän toimesta.
 
+**Tilisiirtolomake ja viivakoodi.** Laskutulosteen alareunassa on suomalainen tilisiirtolomake (kaksikielinen suomi / ruotsi), kun laskuttajan tiedoissa on IBAN. Viite johdetaan laskunumerosta tarkistusnumeroineen. Lomakkeen alla ja laskun näytöllä on pankkiviivakoodi (versio 4), jos IBAN on suomalainen (FI) ja summa on 0,01–999 999,99 €. Viivakoodin voi ottaa pois käytöstä Asetukset → Yleiset → laskuttajan tiedot → Pankkiviivakoodi laskulla. Koodi tehdään laskun tiedoista, joten se tulee myös vanhoille laskuille. Tulosta lasku A4-paperille (selaimen tulostusasetuksissa mittakaava 100 %), niin viivakoodi pysyy oikeankokoisena ja pankkisovellus tai tilisiirtolomakkeen lukija pystyy lukemaan sen.
+
 ### 4.9 Tulosteet ja Excel
 
 Auton sivulta ja Varasto-sivulta löytyvät 🖨-napit (huoltotilanne, koko huoltohistoria, historia kuvilla, yksittäinen huoltosivu, laskut ja varaston listat). Tulosteet avautuvat selaimen tulostusnäkymään, josta ne voi tallentaa PDF:ksi. **📊 Excel** vie auton tai varaston tiedot `.xlsx`-tiedostoon.

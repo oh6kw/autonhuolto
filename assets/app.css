@@ -181,3 +181,4 @@ details.user-row>.inside{padding:4px 14px 14px;border-top:1px solid var(--line)}
 .inventory-print-group{grid-column:span 2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.inventory-print-group .inventory-print{width:100%;justify-content:center;text-align:center}
 @media(max-width:900px){.inventory-print-group{grid-column:1/-1}}
 @media(max-width:520px){.inventory-print-group{grid-template-columns:1fr}}
+.invoice-barcode-ui{margin-top:10px;max-width:100%;overflow-x:auto}.invoice-barcode-ui svg{max-width:100%;height:auto;display:block;border-radius:4px}

@@ -322,7 +322,7 @@ function defaultAppSettings(): array {
         'shop_name'=>DEFAULT_APP_NAME,'home_title'=>HOME_TEXT_DEFAULT,'home_subtitle'=>HOME_TEXT_DEFAULT,
         'business_id'=>'','shop_address'=>'','shop_email'=>'','shop_phone'=>'','iban'=>'','bic'=>'',
         'mobilepay_enabled'=>'0','mobilepay_number'=>'','mobilepay_name'=>'','logo_path'=>'',
-        'show_logo_invoice'=>'1','show_logo_service_print'=>'1','show_logo_car_history'=>'1','show_logo_all_history'=>'1','show_logo_header'=>'0'
+        'show_logo_invoice'=>'1','invoice_barcode'=>'1','show_logo_service_print'=>'1','show_logo_car_history'=>'1','show_logo_all_history'=>'1','show_logo_header'=>'0'
     ];
 }
 /**

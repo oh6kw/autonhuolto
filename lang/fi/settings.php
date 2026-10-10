@@ -235,4 +235,6 @@ return [
     'set.audit_clear_note'=>'Lomakkeen avaamisen jälkeen syntyneet uudet tapahtumat säilyvät. Aiemmat varmuuskopiot voivat sisältää poistettuja tapahtumia.',
 'set.language'=>'Kieli',
 'set.language_help'=>'Järjestelmän oletuskieli. Jokainen käyttäjä voi valita omalla tilillään (Oma tili) toisen kielen.',
+'set.invoice_barcode'=>'Pankkiviivakoodi laskulla',
+'set.invoice_barcode_help'=>'Piirtää laskun näytölle ja tulosteeseen pankkiviivakoodin (versio 4), kun laskuttajalla on suomalainen IBAN. Viivakoodi tehdään laskun loppusummasta, viitteestä ja eräpäivästä, joten myös vanhoille laskuille.',
 ];

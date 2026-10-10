@@ -4,6 +4,41 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 13.
 
+## 1.2.0
+
+Laskun tulostus uudistettu: kompakti laskupohja, suomalainen tilisiirtolomake ja pankkiviivakoodi. Ei tietokantamuutoksia (skeema 13); päivitys vain kopioimalla tiedostot vanhojen päälle.
+
+- **Uusi laskupohja:** logo ja laskutettavan tiedot vasemmalla, laskun tiedot (laskunumero, päiväys, maksuaika, eräpäivä, viitenumero, tila) oikealla, työ ja ajoneuvo vaaleanharmaalla rivillä, laskurivit, yhteissummat ja MobilePay rinnakkain sekä korjaamon tiedot pienellä alareunassa.
+- **Tilisiirtolomake:** kaksikielinen (suomi / ruotsi) lomake laskun alareunassa. Lomake asettuu aina viimeisen sivun alareunaan; pitkä lasku jakautuu kahdelle sivulle, taulukon otsikkorivi toistuu.
+- **Pankkiviivakoodi (versio 4):** Code 128 -viivakoodi lomakkeen alla ja laskun näytöllä, kun laskuttajan IBAN on suomalainen. Piirretään ilman ulkoisia kirjastoja. Asetus: Asetukset → Yleiset → Pankkiviivakoodi laskulla (oletuksena päällä).
+- **Alatunniste:** SQLite-koon viereen tietokannan versio ja kuvahakemiston koko.
+- **Kielet:** uudet tekstit suomeksi ja ruotsiksi.
+- Yksityiskohtaiset muutokset ovat esiversioiden 1.2.0-alpha.1 ja alpha.2 kohdissa.
+
+## 1.2.0-alpha.2
+
+Esiversio, joka ei ole erillisenä julkaisuna GitHubissa; muutokset sisältyvät versioon 1.2.0. Laskun tulostus uudistettu esimerkkimallin pohjalta. Ei tietokantamuutoksia (skeema 13).
+
+- **Uusi laskupohja (tuloste):** yläosassa logo (tai korjaamon nimi, jos logoa ei ole) ja laskutettavan tiedot vasemmalla, otsikko "Lasku" ja laskun tiedot oikealla (laskunumero, päiväys, maksuaika päivinä, eräpäivä, viitenumero, tila). Sen alla yksi rivi työstä ja ajoneuvosta, laskurivit ja alareunassa korjaamon tiedot pienellä (yritys, osoite, Y-tunnus, puhelin, sähköposti; tyhjät kentät jätetään pois). Isot kehykset ja erillinen "Laskutettava / Työ" -ruudut poistuivat, jolloin lasku vie vähemmän tilaa.
+- **Yhteissummat ja MobilePay rinnakkain:** Veroton yhteensä / ALV / Maksettavaa on oikealla ja MobilePay-ruutu vasemmalla samalla rivillä (aiemmin allekkain).
+- **Lomake sivun alareunaan:** tilisiirtolomake ja viivakoodi asettuvat aina viimeisen sivun alareunaan. Pieni apuskripti mittaa sivun pituuden ja lisää tyhjää tilaa lomakkeen yläpuolelle; pitkällä laskulla lomake on siis toisen sivun alareunassa eikä sivun ylälaidassa. Jos selaimen skripti ei ole käytössä, lomake tulee sisällön perään.
+- **Lomakkeen pieni korjaus:** vasemman reunan otsikko "Saajan tilinumero / Mottagarens kontonummer" ei enää leikkaudu.
+- **Kielet:** uudet tekstit suomeksi ja ruotsiksi (1 747 tekstiä per kieli); ruotsiksi mm. "Betalningstid", "Referensnummer", "Företag", "FO-nummer".
+- **Tarkistukset:** laskutuloste testattu kolmella laskulla (2 riviä, 5 riviä ja 35 riviä): lyhyet laskut mahtuvat yhdelle sivulle ja pitkä lasku jakautuu kahdelle sivulle lomake viimeisen sivun alareunassa, taulukon otsikkorivi toistuu. Kaikki muut sivut, tulosteet ja Excel-viennit ovat samat kuin versiossa 1.2.0-alpha.1 (suomi ja ruotsi). Viivakoodi luettiin PDF:stä lukijakirjastolla.
+
+## 1.2.0-alpha.1
+
+Esiversio, joka ei ole erillisenä julkaisuna GitHubissa; muutokset sisältyvät versioon 1.2.0. Laskun tulostus saa suomalaisen tilisiirtolomakkeen ja pankkiviivakoodin. Ei tietokantamuutoksia (skeema 13), joten varmuuskopiot ja päivitys toimivat kuten ennen.
+
+- **Pankkiviivakoodi (versio 4):** laskun näytölle ja tulosteeseen piirtyy Code 128 -viivakoodi (54 numeroa: versio, IBAN, summa, viite, eräpäivä). Se piirretään itse SVG:nä (`code128cSvg()`, `invoiceBarcodeDigits()` tiedostossa `app/invoices.php`), joten ulkoisia kirjastoja ei tarvita. Koodi näkyy myös vanhoilla laskuilla, koska se lasketaan laskun omista tiedoista. Koodia ei piirretä, jos laskuttajan IBAN ei ole suomalainen, viitettä ei voi muodostaa tai summa on alle 0,01 € tai vähintään 1 000 000 €.
+- **Asetus:** Asetukset → Yleiset → laskuttajan tiedot → **Pankkiviivakoodi laskulla** (oletuksena päällä, myös vanhoissa asennuksissa, joissa asetusta ei vielä ole).
+- **Tilisiirtolomake laskutulosteessa:** tulosteen alareunassa on tilisiirtolomake (saajan tilinumero IBAN ja BIC, saaja, maksaja, allekirjoitus, viite, eräpäivä, summa, viesti ja pankkiviivakoodi). Lomakkeen kiinteät tekstit ovat kaksikielisiä (suomi / ruotsi) kummallakin kielellä. Lomake näytetään, kun laskulla on IBAN. Pankkisiirron tiedot (IBAN, viite, eräpäivä) eivät enää toistu erillisessä ruudussa; MobilePay-ruutu säilyy ja on tiivistetty yhdelle riville.
+- **Tulosteen asettelu:** lomake asettuu sivun alareunaan. Tulosteen rivi- ja ruutuvälejä on tiivistetty, jotta tavallinen lasku (noin 5–6 riviä) mahtuu lomakkeineen yhdelle A4-sivulle; pidempi lasku siirtää lomakkeen viimeisen sivun alareunaan.
+- **Alatunniste:** SQLite-tiedoston koon viereen on lisätty tietokannan versio (esim. `tietokanta v13`) ja kuvahakemiston koko (`kuvat 12,3 Mt`). Kuvahakemiston koko lasketaan korkeintaan kerran minuutissa istunnossa.
+- **Kielet:** uudet tekstit suomeksi ja ruotsiksi (1 739 tekstiä per kieli).
+- **Tarkistukset:** viivakoodi luettiin lukijakirjastolla sekä kuvasta että PDF-tulosteesta (300 dpi) ja sisältö täsmäsi laskettuun 54 numeroon (kaksi testilaskua ja kaksi esimerkkiä). Vertailussa muut 35 sivua, tulostetta ja Excel-vientiä (suomi ja ruotsi) ovat samat kuin versiossa 1.1.0; erot ovat vain laskun näyttö ja tuloste, asetukset ja alatunniste. Asetuksen päälle/pois, ei-suomalainen IBAN ja puuttuva IBAN tarkistettu.
+- **Muistettavaa:** viivakoodin luku on testattu lukijakirjastolla; testaa se vielä oikealla pankkisovelluksella tulostetusta laskusta.
+
 ## 1.1.0
 
 Monikielisyys: ohjelma toimii suomeksi ja ruotsiksi (svenska). Kieli valitaan asennuksessa, järjestelmän oletuskieli vaihdetaan Asetuksissa ja jokainen käyttäjä voi valita oman kielensä Oma tili -sivulla. Tietokannan skeema päivittyy versiosta 12 versioon 13 automaattisesti (turvakopio otetaan ensin). Alla yhteenveto; tarkemmat tiedot ovat esiversioiden (1.1.0-alpha.1 … alpha.3) kohdissa.

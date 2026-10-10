@@ -30,6 +30,12 @@ function money(?float $v): string { return $v===null?'—':number_format($v,2,',
 function km(?int $v): string { return !$v?'—':t('helper.km',['n'=>number_format($v,0,',',' ')]); }
 function recordedKm(?int $v): string { return $v!==null&&$v>0?km($v):t('helper.km_not_recorded'); }
 function dec(float $v, int $digits=2): string { return number_format($v,$digits,',',' '); }
+/** Kuvahakemiston (kuvat/) yhteiskoko tavuina. Tulos muistetaan istunnossa minuutiksi, jotta iso kuvahakemisto ei hidasta jokaista sivua. */
+function imageDirSize(): int {
+    $c=$_SESSION['image_dir_size']??null;if(is_array($c)&&time()-(int)$c['t']<60)return (int)$c['v'];
+    $total=0;if(is_dir(IMAGE_DIR)){try{foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(IMAGE_DIR,FilesystemIterator::SKIP_DOTS)) as $f){if($f->isFile()&&!$f->isLink())$total+=(int)$f->getSize();}}catch(Throwable $e){}}
+    $_SESSION['image_dir_size']=['t'=>time(),'v'=>$total];return $total;
+}
 function fileSizeText(int $bytes): string { if($bytes>=1073741824)return t('helper.size_gb',['n'=>number_format($bytes/1073741824,2,',',' ')]);if($bytes>=1048576)return t('helper.size_mb',['n'=>number_format($bytes/1048576,2,',',' ')]);if($bytes>=1024)return t('helper.size_kb',['n'=>number_format($bytes/1024,0,',',' ')]);return t('helper.size_b',['n'=>$bytes]); }
 function formatDuration(int $seconds): string {
     $seconds=max(0,$seconds);$h=intdiv($seconds,3600);$m=intdiv($seconds%3600,60);$s=$seconds%60;

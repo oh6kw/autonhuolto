@@ -14,4 +14,6 @@ return [
 /* --- views/layout_bottom.php: sidfot --- */
 'layout.source_code'=>'Källkod (AGPL v3)',
 'lang.name'=>'Svenska',
+'layout.footer_schema'=>'databas v{n}',
+'layout.footer_images'=>'bilder {size}',
 ];

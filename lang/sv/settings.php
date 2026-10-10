@@ -235,4 +235,6 @@ return [
     'set.audit_clear_note'=>'Nya händelser som uppstått efter att formuläret öppnades finns kvar. Tidigare säkerhetskopior kan innehålla borttagna händelser.',
     'set.language'=>'Språk',
     'set.language_help'=>'Systemets standardspråk. Varje användare kan på sitt eget konto (Mitt konto) välja ett annat språk.',
+'set.invoice_barcode'=>'Bankstreckkod på fakturan',
+'set.invoice_barcode_help'=>'Ritar en bankstreckkod (version 4) på fakturan på skärmen och i utskriften när fakturautställaren har ett finländskt IBAN. Streckkoden görs av fakturans slutsumma, referens och förfallodag, så den fås också på gamla fakturor.',
 ];
