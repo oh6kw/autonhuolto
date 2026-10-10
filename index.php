@@ -53,7 +53,7 @@ date_default_timezone_set('Europe/Helsinki');
 const DEFAULT_APP_NAME      = 'Autonhuolto';
 const DEFAULT_HOME_TITLE    = 'Huoltokirja';
 const DEFAULT_HOME_SUBTITLE = 'Pidä omat, perheen ja tuttujen autot samassa huoltohistoriassa.';
-const APP_VERSION           = '1.2.2';
+const APP_VERSION           = '1.2.3';
 /* AGPL v3 §13: verkossa ajettavan ohjelman käyttäjille on tarjottava lähdekoodi. Aseta tähän julkisen koodivaraston osoite (esim. 'https://github.com/KÄYTTÄJÄ/autonhuolto'); tyhjänä linkkiä ei näytetä. */
 const APP_SOURCE_URL        = 'https://github.com/oh6kw/autonhuolto';
 const SCHEMA_VERSION   = 13;

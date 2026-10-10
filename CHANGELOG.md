@@ -4,6 +4,13 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 13.
 
+## 1.2.3
+
+Pieni korjaus laskutulosteeseen. Ei tietokantamuutoksia (skeema 13).
+
+- **Laskun tila pois tulosteesta:** laskun tila (Luonnos, Lähetetty, Maksettu …) ei enää tulostu laskulle eikä PDF:ään, koska se on ohjelman sisäinen tieto eikä kuulu asiakkaalle. Tila näkyy ja vaihtuu edelleen laskun omalla sivulla ja laskulistassa. Laskun tietolohko on yhden rivin lyhyempi.
+- **README:** laskun PDF-esimerkkikuva päivitetty (ei tila-riviä).
+
 ## 1.2.2
 
 Pieni ulkoasukorjaus laskutulosteeseen. Ei tietokantamuutoksia (skeema 13).
