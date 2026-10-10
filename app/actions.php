@@ -11,6 +11,10 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             $priceMode=post('price_input_mode')==='gross'?'gross':'net';
             $vatRate=max(0.0,(float)(floatpost('vat_rate',25.5)??25.5));
             $pricingForSave=['price_input_mode'=>$priceMode,'vat_rate'=>(string)$vatRate];
+            $ibanSave=ibanNormalize(post('iban'));if($ibanSave!==''&&!ibanValid($ibanSave))throw new RuntimeException(t('act.err_iban_invalid'));
+            $bicSave=strtoupper(post('bic'));if($bicSave!==''&&!bicValid($bicSave))throw new RuntimeException(t('act.err_bic_invalid'));
+            $tzSave=post('timezone');if(!in_array($tzSave,timezone_identifiers_list(),true))$tzSave=(string)($app['timezone']??'Europe/Helsinki');
+            $shopEmailSave=post('shop_email');if($shopEmailSave!==''&&!filter_var($shopEmailSave,FILTER_VALIDATE_EMAIL))throw new RuntimeException(t('act.err_shop_email_invalid'));
             $hourlyInput=max(0.0,(float)(floatpost('hourly_rate',65.0)??65.0));
             $hourlyNet=(float)(priceNetFromInput($hourlyInput,$pricingForSave)??0.0);
             $pairs=[
@@ -20,8 +24,8 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
                 'feature_time_tracking'=>isset($_POST['feature_time_tracking'])?'1':'0',
                 'feature_inventory'=>isset($_POST['feature_inventory'])?'1':'0',
                 'parts_markup_enabled'=>isset($_POST['parts_markup_enabled'])?'1':'0','parts_markup_percent'=>(string)min(500.0,max(0.0,(float)(floatpost('parts_markup_percent',15.0)??15.0))),
-                'theme'=>$theme,'language'=>i18nValidLanguage(post('language'))?:(i18nValidLanguage((string)($app['language']??''))?:I18N_DEFAULT_LANG),'hourly_rate'=>(string)$hourlyNet,'vat_rate'=>(string)$vatRate,'price_input_mode'=>$priceMode,'payment_days'=>(string)max(0,intpost('payment_days',14)),
-                'shop_name'=>post('shop_name')?:DEFAULT_APP_NAME,'home_title'=>homeTextForStorage('home_title',post('home_title'))?:HOME_TEXT_DEFAULT,'home_subtitle'=>homeTextForStorage('home_subtitle',post('home_subtitle')),'business_id'=>post('business_id'),'shop_address'=>post('shop_address'),'shop_email'=>post('shop_email'),'shop_phone'=>post('shop_phone'),'iban'=>post('iban'),'bic'=>post('bic'),'mobilepay_enabled'=>isset($_POST['mobilepay_enabled'])?'1':'0','mobilepay_number'=>post('mobilepay_number'),'mobilepay_name'=>post('mobilepay_name'),'show_logo_invoice'=>isset($_POST['show_logo_invoice'])?'1':'0','invoice_barcode'=>isset($_POST['invoice_barcode'])?'1':'0','show_logo_service_print'=>isset($_POST['show_logo_service_print'])?'1':'0','show_logo_car_history'=>isset($_POST['show_logo_car_history'])?'1':'0','show_logo_all_history'=>isset($_POST['show_logo_all_history'])?'1':'0','show_logo_header'=>isset($_POST['show_logo_header'])?'1':'0'
+                'theme'=>$theme,'timezone'=>$tzSave,'language'=>i18nValidLanguage(post('language'))?:(i18nValidLanguage((string)($app['language']??''))?:I18N_DEFAULT_LANG),'hourly_rate'=>(string)$hourlyNet,'vat_rate'=>(string)$vatRate,'price_input_mode'=>$priceMode,'payment_days'=>(string)max(0,intpost('payment_days',14)),
+                'shop_name'=>post('shop_name')?:DEFAULT_APP_NAME,'home_title'=>homeTextForStorage('home_title',post('home_title'))?:HOME_TEXT_DEFAULT,'home_subtitle'=>homeTextForStorage('home_subtitle',post('home_subtitle')),'business_id'=>post('business_id'),'shop_address'=>post('shop_address'),'shop_email'=>$shopEmailSave,'shop_phone'=>post('shop_phone'),'iban'=>$ibanSave,'bic'=>$bicSave,'mobilepay_enabled'=>isset($_POST['mobilepay_enabled'])?'1':'0','mobilepay_number'=>post('mobilepay_number'),'mobilepay_name'=>post('mobilepay_name'),'show_logo_invoice'=>isset($_POST['show_logo_invoice'])?'1':'0','invoice_barcode'=>isset($_POST['invoice_barcode'])?'1':'0','show_logo_service_print'=>isset($_POST['show_logo_service_print'])?'1':'0','show_logo_car_history'=>isset($_POST['show_logo_car_history'])?'1':'0','show_logo_all_history'=>isset($_POST['show_logo_all_history'])?'1':'0','show_logo_header'=>isset($_POST['show_logo_header'])?'1':'0'
             ];
             /* hintojen syöttötavan vaihto muuntaa myös varaston hankintahinnat (tallennetaan syöttötavan mukaisena), vanhalla ALV-kannalla */
             $oldApp=appSettings($db);$oldMode=priceInputMode($oldApp);$convertedParts=0;
@@ -447,12 +451,96 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             $st=$db->prepare("SELECT id FROM invoices WHERE service_id=?");$st->execute([$sid]);$existing=(int)$st->fetchColumn();if($existing)redirect('?invoice='.$existing);
             $number=nextInvoiceNumber($db);$issue=date('Y-m-d');$due=addMonths($issue,0);$due=date('Y-m-d',strtotime('+'.max(0,(int)($app['payment_days']??14)).' days',strtotime($issue)));
             $invoiceCustomerName=trim((string)($s['customer_name_snapshot']??''));$invoiceCustomerAddress=(string)($s['customer_address_snapshot']??'');$invoiceCustomerEmail=(string)($s['customer_email_snapshot']??'');$invoiceCustomerBusiness=(string)($s['customer_business_id_snapshot']??'');if($invoiceCustomerName===''){if(customersEnabled($app)&&!empty($s['current_customer_id']))throw new RuntimeException(t('act.err_invoice_snapshot_missing'));$invoiceCustomerName=(string)($s['owner']??'');$invoiceCustomerAddress=(string)($s['customer_address']??'');$invoiceCustomerEmail=(string)($s['customer_email']??'');$invoiceCustomerBusiness=(string)($s['customer_business_id']??'');}
-            $db->beginTransaction();$st=$db->prepare("INSERT INTO invoices(service_id,invoice_number,issue_date,due_date,status,seller_name,seller_business_id,seller_address,seller_email,seller_phone,seller_iban,seller_bic,seller_mobilepay_enabled,seller_mobilepay_number,seller_mobilepay_name,seller_logo_path,customer_name,customer_address,customer_email,customer_business_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");$st->execute([$sid,$number,$issue,$due,'draft',$app['shop_name']??DEFAULT_APP_NAME,$app['business_id']??'',$app['shop_address']??'',$app['shop_email']??'',$app['shop_phone']??'',$app['iban']??'',$app['bic']??'',(($app['mobilepay_enabled']??'0')==='1'?1:0),$app['mobilepay_number']??'',$app['mobilepay_name']??'',$app['logo_path']??'',$invoiceCustomerName,$invoiceCustomerAddress,$invoiceCustomerEmail,$invoiceCustomerBusiness]);$iid=(int)$db->lastInsertId();
+            $invoiceReferenceNew=invoiceReference($number);if($invoiceReferenceNew!==''){$rq=$db->prepare('SELECT COUNT(*) FROM invoices WHERE reference=?');$rq->execute([$invoiceReferenceNew]);if((int)$rq->fetchColumn()>0)throw new RuntimeException(t('act.err_invoice_reference_taken',['ref'=>$invoiceReferenceNew]));}
+            $db->beginTransaction();$st=$db->prepare("INSERT INTO invoices(service_id,invoice_number,issue_date,due_date,status,seller_name,seller_business_id,seller_address,seller_email,seller_phone,seller_iban,seller_bic,seller_mobilepay_enabled,seller_mobilepay_number,seller_mobilepay_name,seller_logo_path,customer_name,customer_address,customer_email,customer_business_id,reference) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");$st->execute([$sid,$number,$issue,$due,'draft',$app['shop_name']??DEFAULT_APP_NAME,$app['business_id']??'',$app['shop_address']??'',$app['shop_email']??'',$app['shop_phone']??'',$app['iban']??'',$app['bic']??'',(($app['mobilepay_enabled']??'0')==='1'?1:0),$app['mobilepay_number']??'',$app['mobilepay_name']??'',$app['logo_path']??'',$invoiceCustomerName,$invoiceCustomerAddress,$invoiceCustomerEmail,$invoiceCustomerBusiness,$invoiceReferenceNew]);$iid=(int)$db->lastInsertId();
             $vat=(float)($app['vat_rate']??25.5);$line=$db->prepare("INSERT INTO invoice_lines(invoice_id,description,qty,unit,unit_price_net,vat_rate,sort_order) VALUES(?,?,?,?,?,?,?)");$sort=10;$lineCount=0;
             $hours=(float)($s['labor_hours']??0);$rate=$s['labor_rate']!==null?(float)$s['labor_rate']:(float)($app['hourly_rate']??65);$laborVat=$s['labor_vat_rate']!==null?(float)$s['labor_vat_rate']:$vat;if($hours>0){$line->execute([$iid,t('vocab.note.work_prefix').$s['title'],$hours,'h',$rate,$laborVat,$sort]);$lineCount++;}$sort+=10;
             foreach($s['actions'] as $a){if($a['price_net']===null)continue;$desc=$a['label'];$extra=trim(implode(' ',array_filter([$a['brand'],$a['supplier_sku']])));if($extra)$desc.=' · '.$extra;$qty=$a['quantity']!==null?(float)$a['quantity']:1.0;$unit=(string)($a['unit']?:'pcs');$rowVat=$a['vat_rate']!==null?(float)$a['vat_rate']:$vat;$line->execute([$iid,$desc,$qty,$unit,(float)$a['price_net'],$rowVat,$sort]);$lineCount++;$sort+=10;}
             foreach($s['custom_actions'] as $a){if($a['price_net']===null)continue;$rowVat=$a['vat_rate']!==null?(float)$a['vat_rate']:$vat;$line->execute([$iid,$a['description'],1,'pcs',(float)$a['price_net'],$rowVat,$sort]);$lineCount++;$sort+=10;}
             if($lineCount===0){$db->rollBack();throw new RuntimeException(t('act.err_invoice_no_lines'));}$db->commit();flash(t('act.invoice_draft_created'));redirect('?invoice='.$iid);
+        }
+        if($action==='update_invoice'){
+            $iid=intpost('invoice_id');$st=$db->prepare('SELECT * FROM invoices WHERE id=?');$st->execute([$iid]);$invoiceRow=$st->fetch();
+            if(!$invoiceRow)throw new RuntimeException(t('act.err_invoice_not_found'));
+            if(!invoiceCanDelete($invoiceRow))throw new RuntimeException(t('act.err_invoice_edit_only_draft'));
+            $issue=post('issue_date');$due=post('due_date');
+            if($issue===''||!validOptionalIsoDate($issue)||$due===''||!validOptionalIsoDate($due))throw new RuntimeException(t('act.err_invoice_dates_invalid'));
+            if($due<$issue)throw new RuntimeException(t('act.err_invoice_due_before_issue'));
+            $custEmail=post('customer_email');if($custEmail!==''&&!filter_var($custEmail,FILTER_VALIDATE_EMAIL))throw new RuntimeException(t('act.err_invoice_email_invalid'));
+            $note=post('invoice_note');if(mb_strlen($note)>1500)throw new RuntimeException(t('act.err_invoice_note_long'));
+            $lineIds=(array)($_POST['line_id']??[]);$descs=(array)($_POST['line_desc']??[]);$qtys=(array)($_POST['line_qty']??[]);$units=(array)($_POST['line_unit']??[]);$prices=(array)($_POST['line_price']??[]);$vats=(array)($_POST['line_vat']??[]);$dels=(array)($_POST['line_delete']??[]);
+            $num=static function(mixed $raw): ?float {$v=str_replace([' ',','],['','.'],trim((string)$raw));return $v!==''&&is_numeric($v)&&is_finite((float)$v)?(float)$v:null;};
+            $own=$db->prepare('SELECT id FROM invoice_lines WHERE id=? AND invoice_id=?');$keep=[];$new=[];$remove=[];
+            foreach($descs as $i=>$descRaw){
+                $lid=(int)($lineIds[$i]??0);$desc=trim((string)$descRaw);
+                if($lid>0){$own->execute([$lid,$iid]);if(!$own->fetchColumn())throw new RuntimeException(t('act.err_invoice_line_not_found'));if(isset($dels[$i])||isset($dels[$lid])){$remove[]=$lid;continue;}}
+                if($desc===''&&$lid===0)continue;
+                if($desc==='')throw new RuntimeException(t('act.err_invoice_line_desc_required'));
+                if(mb_strlen($desc)>300)throw new RuntimeException(t('act.err_invoice_line_desc_long'));
+                $qty=$num($qtys[$i]??'');if($qty===null||$qty<=0||$qty>1000000)throw new RuntimeException(t('act.err_invoice_line_qty',['desc'=>$desc]));
+                $price=$num($prices[$i]??'');if($price===null||abs($price)>10000000)throw new RuntimeException(t('act.err_invoice_line_price',['desc'=>$desc]));
+                $vatRate=$num($vats[$i]??'');if($vatRate===null||$vatRate<0||$vatRate>100)throw new RuntimeException(t('act.err_invoice_line_vat',['desc'=>$desc]));
+                $unit=vocabNormalize('unit',(string)($units[$i]??''));if($unit===''||mb_strlen($unit)>20)$unit='pcs';
+                $row=['desc'=>$desc,'qty'=>$qty,'unit'=>$unit,'price'=>$price,'vat'=>$vatRate];
+                if($lid>0)$keep[$lid]=$row;else $new[]=$row;
+            }
+            if(count($keep)+count($new)===0)throw new RuntimeException(t('act.err_invoice_no_lines'));
+            $db->beginTransaction();
+            try{
+                $db->prepare('UPDATE invoices SET issue_date=?,due_date=?,customer_name=?,customer_address=?,customer_email=?,customer_business_id=?,note=? WHERE id=?')->execute([$issue,$due,post('customer_name'),trim((string)($_POST['customer_address']??'')),$custEmail,post('customer_business_id'),$note,$iid]);
+                foreach($remove as $rid)$db->prepare('DELETE FROM invoice_lines WHERE id=? AND invoice_id=?')->execute([$rid,$iid]);
+                $upd=$db->prepare('UPDATE invoice_lines SET description=?,qty=?,unit=?,unit_price_net=?,vat_rate=? WHERE id=? AND invoice_id=?');
+                foreach($keep as $lid=>$r)$upd->execute([$r['desc'],$r['qty'],$r['unit'],$r['price'],$r['vat'],$lid,$iid]);
+                $sort=(int)$db->query('SELECT COALESCE(MAX(sort_order),0) FROM invoice_lines WHERE invoice_id='.(int)$iid)->fetchColumn();
+                $ins=$db->prepare('INSERT INTO invoice_lines(invoice_id,description,qty,unit,unit_price_net,vat_rate,sort_order) VALUES(?,?,?,?,?,?,?)');
+                foreach($new as $r){$sort+=10;$ins->execute([$iid,$r['desc'],$r['qty'],$r['unit'],$r['price'],$r['vat'],$sort]);}
+                $db->commit();
+            }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+            flash(t('act.invoice_updated'));redirect('?invoice='.$iid);
+        }
+        if($action==='save_mail_settings'){
+            $method=post('mail_method');if(!in_array($method,['none','smtp','php'],true))$method='none';
+            $sec=post('smtp_security');if(!in_array($sec,['tls','ssl','none'],true))$sec='tls';
+            $host=post('smtp_host');$port=intpost('smtp_port',0);if($port<=0)$port=['tls'=>587,'ssl'=>465,'none'=>25][$sec];
+            if($port>65535)throw new RuntimeException(t('act.err_mail_port'));
+            $from=post('mail_from');$reply=post('mail_reply_to');
+            if($method!=='none'&&!mailValidAddress($from))throw new RuntimeException(t('act.err_mail_from_invalid'));
+            if($from!==''&&!mailValidAddress($from))throw new RuntimeException(t('act.err_mail_from_invalid'));
+            if($reply!==''&&!mailValidAddress($reply))throw new RuntimeException(t('act.err_mail_reply_invalid'));
+            if($method==='smtp'&&$host==='')throw new RuntimeException(t('act.err_mail_host_required'));
+            if(preg_match('/[\s\/\\:]/',$host))throw new RuntimeException(t('act.err_mail_host_invalid'));
+            $oldPass=(string)($app['smtp_pass']??'');$newPass=(string)($_POST['smtp_pass']??'');
+            $pass=isset($_POST['smtp_pass_clear'])?'':($newPass!==''?$newPass:$oldPass);
+            foreach(['mail_method'=>$method,'smtp_host'=>$host,'smtp_port'=>(string)$port,'smtp_security'=>$sec,'smtp_user'=>post('smtp_user'),'smtp_pass'=>$pass,'smtp_verify'=>isset($_POST['smtp_verify'])?'1':'0','mail_from'=>$from,'mail_from_name'=>post('mail_from_name'),'mail_reply_to'=>$reply,'mail_copy_self'=>isset($_POST['mail_copy_self'])?'1':'0'] as $k=>$v)appSet($db,$k,$v);
+            flash(t('act.mail_settings_saved'));redirect('?view=settings#sahkoposti');
+        }
+        if($action==='send_test_mail'){
+            $appNow=appSettings($db)+defaultAppSettings();$to=post('test_to')?:trim((string)($appNow['mail_from']??''));
+            if(!mailValidAddress($to))throw new RuntimeException(t('mail.err_bad_recipient',['address'=>$to]));
+            mailSend($appNow,['to'=>[$to],'subject'=>t('mail.test_subject',['app'=>$appName]),'text'=>t('mail.test_body',['app'=>$appName,'version'=>APP_VERSION,'method'=>mailMethod($appNow)==='smtp'?('SMTP '.($appNow['smtp_host']??'').':'.($appNow['smtp_port']??'')):t('set.mail_method_php')])]);
+            flash(t('act.test_mail_sent',['to'=>$to]));redirect('?view=settings#sahkoposti');
+        }
+        if($action==='send_invoice_email'){
+            $iid=intpost('invoice_id');$appNow=appSettings($db)+defaultAppSettings();
+            if(!mailConfigured($appNow))throw new RuntimeException(t('mail.err_not_configured'));
+            $st=$db->prepare('SELECT * FROM invoices WHERE id=?');$st->execute([$iid]);$invoiceRow=$st->fetch();if(!$invoiceRow)throw new RuntimeException(t('act.err_invoice_not_found'));
+            $recipients=array_values(array_unique(array_filter(array_map('trim',preg_split('/[,;\s]+/',post('mail_to'))?:[]))));
+            if(!$recipients)throw new RuntimeException(t('mail.err_no_recipient'));
+            if(count($recipients)>5)throw new RuntimeException(t('mail.err_too_many_recipients'));
+            foreach($recipients as $r)if(!mailValidAddress($r))throw new RuntimeException(t('mail.err_bad_recipient',['address'=>$r]));
+            $subject=post('mail_subject');$body=(string)($_POST['mail_message']??'');if($subject==='')throw new RuntimeException(t('mail.err_no_subject'));if(mb_strlen($body)>5000)throw new RuntimeException(t('mail.err_message_long'));
+            $msg=['to'=>$recipients,'subject'=>$subject,'text'=>$body,'html'=>'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5">'.nl2br(h($body)).'</div>'];
+            $shopMail=trim((string)($appNow['shop_email']??''));if(trim((string)($appNow['mail_reply_to']??''))===''&&mailValidAddress($shopMail))$msg['reply_to']=$shopMail;
+            if(isset($_POST['mail_attach_pdf'])){$pdfData=invoicePdf($db,$appNow,$iid);$msg['attachments']=[[invoicePdfFileName((string)$invoiceRow['invoice_number']),'application/pdf',$pdfData]];}
+            mailSend($appNow,$msg);
+            $now=date('Y-m-d H:i:s');
+            $db->prepare('UPDATE invoices SET emailed_at=?,emailed_to=? WHERE id=?')->execute([$now,implode(', ',$recipients),$iid]);
+            if(isset($_POST['mail_mark_sent'])&&(string)$invoiceRow['status']==='draft')$db->prepare("UPDATE invoices SET status='sent',sent_at=CASE WHEN sent_at='' THEN ? ELSE sent_at END WHERE id=? AND status='draft'")->execute([$now,$iid]);
+            flash(t('act.invoice_mailed',['to'=>implode(', ',$recipients)]));redirect('?invoice='.$iid);
+        }
+        if($action==='snooze_backup_reminder'){
+            appSet($db,'backup_reminder_snooze_until',date('Y-m-d',strtotime('+30 days')));
+            flash(t('act.backup_reminder_snoozed'));redirect(post('return')==='settings'?'?view=settings#backup':'?');
         }
         if($action==='update_invoice_status'){
             $iid=intpost('invoice_id');$status=vocabMatch('invstatus',post('status'))??'';$st=$db->prepare('SELECT * FROM invoices WHERE id=?');$st->execute([$iid]);$invoiceRow=$st->fetch();
@@ -494,10 +582,11 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             $message=backupRestore($db,(string)$_FILES['restore_file']['tmp_name']);
             authForget();flash(t('act.restore_done',['message'=>$message]),'warn');redirect('?');
         }
-    } catch(Throwable $e){ if(isset($db)&&$db instanceof PDO&&$db->inTransaction())$db->rollBack(); flash($e->getMessage(),'error');if(post('return')==='inventory')redirect('?view=inventory');$cid=intpost('car_id');redirect($cid?'?car='.$cid:($action==='clear_inventory_history'?'?view=inventory&stock_page=1#varastotapahtumat':((($_POST['action']??'')==='restore_db'||($_POST['action']??'')==='save_app_settings')?'?view=settings':'?'))); }
+    } catch(Throwable $e){ if(isset($db)&&$db instanceof PDO&&$db->inTransaction())$db->rollBack(); flash($e->getMessage(),'error');if(post('return')==='inventory')redirect('?view=inventory');$errInvoice=intpost('invoice_id');if($errInvoice>0&&in_array($action,['update_invoice','send_invoice_email','update_invoice_status','delete_invoice'],true))redirect('?invoice='.$errInvoice);$cid=intpost('car_id');redirect($cid?'?car='.$cid:($action==='clear_inventory_history'?'?view=inventory&stock_page=1#varastotapahtumat':(in_array($action,['restore_db','save_app_settings'],true)?'?view=settings':(in_array($action,['save_mail_settings','send_test_mail'],true)?'?view=settings#sahkoposti':'?')))); }
 }
 
 /* ------------------------------ Excel-vienti ------------------------------ */
 if(($_GET['export']??'')==='xlsx'){ exportCarXlsx($db,(int)($_GET['car']??0)); }
+if(($_GET['export']??'')==='invoices_xlsx'){ if(!invoicingEnabled($app)){http_response_code(404);exit(t('act.err_invoicing_disabled'));} exportInvoicesXlsx($db); }
 if(($_GET['export']??'')==='all_xlsx'){ exportAllCarsXlsx($db); }
 if(($_GET['export']??'')==='inventory_xlsx'){ if(!inventoryEnabled($app)){http_response_code(404);exit(t('act.err_inventory_disabled'));} exportInventoryXlsx($db); }

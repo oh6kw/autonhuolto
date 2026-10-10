@@ -135,6 +135,7 @@ return [
 'print.giro_invoice_ref'=>'Lasku / Faktura {number}',
 'print.giro_legal_fi'=>'Maksu välitetään saajalle maksujen välityksen ehtojen mukaisesti ja vain maksajan ilmoittaman tilinumeron perusteella.',
 'print.giro_legal_sv'=>'Betalningen förmedlas till mottagaren enligt villkoren för betalningsförmedling och endast till det kontonummer som betalaren angivit.',
+'print.inv_note'=>'Lisätietoja',
 'print.inv_terms'=>'Maksuaika',
 'print.inv_terms_days'=>'{n} päivää',
 'print.inv_reference'=>'Viitenumero',

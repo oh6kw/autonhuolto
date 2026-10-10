@@ -92,7 +92,7 @@ function migrateSchema12To13(PDO $db): void {
             $exists=$db->prepare('SELECT COUNT(*) FROM data_issue_ignores WHERE issue_key=?');$setKey=$db->prepare('UPDATE data_issue_ignores SET issue_key=? WHERE issue_key=?');
             foreach($issueKeyMap as $old=>$new){$exists->execute([$new]);if((int)$exists->fetchColumn()===0)$setKey->execute([$new,$old]);}
 
-            $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute([(string)SCHEMA_VERSION]);
+            $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute(['13']);
             $fk=$db->query('PRAGMA foreign_key_check')->fetchAll();
             if($fk)throw new RuntimeException(t('db.err_migration_fk',['n'=>count($fk)]));
             $db->commit();
@@ -105,4 +105,41 @@ function migrateSchema12To13(PDO $db): void {
     }finally{
         i18nLang($previousLang);
     }
+}
+
+/**
+ * Skeema 13 → 14 (versio 1.2.4): laskulle tulee omat sarakkeet viitenumerolle (tallennetaan laskua luotaessa, ei lasketa myöhemmin uudelleen),
+ * vapaalle huomautukselle sekä sähköpostilähetyksen ajalle ja vastaanottajalle. Vanhojen laskujen viite täytetään nykyisellä säännöllä
+ * (laskunumeron numerot + tarkiste), joten jo lähetettyjen laskujen viitteet eivät muutu. Turvakopio otetaan ensin; virheessä kanta jää ennalleen.
+ */
+function migrateSchema13To14(PDO $db): void {
+    $dir=dirname(DB_FILE);
+    $copy=$dir.'/.pre-migration-13-to-14-'.date('Ymd-His').'.sqlite3';
+    try{ consistentDatabaseCopy($db,$copy); }
+    catch(Throwable $e){ throw new RuntimeException(t('db.err_migration_backup',['message'=>$e->getMessage()]),0,$e); }
+    $db->beginTransaction();
+    try{
+        $have=[];foreach($db->query('PRAGMA table_info("invoices")')->fetchAll() as $c)$have[(string)$c['name']]=true;
+        foreach(['reference','note','emailed_at','emailed_to'] as $col)if(!isset($have[$col]))$db->exec('ALTER TABLE invoices ADD COLUMN '.$col." TEXT NOT NULL DEFAULT ''");
+        $used=[];$upd=$db->prepare('UPDATE invoices SET reference=? WHERE id=?');
+        foreach($db->query("SELECT id,invoice_number FROM invoices WHERE reference='' ORDER BY id")->fetchAll() as $r){
+            $ref=invoiceReference((string)$r['invoice_number']);
+            if($ref===''||isset($used[$ref]))continue;
+            $used[$ref]=true;$upd->execute([$ref,(int)$r['id']]);
+        }
+        $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_reference ON invoices(reference) WHERE reference<>''");
+        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute([(string)SCHEMA_VERSION]);
+        $db->commit();
+    }catch(Throwable $e){
+        if($db->inTransaction())$db->rollBack();
+        throw new RuntimeException(t('db.err_migration_failed',['message'=>$e->getMessage(),'copy'=>basename($copy)]),0,$e);
+    }
+    /* Huoltokuvien JPEG-esikatselut tehtiin ennen 1.2.4:ää ilman EXIF-asennon huomiointia (pystykuvat kyljellään). Poistetaan ne; ne syntyvät automaattisesti uudelleen oikein päin, kun kuva näytetään. Alkuperäisiin ei kosketa. */
+    try{
+        if(is_dir(IMAGE_DIR))foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(IMAGE_DIR,FilesystemIterator::SKIP_DOTS)) as $f){
+            if($f->isLink()||!$f->isFile())continue;$path=str_replace('\\','/',$f->getPathname());
+            if(str_contains($path,'/logo/'))continue;
+            if(preg_match('/\.(?:thumb|web)\.jpe?g$/i',$path))@unlink($path);
+        }
+    }catch(Throwable $e){}
 }

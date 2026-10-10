@@ -154,3 +154,29 @@ function exportAllCarsXlsx(PDO $db): never {
     $fileBase=trim((string)(preg_replace('/[^A-Za-z0-9_-]+/','-',$ascii)??''),'-_')?:'Autonhuolto';
     outputXlsx(t('export.file_all_cars',['base'=>$fileBase,'date'=>date('Y-m-d')]),$sheets,$allHistory);
 }
+
+/** Laskujen vienti Exceliin (kirjanpitoa varten): välilehdet Laskut ja Laskurivit. Suodattimet samat kuin laskulistassa (q, status, list_year). */
+function exportInvoicesXlsx(PDO $db): never {
+    $q=trim((string)($_GET['q']??''));$status=vocabMatch('invstatus',(string)($_GET['status']??''))??'';$year=preg_match('/^\d{4}$/',(string)($_GET['list_year']??''))?(string)$_GET['list_year']:'';
+    $where=['1=1'];$params=[];
+    if($status!==''){$where[]='i.status=?';$params[]=$status;}
+    if($year!==''){$where[]='substr(i.issue_date,1,4)=?';$params[]=$year;}
+    if($q!==''){$where[]='(i.invoice_number LIKE ? OR i.customer_name LIKE ? OR c.reg_plate LIKE ? OR c.nickname LIKE ? OR c.make LIKE ? OR c.model LIKE ?)';$like='%'.$q.'%';array_push($params,$like,$like,$like,$like,$like,$like);}
+    $st=$db->prepare("SELECT i.*,s.title,s.service_date,c.reg_plate,c.nickname,c.make,c.model,COALESCE((SELECT SUM(il.qty*il.unit_price_net) FROM invoice_lines il WHERE il.invoice_id=i.id),0) net_total,COALESCE((SELECT SUM(il.qty*il.unit_price_net*il.vat_rate/100.0) FROM invoice_lines il WHERE il.invoice_id=i.id),0) vat_total FROM invoices i JOIN services s ON s.id=i.service_id JOIN cars c ON c.id=s.car_id WHERE ".implode(' AND ',$where)." ORDER BY i.issue_date,i.id");
+    $st->execute($params);$rows=$st->fetchAll();
+    $dt=fn(string $v)=>$v===''?'':date('d.m.Y H:i',strtotime($v));
+    $inv=[[t('export.inv_number'),t('export.inv_issue'),t('export.inv_due'),t('export.inv_status'),t('export.inv_customer'),t('export.inv_customer_bid'),t('export.inv_customer_email'),t('export.inv_car'),t('export.inv_work'),t('export.inv_net'),t('export.inv_vat'),t('export.inv_gross'),t('export.inv_reference'),t('export.inv_sent'),t('export.inv_paid'),t('export.inv_credited'),t('export.inv_note')]];
+    $lines=[[t('export.inv_number'),t('export.inv_issue'),t('export.inv_customer'),t('export.line_desc'),t('export.line_qty'),t('export.line_unit'),t('export.line_price'),t('export.line_vat_pct'),t('export.line_net'),t('export.line_vat'),t('export.line_gross')]];
+    $lst=$db->prepare('SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY sort_order,id');
+    $sumNet=$sumVat=0.0;
+    foreach($rows as $r){
+        $net=round((float)$r['net_total'],2);$vat=round((float)$r['vat_total'],2);$sumNet+=$net;$sumVat+=$vat;
+        $inv[]=[(string)$r['invoice_number'],fiDate((string)$r['issue_date']),fiDate((string)$r['due_date']),invoiceStatusLabel((string)$r['status']),(string)$r['customer_name'],(string)$r['customer_business_id'],(string)$r['customer_email'],trim(($r['reg_plate']?:$r['nickname']).' '.$r['make'].' '.$r['model']),(string)$r['title'],$net,$vat,round($net+$vat,2),(string)$r['reference'],$dt((string)$r['sent_at']),$dt((string)$r['paid_at']),$dt((string)$r['credited_at']),(string)$r['note']];
+        $lst->execute([(int)$r['id']]);
+        foreach($lst->fetchAll() as $l){$ln=(float)$l['qty']*(float)$l['unit_price_net'];$lv=$ln*(float)$l['vat_rate']/100;$lines[]=[(string)$r['invoice_number'],fiDate((string)$r['issue_date']),(string)$r['customer_name'],(string)$l['description'],(float)$l['qty'],unitLabel((string)$l['unit']),(float)$l['unit_price_net'],(float)$l['vat_rate'],round($ln,2),round($lv,2),round($ln+$lv,2)];}
+    }
+    $inv[]=['','','','','','','','',t('export.inv_total'),round($sumNet,2),round($sumVat,2),round($sumNet+$sumVat,2),'','','','',''];
+    $app=appSettings($db);$name=trim((string)($app['shop_name']??DEFAULT_APP_NAME))?:DEFAULT_APP_NAME;$ascii=@iconv('UTF-8','ASCII//TRANSLIT',$name);$ascii=$ascii!==false?$ascii:$name;
+    $base=trim((string)(preg_replace('/[^A-Za-z0-9_-]+/','-',$ascii)??''),'-_')?:'Autonhuolto';
+    outputXlsx(t('export.file_invoices',['base'=>$base,'year'=>$year!==''?$year:t('export.all_years'),'date'=>date('Y-m-d')]),[t('export.sheet_invoices')=>$inv,t('export.sheet_invoice_lines')=>$lines],$inv);
+}

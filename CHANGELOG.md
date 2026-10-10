@@ -2,7 +2,42 @@
 
 Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, asennus-, käyttö- ja varmuuskopio-ohje ovat tiedostossa `SETUP.md`; varmuuskopioinnin tekninen tiivistelmä on tiedostossa `BACKUP.md`.
 
-Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 13.
+Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 14.
+
+## 1.2.4
+
+Laaja versio: laskun muokkaus ja sähköpostitus, PDF-lasku, haku, favicon, varmuuskopiomuistutus sekä joukko korjauksia ja käytettävyysparannuksia. **Tietokannan skeema päivittyy 13 → 14** ensimmäisellä avauksella (ohjelma ottaa ensin turvakopion `.pre-migration-13-to-14-<aika>.sqlite3`). Ota oma varmuuskopio ennen päivitystä. Kirjautumisen lukitus on ennallaan.
+
+### Uutta
+- **Laskuluonnoksen muokkaus:** luonnoslaskun rivejä (kuvaus, määrä, yksikkö, hinta, ALV), päivämääriä, asiakkaan tietoja (nimi, osoite, sähköposti, Y-tunnus) ja lisätietoa voi muokata, kunnes lasku on merkitty lähetetyksi. Rivejä voi lisätä ja poistaa; alennuksen voi lisätä negatiivisena rivinä. Laskunumero ja viitenumero eivät muutu. Tallennus on yksi tietokantatapahtuma ja siinä on muokkausristiriidan tarkistus.
+- **Laskun lisätietokenttä:** vapaa teksti tulostuu laskulle ja PDF:ään taulukon alle.
+- **Lasku sähköpostilla:** laskun sivulta voi lähettää laskun asiakkaalle (enintään 5 vastaanottajaa, muokattava otsikko ja viesti, PDF-liite valinnaisena). Viestiin tulee valmiiksi summa, eräpäivä, tilinumero ja viitenumero. Lähetyksen voi samalla merkitä laskun lähetetyksi; laskulle tallentuu lähetysaika ja vastaanottajat.
+- **Sähköpostiasetukset (Asetukset → Sähköposti):** lähetystavaksi voi valita **oman SMTP-palvelimen** (palvelin, portti, salaus SSL/STARTTLS/ei, käyttäjätunnus ja salasana, palvelimen varmenteen tarkistus; pikavalinnat Gmail, Outlook ja SSL-portti 465) tai **palvelimen oman lähetyksen** (PHP `mail()`). Lisäksi lähettäjän osoite ja nimi, vastausosoite ja piilokopio itselle. **Testiviesti**-painike näyttää palvelimen virheilmoituksen selkokielisenä. Ohjelmassa on oma SMTP-asiakas (ei ulkoisia kirjastoja); AUTH PLAIN ja LOGIN tuettu.
+- **Lasku PDF-tiedostona:** **Lataa PDF** -painike luo laskun PDF:n suoraan palvelimella (oma PDF-kirjoitin, ei kirjastoja) logon, rivien, tilisiirtolomakkeen ja viivakoodin kanssa.
+- **Laskujen Excel-vienti:** Laskut-sivulle **📊 Excel** (kaikki laskut rivitietoineen).
+- **Yleishaku:** valikon hakukenttä ja sivu `?view=search` hakevat autoista (rekisterinumero, merkki, malli, VIN), asiakkaista, laskuista (numero, viite, asiakas), huolloista ja varaosista.
+- **Favicon yrityksen logosta:** selaimen välilehden kuvake tehdään automaattisesti ladatusta logosta (`?favicon=1`); ilman logoa käytetään ohjelman oletuskuvaketta.
+- **Muistutus varmuuskopiosta (vain ylläpitäjälle):** jos varmuuskopiosta on yli 30 päivää (tai sitä ei ole koskaan otettu), yläreunassa näkyy ilmoitus. Sen voi sulkea kuukaudeksi ruksilla **Älä muistuta kuukauteen** tai ottamalla varmuuskopion. Asetuksissa näkyy viimeisimmän varmuuskopion aika.
+- **Aikavyöhyke:** Asetukset → Yleiset → Aikavyöhyke (oletus Europe/Helsinki); päivämäärät ja aikaleimat noudattavat sitä.
+- **`.htaccess` mukana:** zip sisältää valmiin `.htaccess`-tiedoston, joka estää tietokannan, lukitus- ja turvakopiotiedostojen sekä ohjelman sisäisten kansioiden suoran latauksen Apachella. Asetuksissa on selaimessa ajettava testi, joka yrittää ladata tietokannan ja varoittaa, jos suoja ei toimi.
+
+### Korjaukset
+- **Tilisiirtolomakkeen viesti-kenttä:** kun laskulla on viitenumero, viesti-kenttä jätetään tyhjäksi (pankit eivät salli viestiä ja viitettä yhtä aikaa).
+- **Viitenumero tallennetaan laskulle** laskua luotaessa (skeema 14), joten viite ei muutu, vaikka laskunumerointi myöhemmin muuttuisi. Vanhoille laskuille viite lasketaan migraatiossa.
+- **Maksulomake vain avoimille laskuille:** tilisiirtolomake ja viivakoodi näytetään ja tulostetaan vain luonnos- ja lähetetty-tilan laskuille, ei maksetuille eikä hyvitetyille.
+- **Kuvien suunta (EXIF):** puhelimella otetut kuvat näkyivät esikatselussa ja pienennetyissä versioissa väärin päin; pienennetyt kuvat kääntyvät nyt EXIF-tiedon mukaan. Vanhat väärin päin olevat pienennökset poistetaan migraatiossa ja luodaan tarvittaessa uudelleen.
+- **IBAN-, BIC- ja sähköpostitarkistus asetuksissa:** IBAN tarkistetaan mod-97-tarkisteella (Suomen IBAN 18 merkkiä), BIC ja sähköpostiosoitteet muodon mukaan, ja virheelliset arvot hylätään selkeällä ilmoituksella.
+- **Vastausosoite:** laskun sähköpostissa asetuksiin tallennettu vastausosoite ohittaa korjaamon osoitteen (vain jos vastausosoite on tyhjä, käytetään yrityksen sähköpostia).
+- **Ohjelmatiedoston kommentti:** `index.php`:n alun vanhentunut kommentti korjattu.
+
+### Käytettävyys
+- **Kenttien nimet:** nimeämättömille lomakekentille lisätään ruudunlukijaa varten nimi automaattisesti (aria-label).
+- **Siirry sisältöön** -linkki näppäimistökäyttäjille ja sisältöalue `<main>`.
+- **Auton sivun pikavalikko** pysyy näkyvissä vieritettäessä (sticky) puhelimella.
+- **Isommat kosketuskohteet** puhelimella (painikkeet, valikot, valintaruudut).
+
+### Ei tässä versiossa
+Hyvityslasku, huoltomuistutukset ja erääntyneiden laskujen muistutukset eivät kuulu tähän versioon. Kirjautumisen lukitus on ennallaan.
 
 ## 1.2.3
 

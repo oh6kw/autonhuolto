@@ -17,6 +17,13 @@ function invoiceReference(string $invoiceNumber): string {
     $d=preg_replace('/\D/','',$invoiceNumber);if($d===null||strlen($d)<3||strlen($d)>19)return '';
     return $d.invoiceReferenceCheckDigit($d);
 }
+/** Laskun viite: laskua luotaessa tallennettu arvo. Jos laskurivissä ei ole reference-saraketta (vanha kysely), lasketaan se laskunumerosta. */
+function invoiceRef(array $inv): string {
+    if(array_key_exists('reference',$inv))return trim((string)$inv['reference']);
+    return invoiceReference((string)($inv['invoice_number']??''));
+}
+/** Maksulomake ja viivakoodi tulostetaan vain avoimelle laskulle (luonnos tai lähetetty): maksettua tai hyvitettyä laskua ei pidä maksaa uudelleen. */
+function invoiceShowsPaymentForm(array $inv): bool { return in_array((string)($inv['status']??''),['draft','sent'],true); }
 /** Viite luettavassa muodossa: viiden numeron ryhmissä oikealta lukien. */
 function invoiceReferenceFormatted(string $reference): string {
     return $reference===''?'':strrev(trim(chunk_split(strrev($reference),5,' ')));
@@ -48,12 +55,12 @@ function code128cSvg(string $digits,float $moduleMm=0.33,float $heightMm=14.0): 
 }
 /** Laskun pankkiviivakoodi SVG:nä (tyhjä, jos asetus on pois päältä tai laskulta puuttuu kelvollinen IBAN/viite/summa). */
 function invoiceBarcodeSvg(array $app,array $inv,float $gross): string {
-    if(($app['invoice_barcode']??'1')!=='1')return '';
-    return code128cSvg(invoiceBarcodeDigits((string)($inv['seller_iban']??''),$gross,invoiceReference((string)$inv['invoice_number']),(string)($inv['due_date']??'')));
+    if(($app['invoice_barcode']??'1')!=='1'||!invoiceShowsPaymentForm($inv))return '';
+    return code128cSvg(invoiceBarcodeDigits((string)($inv['seller_iban']??''),$gross,invoiceRef($inv),(string)($inv['due_date']??'')));
 }
 /** Tilisiirtolomake (tulosteen alareunaan): saaja, IBAN/BIC, maksaja, viite, eräpäivä, summa ja pankkiviivakoodi. Kaksikielinen kiinteä teksti (fi/sv). */
 function invoiceGiroHtml(array $app,array $inv,float $gross): string {
-    $ref=invoiceReference((string)$inv['invoice_number']);
+    $ref=invoiceRef($inv);
     $payer=trim((string)$inv['customer_name']);if(trim((string)$inv['customer_address'])!=='')$payer.="\n".trim((string)$inv['customer_address']);
     $payee=trim((string)$inv['seller_name']);if(trim((string)$inv['seller_address'])!=='')$payee.="\n".trim((string)$inv['seller_address']);
     $barcode=invoiceBarcodeSvg($app,$inv,$gross);
@@ -66,7 +73,7 @@ function invoiceGiroHtml(array $app,array $inv,float $gross): string {
 <div class="g g-r1 g-bic"><span class="g-tiny">BIC</span><strong><?=h($inv['seller_bic'])?></strong></div>
 <div class="g g-lab g-r2"><?=$lab('payee')?></div>
 <div class="g g-r2 g-payee"><?=nl2br(h($payee))?></div>
-<div class="g g-msg"><span class="g-tiny"><?=$c('message')?></span><div><?=h(t('print.giro_invoice_ref',['number'=>$inv['invoice_number']]))?></div></div>
+<div class="g g-msg"><span class="g-tiny"><?=$c('message')?></span><?php if($ref===''):?><div><?=h(t('print.giro_invoice_ref',['number'=>$inv['invoice_number']]))?></div><?php endif;?></div>
 <div class="g g-lab g-r3"><div class="giro-vert"><?=$c('title')?></div><div class="giro-lab-top"><?=$lab('payer')?></div><div class="giro-lab-bottom"><?=$lab('signature')?></div></div>
 <div class="g g-r3 g-payer"><div><?=nl2br(h($payer))?></div><div class="giro-sign"></div></div>
 <div class="g g-lab g-ref"><?=$lab('reference')?></div>
@@ -117,4 +124,18 @@ function invoiceAllowedStatuses(array $invoice): array {
     if(!empty($invoice['paid_at'])||($invoice['status']??'')==='paid')return ['paid','credited'];
     if(!empty($invoice['sent_at'])||($invoice['status']??'')==='sent')return ['sent','paid','credited'];
     return ['draft','sent','paid','credited'];
+}
+/** Code 128 C -viivakoodin palkit moduuleina: lista [x, leveys] ja kokonaisleveys (sis. 10 moduulin hiljaiset alueet). Tyhjä lista, jos syöte ei kelpaa. */
+function code128cBars(string $digits): array {
+    if($digits===''||strlen($digits)%2!==0||!ctype_digit($digits))return ['bars'=>[],'total'=>0];
+    $values=[105];for($i=0;$i<strlen($digits);$i+=2)$values[]=(int)substr($digits,$i,2);
+    $sum=105;for($i=1;$i<count($values);$i++)$sum+=$values[$i]*$i;$values[]=$sum%103;$values[]=106;
+    $x=10;$bars=[];
+    foreach($values as $v){$bar=true;foreach(str_split(CODE128_PATTERNS[$v]) as $w){$w=(int)$w;if($bar)$bars[]=[$x,$w];$x+=$w;$bar=!$bar;}}
+    return ['bars'=>$bars,'total'=>$x+10];
+}
+/** Laskun viivakoodin numerosarja (tyhjä, jos asetus on pois päältä, lasku ei ole avoin tai tiedot eivät kelpaa). */
+function invoiceBarcodeDigitsFor(array $app,array $inv,float $gross): string {
+    if(($app['invoice_barcode']??'1')!=='1'||!invoiceShowsPaymentForm($inv))return '';
+    return invoiceBarcodeDigits((string)($inv['seller_iban']??''),$gross,invoiceRef($inv),(string)($inv['due_date']??''));
 }

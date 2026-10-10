@@ -1,0 +1,15 @@
+# Autonhuolto – Apache-suojaus (tiedosto kuuluu ohjelman mukana; ks. SETUP.md kohta 3.4)
+# Tietokanta, lukitus, turvakopiot ja ohjetiedostot eivät saa latautua selaimella.
+<IfModule mod_authz_core.c>
+    <FilesMatch "(\.sqlite3|\.lock|\.md)(-wal|-shm)?$|^\.pre-(restore|migration)-|^\.autohuolto-">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Ohjelman sisäiset kansiot: vain index.php saa ajaa niitä. Kuvat ja logo tarjoillaan PHP:n kautta (kirjautumisen takaa).
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(app|views|lang|kuvat)/ - [F]
+</IfModule>
+
+Options -Indexes

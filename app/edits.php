@@ -33,7 +33,7 @@ function editState(PDO $db,string $kind,int $id): string {
             $state[]=editRows($db,'SELECT id,current_customer_id FROM cars WHERE id=?',[$id]);
             $state[]=editRows($db,'SELECT * FROM car_customer_history WHERE car_id=? ORDER BY id',[$id]);break;
         case 'customer':$state=editRows($db,'SELECT * FROM customers WHERE id=?',[$id]);break;
-        case 'invoice':$state=editRows($db,'SELECT * FROM invoices WHERE id=?',[$id]);break;
+        case 'invoice':$state[]=editRows($db,'SELECT * FROM invoices WHERE id=?',[$id]);$state[]=editRows($db,'SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY id',[$id]);break;
         default:throw new LogicException(t('edits.unknown_form_target'));
     }
     return hash('sha256',json_encode($state,JSON_UNESCAPED_UNICODE|JSON_PRESERVE_ZERO_FRACTION|JSON_THROW_ON_ERROR));
@@ -59,7 +59,7 @@ function editField(PDO $db,string $kind,int $id): void {
     if($id>0)echo '<input type="hidden" name="edit_version" value="'.h(editToken($db,$kind,$id)).'">';
 }
 function editRequire(PDO $db,string $action): void {
-    $map=['save_car'=>['car','car_id'],'update_service'=>['service','service_id'],'update_part'=>['part','part_id'],'save_item_settings'=>['program','car_id'],'update_customer'=>['customer','customer_id'],'set_car_customer'=>['ownership','car_id'],'update_car_customer_history'=>['ownership','car_id'],'update_invoice_status'=>['invoice','invoice_id']];
+    $map=['save_car'=>['car','car_id'],'update_service'=>['service','service_id'],'update_part'=>['part','part_id'],'save_item_settings'=>['program','car_id'],'update_customer'=>['customer','customer_id'],'set_car_customer'=>['ownership','car_id'],'update_car_customer_history'=>['ownership','car_id'],'update_invoice_status'=>['invoice','invoice_id'],'update_invoice'=>['invoice','invoice_id'],'send_invoice_email'=>['invoice','invoice_id']];
     if(!isset($map[$action]))return;[$kind,$field]=$map[$action];$id=intpost($field);
     if($action==='save_car'&&$id<=0)return;
     $data=editReadToken($db,$kind,$id,$_POST['edit_version']??null);

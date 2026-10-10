@@ -41,9 +41,9 @@ autonhuolto/
 ├── index.php            Pääohjain: asetukset, istunto, tietokannan avaus, kuvien tarjoilu, sivun datan haku ja näkymän valinta. Ei omia funktioita (paitsi authHttps)
 ├── app/
 │   ├── helpers.php      Yleiset apufunktiot: lomakkeen luku, muotoilu, päivämäärät, hinnat ja ALV (ei tietokantaa)
-│   ├── db.php           Tietokanta: tiedoston valinta, lukko, yhteys, skeema (versio 13), alustus ja sovellusasetukset
+│   ├── db.php           Tietokanta: tiedoston valinta, lukko, yhteys, skeema (versio 14), alustus ja sovellusasetukset
 │   ├── vocab.php        Tietokannan kielineutraalit koodit (toimenpiteet, yksiköt, laskun tilat, huoltotyypit, ryhmät, vakiokohteet) ja niiden näyttönimet kielitiedostosta
-│   ├── migrate.php      Tietokannan päivitys skeemasta 12 skeemaan 13 (ottaa turvakopion ensin)
+│   ├── migrate.php      Tietokannan päivitys skeemasta 12 → 13 → 14 (ottaa turvakopion ensin)
 │   ├── auth.php         Käyttäjät ja kirjautuminen: salasanat, istunto, roolit ja oikeudet, käyttäjähallinta, tapahtumaloki
 │   ├── exports.php      Excel-viennit (.xlsx): auton, kaikkien autojen ja varaston vienti
 │   ├── cars.php         Auton tiedot: haku, vuosikulut, kilometrihistoria ja -aikajana, ajomääräarvio, tietojen tarkistus
@@ -51,7 +51,10 @@ autonhuolto/
 │   ├── invoices.php     Laskut: laskunumerointi, jaksoyhteenveto, sallitut tilat ja poistotarkistus
 │   ├── inventory.php    Varaosat ja varasto: yhteensopivuudet, saldot, varastotapahtumat ja huoltojen varastokäyttö
 │   ├── customers.php    Asiakkaat: haku, asiakasnumerot, poistotarkistukset, auton omistaja ja omistajahistoria
-│   ├── images.php       Huoltokuvat ja logo: tiedostopolut, pienennetyt versiot, tallennus ja poisto
+│   ├── images.php       Huoltokuvat ja logo: tiedostopolut, pienennetyt versiot (EXIF-suunta), tallennus ja poisto sekä favicon logosta
+│   ├── mail.php         Sähköposti: viestin rakennus (MIME, PDF-liite), oma SMTP-asiakas ja PHP mail()
+│   ├── pdf.php          Laskun PDF-tiedosto (oma PDF-kirjoitin, ei kirjastoja)
+│   ├── search.php       Yleishaku (autot, asiakkaat, laskut, huollot, varaosat)
 │   ├── edits.php        Lomakkeiden muokkausristiriidat: allekirjoitettu tilannekuva ja ristiriitojen tunnistus
 │   ├── backup.php       Varmuuskopiot (lataus) ja palautus (SQLite / täysi ZIP)
 │   ├── printing.php     Tulosteet ja PDF-näkymät (?print=...)
@@ -65,6 +68,9 @@ autonhuolto/
 │   ├── customers.php    Asiakaslista ja asiakkaan tiedot (?view=customers)
 │   ├── invoices.php     Laskulista ja yhteenvedot (?view=invoices)
 │   ├── invoice.php      Yksittäinen lasku (?invoice=N)
+│   ├── invoice_edit.php Luonnoslaskun muokkauslomake (ladataan invoice.php:stä)
+│   ├── invoice_mail.php Laskun sähköpostilähetys (ladataan invoice.php:stä)
+│   ├── search.php       Hakutulokset (?view=search)
 │   ├── inventory.php    Varaosavarasto ja varastotapahtumat (?view=inventory)
 │   ├── settings.php     Asetukset: käyttäjät, ulkoasu, mekaanikot, huoltokohteet, backup (?view=settings)
 │   └── account.php      Oma tili ja salasanan vaihto (?view=account)
@@ -78,6 +84,7 @@ autonhuolto/
 ├── LICENSE              GNU AGPL v3 -lisenssi
 ├── README.md            Lyhyt esittely (GitHubin etusivu)
 ├── SECURITY.md          Tietoturvailmoitusten ohje
+├── .htaccess            Apache: estää tietokannan, lukitus- ja turvakopiotiedostojen sekä sisäisten kansioiden suoran latauksen
 ├── .gitignore           Git: tietokanta, kuvat ja varmuuskopiot eivät mene versionhallintaan
 ├── .github/             Vain GitHub-koodivarastossa: Sponsor-napin asetus ja julkaisun automaatio (ei asennuspaketissa)
 ├── SETUP.md       Tämä tiedosto: tiedostorakenne, asennus, käyttö ja varmuuskopiointi
@@ -100,17 +107,20 @@ autonhuolto/
 | `app/i18n.php` | Kielituki: `t('avain')` hakee tekstin kielitiedostoista (`lang/<kieli>/*.php`), `i18nLang()` kertoo käytössä olevan kielen. Puuttuva käännös haetaan suomesta. Selainpuolen tekstit (`js.*`) välitetään sivulle `i18nJsPayload()`-funktiolla ja luetaan `assets/app.js`:ssä funktiolla `tt()`. |
 | `lang/<kieli>/*.php` | Kielitiedostot (`lang/fi/` suomi, `lang/sv/` ruotsi). Suomenkieliset tekstit: yksi tiedosto kutakin ohjelman osaa kohti (esim. `car.php`, `settings.php`, `print.php`, `js.php`). Kukin tiedosto palauttaa taulukon `'alue.avain' => 'Teksti'`. Tekstin muuttujat ovat muotoa `{nimi}`. |
 | `app/vocab.php` | Kielineutraalit koodit: tietokantaan tallennetaan koodit (`replaced`, `pcs`, `paid`, `@initial_balance` …) ja ne näytetään kielitiedoston `vocab.*`-teksteinä (`vocabLabel()`, `unitLabel()`, `actionLabel()`, `noteLabel()`). Käyttäjän itse kirjoittamat tekstit säilyvät sellaisinaan. |
-| `app/migrate.php` | `migrateSchema12To13()`: muuntaa skeeman 12 tekstiarvot koodeiksi, ottaa ensin turvakopion (`.pre-migration-…`) ja peruu muutokset virheessä. Ajetaan automaattisesti, kun ohjelma avaa skeemaversion 12 kannan. |
+| `app/migrate.php` | `migrateSchema12To13()` muuntaa skeeman 12 tekstiarvot koodeiksi ja `migrateSchema13To14()` lisää laskuille viitenumeron, lisätiedon ja sähköpostin lähetystiedot; ottavat ensin turvakopion (`.pre-migration-…`) ja peruvat muutokset virheessä. Ajetaan automaattisesti, kun ohjelma avaa skeemaversion 12 kannan. |
 | `app/helpers.php` | Pieniä, yleisiä apufunktioita: `post()`, `intpost()`, `floatpost()` (lomakkeen luku), `h()` (HTML-escape), `money()`, `km()`, `fiDate()`, `addMonths()`, `priceNetFromInput()` ym. Ei tietokantaa, joten näitä voi kutsua mistä tahansa. |
 | `app/db.php` | Tietokannan tiedosto (`autohuolto.sqlite3`), käyttölukko, yhteys ja versiotarkistus, koko skeema (`currentDatabaseSql()`), uuden kannan alustus ja sovellusasetusten luku/kirjoitus (`appSettings()`, `appSet()`). Ei migraatioita: vain skeemaversio 12 hyväksytään. |
 | `app/auth.php` | Kaikki käyttäjiin liittyvä: salasanan tarkistus ja tiivisteet, kirjautumisen epäonnistumisten rajoitus, istunto (`authCurrent()`), käyttäjähallinnan lomakkeiden käsittely (`authHandlePost()`), roolit (admin / muokkaaja / katselija), `canAction()` ja katselijan lomakkeiden suodatus (`authFilterHtml()`), tapahtumaloki (`authAudit()`) ja ensimmäisen käyttäjän luonti (`authBootstrap()`). |
 | `app/exports.php` | Excel-tiedoston rakennus (`outputXlsx()`, ilman ulkoisia kirjastoja) sekä yhden auton (`exportCarXlsx()`), kaikkien autojen (`exportAllCarsXlsx()`) ja varaston (`exportInventoryXlsx()`) vienti. Tulostuspohjaiset PDF-näkymät ovat `app/printing.php`:ssa. |
 | `app/cars.php` | Auton ja sen mittarilukemien funktiot: `getCar()`, `getAnnualCosts()`, `kilometerHistoryEntries()`, `odometerTimelinePoints()`, `drivingRateEstimate()` (ajomäärä/vuosi), `recalculateCurrentKm()` ja `dataCheckIssues()` (tietojen tarkistuslista). |
 | `app/maintenance.php` | Huolto-ohjelma: huoltotyypit ja toimenpidelajit, huoltokohteet (`allItems()`, `itemMap()`), hihnatarkastukset, huoltorivien tekstit ja hinnat, huoltovälien seuranta (`intervalStartKeys()`, `attachServiceIntervals()`), huoltotilanne (`calculateMaintenanceStatus()`) ja erääntymisennusteet (`forecastForDue()`, `dueInfo()`). |
-| `app/invoices.php` | `nextInvoiceNumber()`, `invoicePeriodSummary()` (kuukausi-/vuosiyhteenveto), `invoiceAllowedStatuses()` ja `invoiceCanDelete()`. Laskun luonti ja tilan muutos tehdään `app/actions.php`:ssa. |
+| `app/invoices.php` | `nextInvoiceNumber()`, `invoicePeriodSummary()` (kuukausi-/vuosiyhteenveto), `invoiceAllowedStatuses()`, `invoiceCanDelete()`, viitenumero ja pankkiviivakoodi (`invoiceRef()`, `code128cBars()`). Laskun luonti, muokkaus, sähköpostitus ja tilan muutos tehdään `app/actions.php`:ssa. |
+| `app/mail.php` | Sähköposti: `mailBuild()` rakentaa MIME-viestin (teksti + HTML + base64-liite), `mailSendSmtp()` on oma SMTP-asiakas (SSL / STARTTLS / ei salausta, AUTH PLAIN ja LOGIN), `mailSendPhp()` käyttää palvelimen `mail()`-funktiota ja `mailSend()` valitsee asetusten mukaan. |
+| `app/pdf.php` | `invoicePdf()` kirjoittaa laskun PDF:n (Helvetica, logo, tilisiirtolomake ja Code 128C -viivakoodi) ilman kirjastoja. |
+| `app/search.php` | `globalSearch()`: haku autoista, asiakkaista, laskuista, huolloista ja varaosista. |
 | `app/inventory.php` | Varaosamuistio ja varasto: `partsForCar()`, `inventoryPartRows()`, yhteensopivuus autoihin (`syncPartCompatibility()`), saldon muutokset (`inventoryApplyPartDelta()`), huollon varastokäyttö (`reconcileServiceInventoryUsage()`) ja varastohistoria (`inventoryHistoryPage()`). |
 | `app/customers.php` | `customersList()`, `getCustomer()`, `nextCustomerNumber()`, poistotarkistukset, auton nykyinen omistaja (`currentCustomerForCar()`) ja omistajahistoria (`carCustomerHistory()`). |
-| `app/images.php` | Huoltokuvien ja logon polut (`photoAbsolutePath()`, `logoAbsolutePath()`), pienennetyt versiot (`photoDerivativeRelative()`, `logoDerivativeRelative()`), tallennus (`storeUploadedPhotos()`, `storeUploadedLogo()`) ja poisto. Polut lasketaan `APP_DIR`-vakiosta. |
+| `app/images.php` | Favicon logosta (`faviconOutput()`), EXIF-suunnan korjaus ja huoltokuvien ja logon polut (`photoAbsolutePath()`, `logoAbsolutePath()`), pienennetyt versiot (`photoDerivativeRelative()`, `logoDerivativeRelative()`), tallennus (`storeUploadedPhotos()`, `storeUploadedLogo()`) ja poisto. Polut lasketaan `APP_DIR`-vakiosta. |
 | `app/edits.php` | Muokkausristiriidat: lomake saa allekirjoitetun tilannekuvan (`editToken()`), ja tallennus tarkistaa, ettei joku muu ole muuttanut tietoa (`editConflict()`). |
 | `views/*.php` | HTML-näkymät ja niiden esitykseen tarvittava PHP (silmukat, ehdot, muotoilu). Näkymät ladataan `index.php`:n kautta ja käyttävät samoja muuttujia ($db, $car, $app, $currentUser jne.). Ne voivat lukea tietokannasta (esim. listoja ja laskelmia), mutta eivät tee tallennuksia: kaikki tietokantaan kirjoittaminen on `app/actions.php`:ssa. |
 | `app/backup.php` | Funktiot ja käsittelijät varmuuskopion lataamiseen (`?backup=db`, `?backup=full`) sekä palautukseen. Palautus validoi kannan, ottaa turvakopion ja vaihtaa tiedostot. |
@@ -121,7 +131,7 @@ autonhuolto/
 ### Lataus- ja suoritusjärjestys (tärkeä kehittäjälle)
 
 1. `index.php` alkaa: ympäristötarkistus → istunto ja suojaotsikot → vakiot (mm. `DB_FILE`, `APP_DIR`).
-2. Heti vakioiden jälkeen ladataan **`app/i18n.php` → `app/vocab.php` → `app/helpers.php` → `db.php` → `migrate.php` → `auth.php` → `exports.php` → `cars.php` → `maintenance.php` → `invoices.php` → `inventory.php` → `customers.php` → `images.php` → `edits.php`**. Näiden funktioita käytetään kaikkialla (auth jo tietokannan avauksessa: `authBootstrap()`), joten ne ladataan ensimmäisinä. Ne sisältävät vain funktioita ja vakioita eivätkä suorita mitään latautuessaan.
+2. Heti vakioiden jälkeen ladataan **`app/i18n.php` → `app/vocab.php` → `app/helpers.php` → `db.php` → `migrate.php` → `auth.php` → `exports.php` → `cars.php` → `maintenance.php` → `invoices.php` → `search.php` → `mail.php` → `pdf.php` → `inventory.php` → `customers.php` → `images.php` → `edits.php`**. Näiden funktioita käytetään kaikkialla (auth jo tietokannan avauksessa: `authBootstrap()`), joten ne ladataan ensimmäisinä. Ne sisältävät vain funktioita ja vakioita eivätkä suorita mitään latautuessaan.
 3. Tietokanta avataan: `dbAcquireLock()` → `dbConnect()` → `authBootstrap()` → asetukset.
 4. `index.php` lataa tiedostot tässä järjestyksessä: **`app/backup.php` → `app/printing.php` → `app/actions.php`**.
 5. Kieli (`i18nLang()`) asetetaan heti, kun asetukset on luettu: kirjautuneella käyttäjällä oma kieli (`user_lang_<id>`), muuten järjestelmän oletuskieli (`language`); kirjautumattomalla `?lang=`-valinta tai asennuksessa selaimen kieli. Sitä ennen käytetään suomea.
@@ -193,7 +203,7 @@ PHP ei voi estää web-palvelinta jakamasta tiedostoja suoraan. Jos tietokantati
 
 **B) Estä lataus palvelimen säännöillä** (tee tämä A:n lisäksi tai sen sijaan).
 
-*Apache*: luo ohjelman kansioon tiedosto `.htaccess` (palautus ei koske omaan `.htaccess`-tiedostoosi):
+*Apache*: ohjelman zip sisältää valmiin `.htaccess`-tiedoston (versiosta 1.2.4), joten Apachella suoja on päällä, kun tiedosto kopioidaan palvelimelle ja `AllowOverride` sallii sen (ks. alla). Jos teet tiedoston käsin tai sinulla on jo oma `.htaccess` (palautus ei koske omaan `.htaccess`-tiedostoosi), tarvittava sisältö on:
 
 ```apache
 # Tietokanta, lukitus, turvakopiot ja ohjetiedostot eivät saa latautua selaimella
@@ -203,15 +213,17 @@ PHP ei voi estää web-palvelinta jakamasta tiedostoja suoraan. Jos tietokantati
 
 # Ohjelman sisäiset kansiot: vain index.php saa ajaa niitä. Kuvat tarjoillaan PHP:n kautta.
 RewriteEngine On
-RewriteRule ^(app|views|kuvat)/ - [F]
+RewriteRule ^(app|views|lang|kuvat)/ - [F]
 ```
+
+Asetuksissa (välilehti Varmuuskopiot ja suojaus) on lisäksi automaattinen testi, joka yrittää ladata tietokannan selaimella ja varoittaa, jos se onnistuu.
 
 Apachen sivuston asetuksessa pitää olla `AllowOverride All` (tai vähintään `FileInfo AuthConfig Limit`) ohjelman kansiolle, muuten `.htaccess` ei vaikuta.
 
 *Nginx*: lisää nämä `server { ... }`-lohkoon **ennen** `location ~ \.php$` -lohkoa (korvaa `/autonhuolto` omalla alikansiollasi tai poista se, jos ohjelma on sivuston juuressa):
 
 ```nginx
-location ~ ^/autonhuolto/(app|views|kuvat)/ { deny all; }
+location ~ ^/autonhuolto/(app|views|lang|kuvat)/ { deny all; }
 location ~ ^/autonhuolto/.*\.(sqlite3|lock|md)(-wal|-shm)?$ { deny all; }
 location ~ ^/autonhuolto/\.(pre-restore|pre-migration|autohuolto) { deny all; }
 ```
@@ -309,6 +321,19 @@ Huollosta voi muodostaa laskun (**🧾 Muodosta lasku**). Laskut numeroidaan aut
 
 **Tilisiirtolomake ja viivakoodi.** Laskutulosteen alareunassa on suomalainen tilisiirtolomake (kaksikielinen suomi / ruotsi), kun laskuttajan tiedoissa on IBAN. Viite johdetaan laskunumerosta tarkistusnumeroineen. Lomakkeen alla ja laskun näytöllä on pankkiviivakoodi (versio 4), jos IBAN on suomalainen (FI) ja summa on 0,01–999 999,99 €. Viivakoodin voi ottaa pois käytöstä Asetukset → Yleiset → laskuttajan tiedot → Pankkiviivakoodi laskulla. Koodi tehdään laskun tiedoista, joten se tulee myös vanhoille laskuille. Tulosta lasku A4-paperille (selaimen tulostusasetuksissa mittakaava 100 %), niin viivakoodi pysyy oikeankokoisena ja pankkisovellus tai tilisiirtolomakkeen lukija pystyy lukemaan sen.
 
+**Laskun muokkaus.** Luonnoslaskun voi muokata laskun sivun kohdasta **Muokkaa laskua**: rivit, päivämäärät, asiakkaan tiedot ja lisätieto. Kun lasku on merkitty lähetetyksi, se lukitaan; laskunumero ja viitenumero eivät muutu koskaan.
+
+**Lasku PDF:nä ja sähköpostilla.** **Lataa PDF** tekee laskusta PDF-tiedoston palvelimella. **✉ Lähetä sähköpostilla** lähettää laskun asiakkaalle (PDF-liitteenä, jos valitset); ensin sähköposti pitää määrittää Asetukset → Sähköposti. Vaihtoehdot:
+
+- **Oma SMTP-palvelin** (suositus): syötä palvelin, portti, salaus ja tunnukset. Gmailissa: palvelin `smtp.gmail.com`, portti 587, salaus STARTTLS, käyttäjätunnus koko Gmail-osoite ja salasanaksi **sovelluskohtainen salasana** (Google-tili → Suojaus → Kaksivaiheinen vahvistus päälle → Sovellussalasanat); tavallinen Gmail-salasana ei toimi. Outlook / Microsoft 365: `smtp.office365.com`, portti 587, STARTTLS (organisaation hallinta voi estää SMTP-tunnistautumisen). Oman verkkotunnuksen postissa käytä hostingin ohjeen mukaista SMTP-palvelinta ja lähettäjän osoitetta, joka kuuluu tunnukselle. SMTP-salasana tallennetaan tietokantaan selkokielisenä (ohjelman pitää lähettää se palvelimelle), joten tietokantaa ei saa olla ladattavissa selaimella (ks. 3.4) ja varmuuskopio sisältää salasanan. Käytä mieluiten sovelluskohtaista salasanaa.
+- **Palvelimen oma lähetys** (PHP `mail()`): ei tunnuksia, mutta toimii vain jos palvelimelle on asennettu postin lähetys (esim. sendmail/postfix). Monet VPS-palvelimet eivät lähetä postia suoraan, ja viestit joutuvat helposti roskapostiin; silloin käytä SMTP:tä.
+
+Testiviesti-painike (Asetukset → Sähköposti) kertoo heti, toimiiko lähetys.
+
+**Haku.** Valikon hakukenttä hakee autoista, asiakkaista, laskuista, huolloista ja varaosista (vähintään kaksi merkkiä).
+
+**Varmuuskopiomuistutus.** Ylläpitäjälle näytetään ilmoitus, kun viimeisimmästä varmuuskopiosta on yli 30 päivää. Ilmoituksen saa pois kuukaudeksi ruksilla tai ottamalla varmuuskopion.
+
 ### 4.9 Tulosteet ja Excel
 
 Auton sivulta ja Varasto-sivulta löytyvät 🖨-napit (huoltotilanne, koko huoltohistoria, historia kuvilla, yksittäinen huoltosivu, laskut ja varaston listat). Tulosteet avautuvat selaimen tulostusnäkymään, josta ne voi tallentaa PDF:ksi. **📊 Excel** vie auton tai varaston tiedot `.xlsx`-tiedostoon.
@@ -317,7 +342,8 @@ Auton sivulta ja Varasto-sivulta löytyvät 🖨-napit (huoltotilanne, koko huol
 
 | Välilehti | Sisältö |
 |---|---|
-| Yleiset | Korjaamon nimi ja logo, järjestelmän oletuskieli (suomi / ruotsi), teema (tumma / hämärä / vaalea), hintojen syöttötapa ja ALV-prosentti, korjaamon ja laskuttajan tiedot |
+| Yleiset | Korjaamon nimi ja logo (logosta tehdään myös selaimen välilehden kuvake), aikavyöhyke, järjestelmän oletuskieli (suomi / ruotsi), teema (tumma / hämärä / vaalea), hintojen syöttötapa ja ALV-prosentti, korjaamon ja laskuttajan tiedot |
+| Sähköposti | Lähetystapa (SMTP tai palvelimen oma), lähettäjä, vastausosoite, testiviesti |
 | Mekaanikot | Mekaanikkojen lisäys ja käytöstä poisto. Poistettu mekaanikko säilyy vanhoissa huolloissa |
 | Huoltotoimet | Huoltokohteet ja toimenpiteet, joita huoltolomakkeella tarjotaan |
 | Käyttäjät | Käyttäjät, roolit ja salasanojen nollaus |
@@ -383,11 +409,11 @@ Käytä `.backup`-komentoa, älä tavallista tiedoston kopiointia, koska tietoka
 
 1. **Ota SQLite-varmuuskopio** (ja mielellään täysi ZIP) ja lataa se omalle koneelle.
 2. Pura uuden version ZIP omalla koneellasi.
-3. Kopioi uudet `index.php`, `app/`, `assets/`, `views/`, `lang/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE` ja `SECURITY.md` palvelimella vanhojen päälle. **Älä koske** tietokantaan, `kuvat/`-kansioon tai omaan `.htaccess`-tiedostoosi.
+3. Kopioi uudet `index.php`, `app/`, `assets/`, `views/`, `lang/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE` ja `SECURITY.md` palvelimella vanhojen päälle. **Älä koske** tietokantaan ja `kuvat/`-kansioon. Zipissä on myös `.htaccess` (versiosta 1.2.4): jos sinulla on jo oma `.htaccess`, yhdistä säännöt käsin (ks. 3.4) sen sijaan, että ylikirjoittaisit omasi.
 4. Varmista oikeudet: `sudo chown -R www-data:www-data kansio` ja `sudo find kansio -type f -exec chmod 644 {} \;` (tietokanta pysyy 600).
 5. Avaa ohjelma ja tarkista versionumero sivun alatunnisteesta. Lue muutokset tiedostosta `CHANGELOG.md`.
 
-Tietokannan skeemaversio on 13. Skeemaversion 12 kanta (versiot 1.0.x ja 1.1.0-alpha.1) päivitetään automaattisesti ensimmäisellä avauksella: ohjelma ottaa ensin turvakopion (`.pre-migration-12-to-13-<aika>.sqlite3` tietokannan viereen) ja jos päivitys epäonnistuu, kantaan ei jää muutoksia. Ota silti aina oma varmuuskopio ennen päivitystä. Muun skeemaversion kanta hylätään selkeällä virheilmoituksella. Päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla; jos joudut palaamaan, palauta ennen päivitystä ottamasi varmuuskopio.
+Tietokannan skeemaversio on 14. Skeemaversion 12 ja 13 kanta (versiot 1.0.x–1.2.3) päivitetään automaattisesti ensimmäisellä avauksella: ohjelma ottaa ensin turvakopion (`.pre-migration-<vanha>-to-<uusi>-<aika>.sqlite3` tietokannan viereen) ja jos päivitys epäonnistuu, kantaan ei jää muutoksia. Ota silti aina oma varmuuskopio ennen päivitystä. Muun skeemaversion kanta hylätään selkeällä virheilmoituksella. Päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla; jos joudut palaamaan, palauta ennen päivitystä ottamasi varmuuskopio.
 
 ---
 

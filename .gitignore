@@ -23,6 +23,5 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Palvelinkohtaiset asetukset (eivät kuulu ohjelmaan)
-.htaccess
+# Palvelinkohtaiset asetukset (eivät kuulu ohjelmaan). .htaccess kuuluu ohjelmaan (versiosta 1.2.4).
 .env

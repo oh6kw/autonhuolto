@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * AUTONHUOLTO – kevyt korjaamojärjestelmä
- * Versio 1.1.0-alpha.1 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
+ * PHP 8.2+ / PDO_SQLITE · tietokannan skeema 14 (ohjelmaversio: vakio APP_VERSION alempana, muutokset: CHANGELOG.md)
  *
  * Autonhuolto – vapaa ohjelmisto, lisenssi GNU AGPL v3 (tiedosto LICENSE).
  * Copyright (C) 2026 Jarno Jaskari
@@ -53,10 +53,10 @@ date_default_timezone_set('Europe/Helsinki');
 const DEFAULT_APP_NAME      = 'Autonhuolto';
 const DEFAULT_HOME_TITLE    = 'Huoltokirja';
 const DEFAULT_HOME_SUBTITLE = 'Pidä omat, perheen ja tuttujen autot samassa huoltohistoriassa.';
-const APP_VERSION           = '1.2.3';
+const APP_VERSION           = '1.2.4';
 /* AGPL v3 §13: verkossa ajettavan ohjelman käyttäjille on tarjottava lähdekoodi. Aseta tähän julkisen koodivaraston osoite (esim. 'https://github.com/KÄYTTÄJÄ/autonhuolto'); tyhjänä linkkiä ei näytetä. */
 const APP_SOURCE_URL        = 'https://github.com/oh6kw/autonhuolto';
-const SCHEMA_VERSION   = 13;
+const SCHEMA_VERSION   = 14;
 /* Tietokanta on aina autohuolto.sqlite3 sovelluskansiossa. Ympäristömuuttuja AUTOHUOLTO_DB_PATH voi osoittaa sen muualle (esim. web-juuren ulkopuolelle). */
 if(trim((string)getenv('AUTOHUOLTO_DB_PATH'))!=='')define('DB_FILE',(string)getenv('AUTOHUOLTO_DB_PATH'));
 else define('DB_FILE',__DIR__.'/autohuolto.sqlite3');
@@ -75,6 +75,9 @@ require __DIR__ . '/app/exports.php';
 require __DIR__ . '/app/cars.php';
 require __DIR__ . '/app/maintenance.php';
 require __DIR__ . '/app/invoices.php';
+require __DIR__ . '/app/search.php';
+require __DIR__ . '/app/mail.php';
+require __DIR__ . '/app/pdf.php';
 require __DIR__ . '/app/inventory.php';
 require __DIR__ . '/app/customers.php';
 require __DIR__ . '/app/images.php';
@@ -86,6 +89,9 @@ require __DIR__ . '/app/edits.php';
 dbAcquireLock();
 try{
     $db=dbConnect();
+    /* Aikavyöhyke asetuksista (oletus Europe/Helsinki); asetetaan ennen kuin mitään aikaleimoja kirjoitetaan. */
+    $tzSetting=(function(PDO $d): string { try{$st=$d->prepare("SELECT setting_value FROM app_settings WHERE setting_key='timezone'");$st->execute();return (string)($st->fetchColumn()?:'');}catch(Throwable){return '';} })($db);
+    if($tzSetting!==''&&in_array($tzSetting,timezone_identifiers_list(),true))date_default_timezone_set($tzSetting);
     authBootstrap($db);
     $app=appSettings($db)+defaultAppSettings();
     i18nLang(authUserLanguage($app));
@@ -112,13 +118,16 @@ if(isset($_GET['brand_logo'])){
     header('Content-Type: '.$mime);header('Content-Length: '.filesize($abs));header('Cache-Control: private, max-age=604800');readfile($abs);exit;
 }
 
+/* Selaimen kuvake: yrityksen logosta (tai oletuskuvake). Kulkee kirjautumisen kautta kuten logo. */
+if(isset($_GET['favicon'])){faviconOutput($app);}
+
 /* Järjestys on tärkeä: actions.php ajaa POST-käsittelijät heti ja kutsuu backup.php:n ja printing.php:n funktioita. */
 require __DIR__ . '/app/backup.php';
 require __DIR__ . '/app/printing.php';
 require __DIR__ . '/app/actions.php';
 
 /* ------------------------------ Sivun data ------------------------------ */
-$app=appSettings($db);$appName=trim((string)($app['shop_name']??DEFAULT_APP_NAME))?:DEFAULT_APP_NAME;$theme=$app['theme']??'dark';$mechanicsAll=mechanicsList($db,false);$activeMechanics=mechanicsList($db,true);$customerList=customersList($db,false);$activeCustomers=customersList($db,true);$items=allItems($db,true);$itemMap=itemMap($db);$carId=(int)($_GET['car']??0);$car=$carId?getCar($db,$carId):null;$view=(string)($_GET['view']??'');$showAll=$view==='all';$showSettings=$view==='settings';$showAccount=$view==='account';$showCustomers=$view==='customers'&&customersEnabled($app);$showInvoices=$view==='invoices'&&invoicingEnabled($app);$showInventory=$view==='inventory'&&inventoryEnabled($app);$customerId=$showCustomers?(int)($_GET['customer']??0):0;$customer=$customerId?getCustomer($db,$customerId):null;
+$app=appSettings($db);$appName=trim((string)($app['shop_name']??DEFAULT_APP_NAME))?:DEFAULT_APP_NAME;$theme=$app['theme']??'dark';$mechanicsAll=mechanicsList($db,false);$activeMechanics=mechanicsList($db,true);$customerList=customersList($db,false);$activeCustomers=customersList($db,true);$items=allItems($db,true);$itemMap=itemMap($db);$carId=(int)($_GET['car']??0);$car=$carId?getCar($db,$carId):null;$view=(string)($_GET['view']??'');$showAll=$view==='all';$showSettings=$view==='settings';$showAccount=$view==='account';$showSearch=$view==='search';$showCustomers=$view==='customers'&&customersEnabled($app);$showInvoices=$view==='invoices'&&invoicingEnabled($app);$showInventory=$view==='inventory'&&inventoryEnabled($app);$customerId=$showCustomers?(int)($_GET['customer']??0):0;$customer=$customerId?getCustomer($db,$customerId):null;
 $flash=$_SESSION['flash']??null;unset($_SESSION['flash']);
 $cars=$db->query("SELECT c.*,cu.name current_customer_name,cu.customer_number current_customer_number,(SELECT MAX(service_date) FROM services s WHERE s.car_id=c.id) last_service_date,(SELECT odometer FROM services s WHERE s.car_id=c.id ORDER BY service_date DESC,id DESC LIMIT 1) last_service_km,(SELECT COUNT(*) FROM services s WHERE s.car_id=c.id) service_count FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id ORDER BY COALESCE(NULLIF(cu.name,''),NULLIF(c.owner,''),'~'),COALESCE(NULLIF(c.nickname,''),c.reg_plate),c.id DESC")->fetchAll();
 $allServices=[];if($showAll){$allServices=$db->query("SELECT s.*,c.reg_plate,c.nickname,c.owner,c.make,c.model FROM services s JOIN cars c ON c.id=s.car_id ORDER BY s.service_date DESC,s.id DESC")->fetchAll();foreach($allServices as &$r){$r['actions']=getServiceActions($db,(int)$r['id']);$r['custom_actions']=getCustomActions($db,(int)$r['id']);$r['photos']=getServicePhotos($db,(int)$r['id']);$r['inventory_usage']=serviceInventoryUsage($db,(int)$r['id']);}unset($r);attachServiceIntervals($db,$allServices);$per=[];foreach($allServices as $i=>$r)$per[(int)$r['car_id']][]=$i;foreach($per as $idxs)foreach($idxs as $p=>$idx)$allServices[$idx]['gap']=intervalInfo($allServices[$idx],isset($idxs[$p+1])?$allServices[$idxs[$p+1]]:null);}
@@ -153,6 +162,7 @@ require __DIR__ . '/views/layout_top.php';
 if($showAccount)require __DIR__ . '/views/account.php';
 elseif($invoice)require __DIR__ . '/views/invoice.php';
 elseif($showInvoices)require __DIR__ . '/views/invoices.php';
+elseif($showSearch)require __DIR__ . '/views/search.php';
 elseif($showSettings)require __DIR__ . '/views/settings.php';
 elseif($showCustomers)require __DIR__ . '/views/customers.php';
 elseif($showInventory)require __DIR__ . '/views/inventory.php';

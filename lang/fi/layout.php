@@ -16,4 +16,14 @@ return [
 'lang.name'=>'Suomi',
 'layout.footer_schema'=>'tietokanta v{n}',
 'layout.footer_images'=>'kuvat {size}',
+/* --- 1.2.4 --- */
+'layout.skip_to_content'=>"Siirry sisältöön",
+'layout.nav_aria'=>"Päävalikko",
+'layout.search_placeholder'=>"Haku…",
+'layout.search_aria'=>"Hae autoista, asiakkaista, huolloista ja laskuista",
+'layout.backup_nag'=>"Viimeisimmästä varmuuskopiosta on {days} päivää.",
+'layout.backup_nag_never'=>"Varmuuskopiota ei ole otettu, ja ohjelma on ollut käytössä {days} päivää.",
+'layout.backup_nag_take'=>"Lataa varmuuskopio",
+'layout.backup_nag_snooze'=>"Älä muistuta kuukauteen",
+'layout.backup_nag_hide'=>"Piilota kuukaudeksi",
 ];

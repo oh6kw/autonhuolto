@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * app/db.php – tietokanta.
  * Tiedoston valinta, käyttölukko ja yhteys; skeema ja sen tarkistus; uuden kannan alustus; sovellusasetukset.
- * Tietokannan skeemaversio on 13 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemasta 12 päivitetään automaattisesti
+ * Tietokannan skeemaversio on 14 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemoista 12 ja 13 päivitetään automaattisesti
  * (app/migrate.php, turvakopio otetaan ensin). Tätä vanhempaa kantaa ei avata (requireCurrentDatabaseVersion).
  * Jos skeema tai tallennettujen arvojen muoto muuttuu, lisää migraatio app/migrate.php:hen ja nosta SCHEMA_VERSION.
  * Ladataan index.php:n alussa.
@@ -189,6 +189,7 @@ CREATE TABLE invoices (
     customer_name TEXT NOT NULL DEFAULT '', customer_address TEXT NOT NULL DEFAULT '', customer_email TEXT NOT NULL DEFAULT '', customer_business_id TEXT NOT NULL DEFAULT '',
     sent_at TEXT NOT NULL DEFAULT '', paid_at TEXT NOT NULL DEFAULT '', credited_at TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reference TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '', emailed_at TEXT NOT NULL DEFAULT '', emailed_to TEXT NOT NULL DEFAULT '',
     FOREIGN KEY(service_id) REFERENCES services(id) ON DELETE RESTRICT
 );
 CREATE TABLE invoice_lines (
@@ -231,6 +232,7 @@ CREATE TABLE service_inventory_usage (
     FOREIGN KEY(part_id) REFERENCES parts(id) ON DELETE RESTRICT
 );
 
+CREATE UNIQUE INDEX idx_invoices_reference ON invoices(reference) WHERE reference<>'';
 CREATE INDEX idx_inventory_transactions_part_time ON inventory_transactions(part_id,created_at,id);
 CREATE INDEX idx_part_car_compatibility_car ON part_car_compatibility(car_id,part_id);
 CREATE INDEX idx_service_inventory_usage_service ON service_inventory_usage(service_id,item_key);
@@ -269,13 +271,14 @@ function currentDatabaseDefinition(): array {
     }
     return $definition;
 }
-/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanha tuettu skeema 12 hyväksytään ilman päivitystä. */
+/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanhat tuetut skeemat (12, 13) hyväksytään ilman päivitystä. */
 function requireCurrentDatabaseVersion(PDO $db,bool $migrate=true): void {
     if(!(int)$db->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='app_settings'")->fetchColumn())throw new RuntimeException(t('db.err_settings_table_missing'));
     $raw=$db->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
     if($raw===false||!preg_match('/^[0-9]+$/D',(string)$raw))throw new RuntimeException(t('db.err_schema_invalid'));
     $version=(int)$raw;
-    if($version===12){if($migrate)migrateSchema12To13($db);}
+    if($version===12){if($migrate){migrateSchema12To13($db);migrateSchema13To14($db);}}
+    elseif($version===13){if($migrate)migrateSchema13To14($db);}
     elseif($version<SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_old',['version'=>$version,'supported'=>SCHEMA_VERSION]));
     if($version>SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_new'));
 }
@@ -318,10 +321,11 @@ function defaultAppSettings(): array {
     return [
         'feature_invoicing'=>'0','feature_mechanics'=>'0','feature_customers'=>'0','feature_time_tracking'=>'0','feature_inventory'=>'0',
         'parts_markup_enabled'=>'0','parts_markup_percent'=>'15',
-        'language'=>'fi','theme'=>'dark','hourly_rate'=>'65.00','vat_rate'=>'25.5','price_input_mode'=>'net','payment_days'=>'14',
+        'language'=>'fi','timezone'=>'Europe/Helsinki','theme'=>'dark','hourly_rate'=>'65.00','vat_rate'=>'25.5','price_input_mode'=>'net','payment_days'=>'14',
         'shop_name'=>DEFAULT_APP_NAME,'home_title'=>HOME_TEXT_DEFAULT,'home_subtitle'=>HOME_TEXT_DEFAULT,
         'business_id'=>'','shop_address'=>'','shop_email'=>'','shop_phone'=>'','iban'=>'','bic'=>'',
         'mobilepay_enabled'=>'0','mobilepay_number'=>'','mobilepay_name'=>'','logo_path'=>'',
+        'mail_method'=>'none','smtp_host'=>'','smtp_port'=>'587','smtp_security'=>'tls','smtp_user'=>'','smtp_pass'=>'','smtp_verify'=>'1','mail_from'=>'','mail_from_name'=>'','mail_reply_to'=>'','mail_copy_self'=>'0','last_backup_at'=>'','backup_reminder_snooze_until'=>'',
         'show_logo_invoice'=>'1','invoice_barcode'=>'1','show_logo_service_print'=>'1','show_logo_car_history'=>'1','show_logo_all_history'=>'1','show_logo_header'=>'0'
     ];
 }

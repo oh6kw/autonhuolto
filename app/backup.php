@@ -94,11 +94,14 @@ function validateRestoreDatabase(string $file,?string $images=null): void {
     if($check->query('PRAGMA integrity_check')->fetchColumn()!=='ok')throw new RuntimeException(t('backup.err_db_corrupt'));
     if($check->query("SELECT COUNT(*) FROM sqlite_master WHERE type IN ('trigger','view')")->fetchColumn()>0)throw new RuntimeException(t('backup.err_foreign_structures'));
     requireCurrentDatabaseVersion($check,false);
+    /* Vanhemmassa skeemassa (12, 13) ei ole skeemassa 14 lisättyjä sarakkeita; ne lisätään päivityksessä, kun kanta avataan ensimmäisen kerran. */
+    $schemaVersion=(int)$check->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
+    $addedLater=$schemaVersion<14?['invoices'=>['reference','note','emailed_at','emailed_to']]:[];
     $tables=$check->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
     foreach(currentDatabaseDefinition() as $table=>$definition){
         if(!in_array($table,$tables,true))throw new RuntimeException(t('backup.err_missing_table',['table'=>$table]));
         $columns=[];foreach($check->query('PRAGMA table_info("'.$table.'")')->fetchAll() as $col)$columns[$col['name']]=$col;
-        foreach($definition['columns'] as $name=>$expected){if(!isset($columns[$name]))throw new RuntimeException(t('backup.err_missing_column',['table'=>$table,'column'=>$name]));if(strtoupper((string)$columns[$name]['type'])!==$expected['type']||(int)$columns[$name]['pk']!==$expected['pk'])throw new RuntimeException(t('backup.err_bad_column',['table'=>$table,'column'=>$name]));}
+        foreach($definition['columns'] as $name=>$expected){if(!isset($columns[$name])&&in_array($name,$addedLater[$table]??[],true))continue;if(!isset($columns[$name]))throw new RuntimeException(t('backup.err_missing_column',['table'=>$table,'column'=>$name]));if(strtoupper((string)$columns[$name]['type'])!==$expected['type']||(int)$columns[$name]['pk']!==$expected['pk'])throw new RuntimeException(t('backup.err_bad_column',['table'=>$table,'column'=>$name]));}
         $declared=[];foreach($check->query('PRAGMA foreign_key_list("'.$table.'")')->fetchAll() as $fk)$declared[]=[(string)$fk['table'],(string)$fk['from'],(string)$fk['to']];
         foreach($definition['foreign_keys'] as $fk){[$parent,$childCol,$parentCol]=$fk;if(!in_array($fk,$declared,true))throw new RuntimeException(t('backup.err_missing_fk',['table'=>$table,'column'=>$childCol]));$sql='SELECT COUNT(*) FROM "'.$table.'" c LEFT JOIN "'.$parent.'" p ON p."'.$parentCol.'"=c."'.$childCol.'" WHERE c."'.$childCol.'" IS NOT NULL AND p."'.$parentCol.'" IS NULL';if((int)$check->query($sql)->fetchColumn()>0)throw new RuntimeException(t('backup.err_broken_ref',['table'=>$table,'column'=>$childCol]));}
         $unique=[];foreach($check->query('PRAGMA index_list("'.$table.'")')->fetchAll() as $idx){if(!(int)$idx['unique']||(int)$idx['partial'])continue;$unique[]=array_column($check->query('PRAGMA index_info('.$check->quote((string)$idx['name']).')')->fetchAll(),'name');}
@@ -166,7 +169,7 @@ function backupExtractZip(string $upload,string $stage): array {
 }
 function backupValidateManifest(array $manifest,string $root,string $db): void {
     if(($manifest['format']??'')!=='autohuolto-full-backup'||(int)($manifest['format_version']??0)!==4)throw new RuntimeException(t('backup.err_manifest_unknown'));
-    if(!in_array((int)($manifest['schema_version']??0),[12,SCHEMA_VERSION],true))throw new RuntimeException(t('backup.err_schema_version'));
+    if(!in_array((int)($manifest['schema_version']??0),[12,13,SCHEMA_VERSION],true))throw new RuntimeException(t('backup.err_schema_version'));
     $dbh=(string)($manifest['database']['sha256']??'');if($dbh===''||!hash_equals($dbh,(string)hash_file('sha256',$db)))throw new RuntimeException(t('backup.err_manifest_db'));
     foreach((array)($manifest['files']??[]) as $entry){$path=(string)($entry['path']??'');$full=$root.'/'.$path;if(!backupRelativeSafe($path)||!is_file($full)||!hash_equals((string)($entry['sha256']??''),(string)hash_file('sha256',$full)))throw new RuntimeException(t('backup.err_manifest_file',['path'=>$path]));}
 }
@@ -290,6 +293,7 @@ if(isset($_GET['backup'])){
             backupCreateFullZip($snapshot,$download);
             $filename='autohuolto-taysi-backup-v'.backupFileVersion().'-'.date('Y-m-d-His').'.zip';$type='application/zip';
         }else{http_response_code(404);exit(t('backup.err_unknown_type'));}
+        appSet($db,'last_backup_at',date('c'));appSet($db,'last_backup_kind',$kind);
         header('Content-Type: '.$type);header('Content-Disposition: attachment; filename="'.$filename.'"');header('Content-Length: '.filesize($download));header('Cache-Control: no-store');readfile($download);
     }catch(Throwable $e){
         http_response_code(500);
@@ -298,4 +302,18 @@ if(isset($_GET['backup'])){
         echo t('backup.failed',['message'=>$e->getMessage()]);
     }
     finally{if(is_string($temp)&&$temp!=='')backupRemoveTree($temp);}exit;
+}
+
+/**
+ * Varmuuskopiomuistutus ylläpitäjälle: palauttaa tiedot, jos viimeisestä varmuuskopiosta (tai asennuksesta, jos kopiota ei ole otettu) on yli 30 päivää
+ * eikä muistutusta ole siirretty. Muuten null. 'days' = päivää viime kopiosta, 'never' = kopiota ei ole koskaan otettu.
+ */
+function backupReminder(PDO $db,array $app): ?array {
+    if(!canAction('save_app_settings'))return null;
+    $today=date('Y-m-d');if(trim((string)($app['backup_reminder_snooze_until']??''))>=$today)return null;
+    $last=trim((string)($app['last_backup_at']??''));$never=$last==='';
+    $ref=$last;if($never){$ref=(string)$db->query('SELECT MIN(created_at) FROM auth_users')->fetchColumn();if($ref==='')return null;}
+    $ts=strtotime($ref);if(!$ts)return null;
+    $days=(int)floor((time()-$ts)/86400);
+    return $days>=30?['days'=>$days,'never'=>$never]:null;
 }

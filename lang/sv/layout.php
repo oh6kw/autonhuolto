@@ -16,4 +16,14 @@ return [
 'lang.name'=>'Svenska',
 'layout.footer_schema'=>'databas v{n}',
 'layout.footer_images'=>'bilder {size}',
+/* --- 1.2.4 --- */
+'layout.skip_to_content'=>"Hoppa till innehåll",
+'layout.nav_aria'=>"Huvudmeny",
+'layout.search_placeholder'=>"Sök…",
+'layout.search_aria'=>"Sök bland bilar, kunder, servicer och fakturor",
+'layout.backup_nag'=>"Det har gått {days} dagar sedan senaste säkerhetskopian.",
+'layout.backup_nag_never'=>"Ingen säkerhetskopia har tagits och programmet har använts i {days} dagar.",
+'layout.backup_nag_take'=>"Hämta säkerhetskopia",
+'layout.backup_nag_snooze'=>"Påminn inte på en månad",
+'layout.backup_nag_hide'=>"Dölj i en månad",
 ];

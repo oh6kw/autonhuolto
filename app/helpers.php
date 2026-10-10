@@ -115,3 +115,18 @@ function purchasePriceNetGross(array $app,?float $stored): array {
 function priceInputLabel(array $app,string $base='Hinta'): string {
     return priceInputMode($app)==='gross'?t('helper.price_incl_vat',['base'=>$base,'rate'=>dec(appVatRate($app),1)]):t('helper.price_net',['base'=>$base]);
 }
+
+/* ------------------------------ Pankkitiedot ------------------------------ */
+/** IBAN ilman välilyöntejä isoilla kirjaimilla. */
+function ibanNormalize(string $iban): string { return strtoupper((string)preg_replace('/\s+/','',$iban)); }
+/** IBANin muoto ja mod-97-tarkistussumma (ISO 13616). Suomalainen IBAN on aina 18 merkkiä. */
+function ibanValid(string $iban): bool {
+    $iban=ibanNormalize($iban);
+    if(!preg_match('/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/D',$iban))return false;
+    if(str_starts_with($iban,'FI')&&strlen($iban)!==18)return false;
+    $moved=substr($iban,4).substr($iban,0,4);$rem=0;
+    foreach(str_split($moved) as $ch){$v=ctype_digit($ch)?(int)$ch:ord($ch)-55;$rem=($rem*($v>9?100:10)+$v)%97;}
+    return $rem===1;
+}
+/** BIC/SWIFT: 8 tai 11 merkkiä. */
+function bicValid(string $bic): bool { return (bool)preg_match('/^[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?$/D',strtoupper(trim($bic))); }
