@@ -273,7 +273,7 @@ function requireCurrentDatabaseVersion(PDO $db): void {
     $raw=$db->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
     if($raw===false||!preg_match('/^[0-9]+$/D',(string)$raw))throw new RuntimeException('Tietokannan skeemaversio puuttuu tai on virheellinen.');
     $version=(int)$raw;
-    if($version<SCHEMA_VERSION)throw new RuntimeException('Tietokannan skeemaversio '.$version.' on liian vanha. Tämä ohjelma tukee skeemaversiota '.SCHEMA_VERSION.'. Päivitä vanha kanta ensin ohjelmalla v0.8.22-dev.');
+    if($version<SCHEMA_VERSION)throw new RuntimeException('Tietokannan skeemaversio '.$version.' on liian vanha. Tämä ohjelma tukee skeemaversiota '.SCHEMA_VERSION.'. Kanta on luotu ohjelman varhaisella kehitysversiolla, jota tämä versio ei enää päivitä.');
     if($version>SCHEMA_VERSION)throw new RuntimeException('Tietokanta on tehty uudemmalla ohjelmaversiolla. Päivitä ohjelma ennen kannan käyttöä tai palautusta.');
 }
 function authSchema(PDO $db): void {

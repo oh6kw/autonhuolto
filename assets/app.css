@@ -1,4 +1,4 @@
-/* AUTONHUOLTO – pääsivun käyttöliittymätyylit. Erotettu index.php:stä 0.8.33-dev-refactorissa. */
+/* AUTONHUOLTO – pääsivun käyttöliittymätyylit. */
 
 :root{--bg:#0a0f14;--panel:#111923;--panel2:#16212c;--line:#2a3847;--text:#edf3f8;--muted:#93a1b0;--accent:#ffad31;--accent2:#ffc860;--good:#52d49b;--warn:#ffba45;--bad:#ff6672;--blue:#5ab5ff;--shadow:#0007;--input:#0d141c}
 html[data-theme="mid"]{--bg:#2c3035;--panel:#383e45;--panel2:#434a52;--line:#59636d;--text:#f3f5f7;--muted:#c0c7ce;--accent:#f6b94d;--accent2:#ffd376;--good:#78d7a9;--warn:#f3c363;--bad:#ff858e;--blue:#80c4ff;--shadow:#0004;--input:#30363c}
@@ -36,7 +36,7 @@ html[data-theme="light"]{--bg:#edf1f5;--panel:#fff;--panel2:#f5f7f9;--line:#cfd7
 .stock-events-table{width:100%;min-width:0;table-layout:fixed}.stock-events-table th,.stock-events-table td{overflow-wrap:anywhere;vertical-align:top}.stock-events-table th:nth-child(1){width:14%}.stock-events-table th:nth-child(2){width:23%}.stock-events-table th:nth-child(3){width:17%}.stock-events-table th:nth-child(4),.stock-events-table th:nth-child(5){width:12%}.stock-events-table th:nth-child(6){width:22%}.stock-events-note{white-space:pre-wrap}.stock-history-filters>*{min-width:0}
 @media(max-width:900px){.stock-events-table,.stock-events-table tbody{display:block;width:100%}.stock-events-table thead{display:none}.stock-events-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;margin:12px 0;padding:10px;gap:8px}.stock-events-table td{display:block;border:0;padding:4px;min-width:0}.stock-events-table td:before{content:attr(data-label);display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px}.stock-events-table td:nth-child(1),.stock-events-table td:nth-child(2),.stock-events-table td:nth-child(3),.stock-events-table td:nth-child(6){grid-column:1/-1}}
 
-/* 0.8.54: lomakkeen kentät vain rastitetuille kohteille (myös työpöydällä) */
+/* lomakkeen kentät vain rastitetuille kohteille (myös työpöydällä) */
 .mobile-service-hint{display:block;margin:-2px 0 14px;padding:10px 12px;border-radius:11px;background:color-mix(in srgb,var(--blue) 9%,var(--panel2));border:1px solid color-mix(in srgb,var(--blue) 24%,var(--line));color:var(--muted);font-size:12px}
 @media(min-width:901px){
 .service-form .maint-row[data-item]:not(.is-selected) .service-field{display:none}
@@ -55,7 +55,7 @@ html[data-theme="light"]{--bg:#edf1f5;--panel:#fff;--panel2:#f5f7f9;--line:#cfd7
 .history-more[hidden]{display:none}
 .service-title>.badge{align-self:flex-start;white-space:nowrap}
 
-/* 0.8.55: varastosivu */
+/* varastosivu */
 .badge-btn{font:inherit;color:var(--text);cursor:pointer;appearance:none}
 .badge-btn:hover{border-color:var(--accent)}
 .badge #inventoryValueBadge{margin-left:.3em}
@@ -100,7 +100,7 @@ dialog.app-dialog h3{margin:0 0 4px;font-size:20px}
 dialog.app-dialog form{padding:16px}
 }
 
-/* 0.8.56: kelluva tallennuspalkki myös työpöydälle, asetusten välilehdet ja tiiviit rivit */
+/* kelluva tallennuspalkki myös työpöydälle, asetusten välilehdet ja tiiviit rivit */
 .inventory-savebar{position:sticky;bottom:8px;z-index:9;box-shadow:0 8px 28px var(--shadow)}
 .savebar{position:sticky;bottom:8px;z-index:9;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);box-shadow:0 8px 28px var(--shadow)}
 .savebar-note{font-size:13px;font-weight:700;color:var(--warn,#b45309)}
@@ -177,7 +177,7 @@ details.user-row>.inside{padding:4px 14px 14px;border-top:1px solid var(--line)}
 .yearsum .tiny{flex-basis:100%}
 @media(max-width:560px){.yearhead,.yearrow{grid-template-columns:2.8em minmax(0,1fr) minmax(0,1.3fr)}.yearrow .yn{grid-column:1/-1;text-align:left}}
 
-/* 0.8.65: varaston tulostusnapit ryhmänä */
+/* varaston tulostusnapit ryhmänä */
 .inventory-print-group{grid-column:span 2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.inventory-print-group .inventory-print{width:100%;justify-content:center;text-align:center}
 @media(max-width:900px){.inventory-print-group{grid-column:1/-1}}
 @media(max-width:520px){.inventory-print-group{grid-template-columns:1fr}}

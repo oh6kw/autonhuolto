@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * AUTONHUOLTO – kevyt korjaamojärjestelmä
- * Versio 1.0.4 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
+ * Versio 1.0.5 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
  *
  * Autonhuolto – vapaa ohjelmisto, lisenssi GNU AGPL v3 (tiedosto LICENSE).
  * Copyright (C) 2026 Jarno Jaskari
@@ -52,7 +52,7 @@ date_default_timezone_set('Europe/Helsinki');
 const DEFAULT_APP_NAME      = 'Autonhuolto';
 const DEFAULT_HOME_TITLE    = 'Huoltokirja';
 const DEFAULT_HOME_SUBTITLE = 'Pidä omat, perheen ja tuttujen autot samassa huoltohistoriassa.';
-const APP_VERSION           = '1.0.4';
+const APP_VERSION           = '1.0.5';
 /* AGPL v3 §13: verkossa ajettavan ohjelman käyttäjille on tarjottava lähdekoodi. Aseta tähän julkisen koodivaraston osoite (esim. 'https://github.com/KÄYTTÄJÄ/autonhuolto'); tyhjänä linkkiä ei näytetä. */
 const APP_SOURCE_URL        = 'https://github.com/oh6kw/autonhuolto';
 const SCHEMA_VERSION   = 12;
@@ -90,7 +90,7 @@ try{
     exit('Huoltokirjan tietokantaa ei voitu avata: '.$e->getMessage());
 }
 
-/* Myös ennen 0.8.16:ta ladattu nykyinen logo saa johdannaisversiot automaattisesti. Alkuperäiseen ei kosketa. */
+/* Myös aiemmin ladattu nykyinen logo saa johdannaisversiot automaattisesti. Alkuperäiseen ei kosketa. */
 $configuredLogo=(string)($app['logo_path']??'');if($configuredLogo!==''&&logoAbsolutePath($configuredLogo)&&is_file((string)logoAbsolutePath($configuredLogo)))ensureLogoDerivatives($configuredLogo);
 
 /* Huoltokuvien näyttö kulkee sovelluksen kirjautumisen kautta. */

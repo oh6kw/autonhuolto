@@ -30,7 +30,7 @@ function nextInvoiceNumber(PDO $db): string {
 }
 function invoicePeriodSummary(PDO $db,string $from,string $to): array {
     /* Laskutettu/avoin/luonnos/hyvitetty ryhmitellään laskun päiväyksellä. Maksettu ryhmitellään
-       varsinaisella paid_at-aikaleimalla; ennen 0.8.4:ää maksetuilla legacy-laskuilla käytetään issue_datea. */
+       varsinaisella paid_at-aikaleimalla; jos maksupäivää ei ole tallennettu, käytetään issue_datea. */
     $sql="SELECT i.status,COUNT(*) invoice_count,
                  COALESCE(SUM((SELECT SUM(il.qty*il.unit_price_net) FROM invoice_lines il WHERE il.invoice_id=i.id)),0) net_total,
                  COALESCE(SUM((SELECT SUM(il.qty*il.unit_price_net*il.vat_rate/100.0) FROM invoice_lines il WHERE il.invoice_id=i.id)),0) vat_total

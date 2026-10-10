@@ -4,6 +4,15 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 12.
 
+## 1.0.5
+
+Siivous: kaikki viittaukset ennen julkaisua käytettyihin 0.x-kehitysversioihin poistettu.
+
+- **SETUP.md:** poistettu maininta "versiossa 0.8.46-dev" (lataus-järjestyksen selitys).
+- **Käyttöliittymän tekstit:** laskujen yhteenvedon ohjeteksti ja tietokannan liian vanhan skeeman virheilmoitus eivät enää nimeä vanhoja versioita.
+- **Lähdekoodin kommentit** (`index.php`, `app/`, `assets/`): poistettu versiotunnisteet kuten "0.8.55:".
+- Ohjelman toiminta ei muutu. Versio 1.0.5, ei tietokantamuutoksia (skeema 12).
+
 ## 1.0.4
 
 Dokumentaatiopäivitys; ohjelman toiminta ei muutu.

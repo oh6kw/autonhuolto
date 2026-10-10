@@ -23,7 +23,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
                 'theme'=>$theme,'hourly_rate'=>(string)$hourlyNet,'vat_rate'=>(string)$vatRate,'price_input_mode'=>$priceMode,'payment_days'=>(string)max(0,intpost('payment_days',14)),
                 'shop_name'=>post('shop_name')?:DEFAULT_APP_NAME,'home_title'=>post('home_title')?:DEFAULT_HOME_TITLE,'home_subtitle'=>post('home_subtitle'),'business_id'=>post('business_id'),'shop_address'=>post('shop_address'),'shop_email'=>post('shop_email'),'shop_phone'=>post('shop_phone'),'iban'=>post('iban'),'bic'=>post('bic'),'mobilepay_enabled'=>isset($_POST['mobilepay_enabled'])?'1':'0','mobilepay_number'=>post('mobilepay_number'),'mobilepay_name'=>post('mobilepay_name'),'show_logo_invoice'=>isset($_POST['show_logo_invoice'])?'1':'0','show_logo_service_print'=>isset($_POST['show_logo_service_print'])?'1':'0','show_logo_car_history'=>isset($_POST['show_logo_car_history'])?'1':'0','show_logo_all_history'=>isset($_POST['show_logo_all_history'])?'1':'0','show_logo_header'=>isset($_POST['show_logo_header'])?'1':'0'
             ];
-            /* 0.8.63: hintojen syöttötavan vaihto muuntaa myös varaston hankintahinnat (tallennetaan syöttötavan mukaisena), vanhalla ALV-kannalla */
+            /* hintojen syöttötavan vaihto muuntaa myös varaston hankintahinnat (tallennetaan syöttötavan mukaisena), vanhalla ALV-kannalla */
             $oldApp=appSettings($db);$oldMode=priceInputMode($oldApp);$convertedParts=0;
             $db->beginTransaction();
             try{

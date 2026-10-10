@@ -148,7 +148,7 @@ function odometerTimelinePoints(PDO $db,int $carId): array {
 /**
  * Arvioi auton vuotuisen ajomäärän huoltojen ja erillisten mittarimerkintöjen
  * muodostamasta aikajanasta. Nykyisen kilometrilukeman päivätty piste valitaan
- * ankkuriksi, jos sellainen löytyy. Vanhoille ennen 0.8.6:ta tallennetuille
+ * ankkuriksi, jos sellainen löytyy. Vanhoille ilman ankkuria tallennetuille
  * current_km-arvoille säilyy turvallinen legacy-fallback: nykyhetki.
  */
 function drivingRateEstimate(PDO $db,array $car): array {

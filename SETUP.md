@@ -114,7 +114,7 @@ autonhuolto/
 2. Heti vakioiden jälkeen ladataan **`app/helpers.php` → `db.php` → `auth.php` → `exports.php` → `cars.php` → `maintenance.php` → `invoices.php` → `inventory.php` → `customers.php` → `images.php` → `edits.php`**. Näiden funktioita käytetään kaikkialla (auth jo tietokannan avauksessa: `authBootstrap()`), joten ne ladataan ensimmäisinä. Ne sisältävät vain funktioita ja vakioita eivätkä suorita mitään latautuessaan.
 3. Tietokanta avataan: `dbAcquireLock()` → `dbConnect()` → `authBootstrap()` → asetukset.
 4. `index.php` lataa tiedostot tässä järjestyksessä: **`app/backup.php` → `app/printing.php` → `app/actions.php`**.
-5. `app/actions.php` ajaa POST-käsittelijänsä heti latautuessaan ja kutsuu mm. `backupRestore()`-funktiota. Siksi sen täytyy olla ladattuna **viimeisenä**. Väärä järjestys rikkoi palautuksen versiossa 0.8.46-dev.
+5. `app/actions.php` ajaa POST-käsittelijänsä heti latautuessaan ja kutsuu mm. `backupRestore()`-funktiota. Siksi sen täytyy olla ladattuna **viimeisenä**. Väärä järjestys rikkoisi varmuuskopion palautuksen.
 6. `index.php` hakee sivun datan ja lataa lopuksi näkymät: `views/layout_top.php` → yksi näkymä (valinta `if/elseif`-ketjussa tiedoston lopussa) → `views/layout_bottom.php`.
 
 Funktiot, jotka on siirretty omaan tiedostoonsa, ovat käytössä vasta kun tiedosto on ladattu (toisin kuin `index.php`:n omat funktiot, jotka PHP tuntee jo ennen suoritusta). Siksi uuden tiedoston lataus pitää lisätä kohtaan, jossa mikään sen funktioita käyttävä koodi ei ehdi ajaa ennen sitä.

@@ -1,4 +1,4 @@
-/* AUTONHUOLTO – selainlogiikka. Erotettu index.php:stä 0.8.33-dev-refactorissa. */
+/* AUTONHUOLTO – selainlogiikka. */
 
 (()=>{
  const form=document.getElementById('inventoryBulkForm'),body=document.getElementById('inventoryTableBody'),search=document.getElementById('inventorySearch'),carFilter=document.getElementById('inventoryCarFilter'),lowOnly=document.getElementById('inventoryLowOnly'),sortSelect=document.getElementById('inventorySortSelect'),dirtyText=document.getElementById('inventoryDirtyText'),printLink=document.getElementById('inventoryPrintLink'),printInfoLink=document.getElementById('inventoryPrintInfoLink'),excelLink=document.getElementById('inventoryExcelLink');
@@ -146,7 +146,7 @@ if(serviceForm&&!(serviceForm.querySelector('[name="service_id"]'))){
  }
 }
 
-/* 0.8.55: varastotapahtuma (+/−) ja varaosan lisäys varastosivulta */
+/* varastotapahtuma (+/−) ja varaosan lisäys varastosivulta */
 (()=>{
  const bulk=document.getElementById('inventoryBulkForm');
  const closeBtns=document.querySelectorAll('[data-close-dialog]');closeBtns.forEach(b=>b.addEventListener('click',()=>b.closest('dialog')?.close()));
@@ -177,7 +177,7 @@ if(serviceForm&&!(serviceForm.querySelector('[name="service_id"]'))){
  }
 })();
 
-/* 0.8.56: asetusten välilehdet, kelluvan tallennuspalkin muutosmerkki, salasanan näyttö */
+/* asetusten välilehdet, kelluvan tallennuspalkin muutosmerkki, salasanan näyttö */
 (function(){
   var nav=document.getElementById('settingsTabs'),wrap=document.getElementById('settingsPanels');
   if(nav&&wrap){
@@ -227,7 +227,7 @@ if(serviceForm&&!(serviceForm.querySelector('[name="service_id"]'))){
   });
 })();
 
-/* 0.8.59: varaosakate. Varastosta otetulle osalle ehdotetaan hankintahinta × (1 + kate); käsin hinnoitellulle osalle ＋kate -painike. */
+/* varaosakate. Varastosta otetulle osalle ehdotetaan hankintahinta × (1 + kate); käsin hinnoitellulle osalle ＋kate -painike. */
 (function(){
   var form=document.getElementById('serviceForm');if(!form)return;
   var pct=parseFloat(form.dataset.markup||'');if(!isFinite(pct)||pct<=0)return;

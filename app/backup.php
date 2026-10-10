@@ -18,7 +18,7 @@ function backupRuntimeExcluded(string $relative): bool {
     if(in_array($base,[$dbName,BACKUP_DB_NAME,$dbName.'-wal',$dbName.'-shm',BACKUP_DB_NAME.'-wal',BACKUP_DB_NAME.'-shm','backup-manifest.json','.autohuolto-access-7f3c91.lock','.autohuolto-setup-7f3c91.php'],true))return true;
     foreach(explode('/',$relative) as $part)if(preg_match('/^\.(?:pre-restore|restore-stage|restore-old|restore-incoming|restore-tmp|failed-kuvat|pre-users|autohuolto-backup-tmp)-/',$part))return true;
     if(preg_match('/^autohuolto-(?:taysi-)?backup-.*\.(?:zip|sqlite3)$/i',$base)||preg_match('/^index\.php\.backup-/i',$base))return true;
-    /* 0.8.64: kaikki SQLite-tiedoston kopiot ja muunnelmat (esim. autohuolto.sqlite3.ennen-…, käsin tai skriptillä otetut varmuuskopiot) jätetään pois: ne eivät kuulu ohjelmapuuhun, ja niiden oikeudet voivat estää ZIP:n luonnin. */
+    /* kaikki SQLite-tiedoston kopiot ja muunnelmat (esim. autohuolto.sqlite3.ennen-…, käsin tai skriptillä otetut varmuuskopiot) jätetään pois: ne eivät kuulu ohjelmapuuhun, ja niiden oikeudet voivat estää ZIP:n luonnin. */
     if(preg_match('/\.sqlite3(?:[.-].*)?$/i',$base))return true;
     return false;
 }
@@ -81,7 +81,7 @@ function backupPruneOldSafetyCopies(string $dir,string $keepStamp): int {
     return $removed;
 }
 function backupTempDir(): string {
-    // 0.8.38:n toimivaksi todettu toteutus: käytä PHP:n omaa temp-hakemistoa.
+    // Käytä PHP:n omaa temp-hakemistoa.
     // Näin backup ei riipu sovelluskansion erityisistä kirjoitusoikeuksista.
     $dir=rtrim(sys_get_temp_dir(),'/\\').'/autohuolto-backup-'.bin2hex(random_bytes(8));
     if(!@mkdir($dir,0700,true))throw new RuntimeException('Varmuuskopion valmistelu epäonnistui.');
