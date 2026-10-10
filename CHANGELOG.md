@@ -4,6 +4,13 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 12.
 
+## 1.0.4
+
+Dokumentaatiopäivitys; ohjelman toiminta ei muutu.
+
+- **README.md:** uusi osio "Toimii puhelimella ja tietokoneella" (mekaanikko voi kirjata huollon ja ottaa kuvat työn ohessa puhelimella), maininta ominaisuuslistassa ja englanninkielisessä yhteenvedossa sekä mobiilikuvakaappaus (`docs/screenshots/mobiili.png`: huoltotilanne, huoltolomake, kuvien lisäys ja työajastin).
+- Versio 1.0.4. Ei tietokantamuutoksia (skeema 12).
+
 ## 1.0.3
 
 - **Korjaus:** varastosivun "⚠️ N varoitusrajalla" -merkin teksti oli tummalla tummaa taustaa vasten (selaimen oletusväri painikkeelle). Merkki käyttää nyt teeman tekstiväriä (`assets/`-tyylitiedosto, `.badge-btn`).

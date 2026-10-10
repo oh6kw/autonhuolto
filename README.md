@@ -4,13 +4,17 @@ Koodivarasto: <https://github.com/oh6kw/autonhuolto>
 
 Kevyt, itse ajettava **huoltokirja- ja pienkorjaamo-ohjelma** autoille. Sopii harrastajalle, perheen autoille ja pienelle korjaamolle, joka haluaa pitää huoltohistorian, varaosat, asiakkaat ja laskut yhdessä paikassa ilman raskasta järjestelmää.
 
-*English summary: Autonhuolto is a lightweight, self-hosted car maintenance log and small-workshop tool (PHP 8.2+, SQLite, no external dependencies). The user interface is in Finnish. Licensed under AGPL v3.*
+*English summary: Autonhuolto is a lightweight, self-hosted car maintenance log and small-workshop tool (PHP 8.2+, SQLite, no external dependencies). Works in any browser on phone, tablet and desktop, so a mechanic can log a service and take photos on the spot. The user interface is in Finnish. Licensed under AGPL v3.*
 
-## Ominaisuudet
+## Toimii puhelimella ja tietokoneella
+
+Käyttöliittymä mukautuu automaattisesti näytön kokoon, joten samaa ohjelmaa voi käyttää kännykällä, tabletilla ja tietokoneella ilman erillistä sovellusta (riittää selain). Mekaanikko voi kirjata huollon heti työn ohessa puhelimella: rastittaa tehdyt työt, ottaa kuvat suoraan puhelimen kameralla tai valita ne galleriasta, käynnistää työajastimen ja tarkistaa varaston saldon. Toimisto- ja laskutustyöt (laskut, tulosteet, Excel-viennit, asetukset) sujuvat luontevimmin tietokoneella.
+
 
 - Autot, mittarilukemahistoria ja ajomääräarvio
 - Kohdekohtaiset huoltovälit, huoltotilanne ja erääntymisennusteet
-- Huoltohistoria kuvineen, mekaanikot ja työajastin
+- Huoltohistoria kuvineen (kuvat suoraan puhelimen kameralla), mekaanikot ja työajastin
+- Mobiilikäyttöinen: kirjaus onnistuu työn ohessa puhelimella
 - Varaosamuistio, moniautosopivuus ja varasto saldoineen sekä varastotapahtumat
 - Asiakkaat ja auton omistushistoria
 - Laskut (myös MobilePay-tiedot), tulosteet / PDF ja Excel-viennit
@@ -40,6 +44,10 @@ Kuvissa on keksittyä esimerkkitietoa (kuvitteellinen korjaamo, autot ja asiakka
 ![Lasku](docs/screenshots/lasku.png)
 
 ![Lasku tulostettuna / PDF-muodossa](docs/screenshots/lasku-pdf.png)
+
+### Mobiilinäkymä
+
+![Mobiilinäkymä: huoltotilanne, huoltolomake ja kuvien lisäys + työajastin](docs/screenshots/mobiili.png)
 
 ## Vaatimukset
 
