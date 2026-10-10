@@ -4,6 +4,12 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 13.
 
+## 1.2.2
+
+Pieni ulkoasukorjaus laskutulosteeseen. Ei tietokantamuutoksia (skeema 13).
+
+- **Työ / ajoneuvo -rivin harmaa pohja:** pohja on tummennettu (vaaleanharmaa #dcdcdc), jotta se erottuu paperilla selvemmin, ja sille on asetettu tulostusväri "exact". Näin pohja tulostuu myös silloin, kun selaimen tulostusasetuksissa "Taustagrafiikka" ei ole valittuna.
+
 ## 1.2.1
 
 Korjausversio. Ei tietokantamuutoksia (skeema 13).
