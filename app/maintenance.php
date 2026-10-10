@@ -8,24 +8,25 @@ declare(strict_types=1);
  * Vain funktiot; ei suoriteta mitään latauksessa. Ladataan index.php:n alussa.
  */
 
-function serviceTypes(): array { return ['Määräaikaishuolto','Korjaus','Katsastus','Rengastyö','Muu']; }
-function actionTypes(): array { return ['Vaihdettu / tehty','Tehty','Tarkastettu','Korjattu','Puhdistettu','Lisätty / täytetty']; }
-function validServiceType(string $v): string { return in_array($v,serviceTypes(),true)?$v:'Määräaikaishuolto'; }
-function validActionType(string $v): string { return in_array($v,actionTypes(),true)?$v:'Vaihdettu / tehty'; }
-function itemKinds(): array { return ['generic'=>'Yleinen','fluid'=>'Neste','part'=>'Varaosa','inspection'=>'Tarkastus','service'=>'Palvelu']; }
-function scheduleTypes(): array { return ['replace'=>'Vaihto','inspect'=>'Tarkastus','condition'=>'Kunnon mukaan']; }
+/** Huoltotyypit ja toimenpiteet: koodi => nimi (koodit tallennetaan kantaan, ks. app/vocab.php). */
+function serviceTypes(): array { return vocabOptions('stype'); }
+function actionTypes(): array { return vocabOptions('action'); }
+function validServiceType(string $v): string { return vocabCode('stype',$v,'scheduled'); }
+function validActionType(string $v): string { return vocabCode('action',$v,'replaced'); }
+function itemKinds(): array { return ['generic'=>t('maint.kind_generic'),'fluid'=>t('maint.kind_fluid'),'part'=>t('maint.kind_part'),'inspection'=>t('maint.kind_inspection'),'service'=>t('maint.kind_service')]; }
+function scheduleTypes(): array { return ['replace'=>t('maint.schedule_replace'),'inspect'=>t('maint.schedule_inspect'),'condition'=>t('maint.schedule_condition')]; }
 function validItemKind(string $v): string { return array_key_exists($v,itemKinds())?$v:'generic'; }
 function validScheduleType(string $v): string { return array_key_exists($v,scheduleTypes())?$v:'replace'; }
-function actionForSchedule(string $schedule,string $fallback='Vaihdettu / tehty'): string {
-    return $schedule==='inspect'?'Tarkastettu':($schedule==='condition'?'Tarkastettu':$fallback);
+function actionForSchedule(string $schedule,string $fallback='replaced'): string {
+    return $schedule==='inspect'?'inspected':($schedule==='condition'?'inspected':$fallback);
 }
 function resetDefaultForAction(string $schedule,string $action): bool {
-    if($schedule==='inspect') return $action==='Tehty' || $action==='Tarkastettu' || $action==='Vaihdettu / tehty' || $action==='Korjattu';
-    if($schedule==='condition') return $action==='Vaihdettu / tehty' || $action==='Korjattu';
-    return $action==='Vaihdettu / tehty' || $action==='Korjattu';
+    if($schedule==='inspect') return $action==='done' || $action==='inspected' || $action==='replaced' || $action==='repaired';
+    if($schedule==='condition') return $action==='replaced' || $action==='repaired';
+    return $action==='replaced' || $action==='repaired';
 }
 function resetDefaultForItem(string $itemKey,string $schedule,string $action): bool {
-    if(isset(beltInspectionItems()[$itemKey]))return $action==='Vaihdettu / tehty';
+    if(isset(beltInspectionItems()[$itemKey]))return $action==='replaced';
     // Jarrujen huolto/tarkastus aloittaa oletuksena uuden seurantavälin.
     // Käyttäjä voi edelleen ottaa rastin pois yksittäisestä kirjauksesta.
     if(in_array($itemKey,['brakes_front','brakes_rear'],true)) return true;
@@ -48,30 +49,38 @@ function normalizeBeltSettings(array $settings): array {
     return $settings;
 }
 function serviceActionLabel(array $a): string {
-    $label=(string)($a['action']??'');
-    return ($a['item_key']??'')==='inspection'&&$label==='Vaihdettu / tehty'?'Tehty':$label;
+    $code=(string)($a['action']??'');
+    return actionLabel(($a['item_key']??'')==='inspection'&&$code==='replaced'?'done':$code);
 }
 function serviceActionQuantityText(array $a): string {
     $q=$a['quantity']??null;$brake=isBrakeItem((string)($a['item_key']??''));
     if($q===null){if(!$brake||($a['price_net']??null)===null)return ''; $q=1;}
-    return dec((float)$q,(float)$q===(float)(int)$q?0:2).' '.($brake?'kokonaisuus':($a['unit']?:'kpl'));
+    return dec((float)$q,(float)$q===(float)(int)$q?0:2).' '.($brake?t('maint.unit_whole'):unitLabel((string)$a['unit']));
+}
+/** Hintatekstin osat (erotin ' · '); 'net' = veroton-osa. */
+function servicePriceParts(array $a,array $app,bool $custom=false): array {
+    if(($a['price_net']??null)===null)return [];
+    $net=(float)$a['price_net'];$vat=$a['vat_rate']!==null?(float)$a['vat_rate']:appVatRate($app);$gross=$net*(1+$vat/100);
+    $unit=$custom?'':(isBrakeItem((string)($a['item_key']??''))?t('maint.unit_whole'):unitLabel((string)($a['unit']??'')));
+    $suffix=$unit!==''?' / '.$unit:'';
+    $parts=[
+        ['text'=>t($custom?'maint.price_custom':'maint.price_unit',['price'=>money($gross),'suffix'=>$suffix,'vat'=>dec($vat,1)]),'net'=>false],
+        ['text'=>t('maint.price_net',['price'=>money($net),'suffix'=>$suffix]),'net'=>true],
+    ];
+    $q=$a['quantity']??null;
+    if(!$custom&&$q!==null)$parts[]=['text'=>t('maint.price_total',['price'=>money((float)$q*$net*(1+$vat/100))]),'net'=>false];
+    return $parts;
 }
 function servicePriceText(array $a,array $app,bool $custom=false): string {
-    if(($a['price_net']??null)===null)return '';
-    $net=(float)$a['price_net'];$vat=$a['vat_rate']!==null?(float)$a['vat_rate']:appVatRate($app);$gross=$net*(1+$vat/100);
-    $unit=$custom?'':(isBrakeItem((string)($a['item_key']??''))?'kokonaisuus':($a['unit']?:'kpl'));
-    $suffix=$unit!==''?' / '.$unit:'';
-    $text=($custom?'Hinta ':'Yksikköhinta ').money($gross).$suffix.' sis. ALV '.dec($vat,1).' % · Veroton '.money($net).$suffix;
-    $q=$a['quantity']??null;
-    if(!$custom&&$q!==null)$text.=' · Yhteensä '.money((float)$q*$net*(1+$vat/100)).' sis. ALV';
-    return $text;
+    return implode(' · ',array_column(servicePriceParts($a,$app,$custom),'text'));
 }
 /** Tulostehinnat: verollinen yksikköhinta ja rivisumma erottuvat, kaikki teksti escapetaan. */
 function servicePriceHtml(array $a,array $app,bool $custom=false): string {
-    $parts=explode(' · ',servicePriceText($a,$app,$custom));$html=[];
-    foreach($parts as $part){
+    $html=[];
+    foreach(servicePriceParts($a,$app,$custom) as $pp){
+        $part=$pp['text'];
         if($part==='')continue;
-        if(!str_starts_with($part,'Veroton ')&&preg_match('/^(.*?)(-?[0-9 ]+,[0-9]{2} '.preg_quote(CURRENCY,'/').')(.*)$/u',$part,$match))
+        if(!$pp['net']&&preg_match('/^(.*?)(-?[0-9 ]+,[0-9]{2} '.preg_quote(CURRENCY,'/').')(.*)$/u',$part,$match))
             $html[]=h($match[1]).'<strong class="print-price-gross">'.h($match[2]).'</strong>'.h($match[3]);
         else $html[]=h($part);
     }
@@ -79,31 +88,41 @@ function servicePriceHtml(array $a,array $app,bool $custom=false): string {
 }
 function intervalTrackingKey(array $row): string {
     $key=(string)$row['item_key'];$inspect=beltInspectionItems()[$key]??null;
-    return $inspect!==null&&($row['action']??'')==='Tarkastettu'?$inspect:$key;
+    return $inspect!==null&&($row['action']??'')==='inspected'?$inspect:$key;
 }
 function intervalStartKeys(array $row): array {
     $key=(string)$row['item_key'];$inspect=beltInspectionItems()[$key]??null;
     if($inspect!==null){
-        if(($row['action']??'')==='Tarkastettu')return [$inspect];
-        return ($row['action']??'')==='Vaihdettu / tehty'&&(int)($row['resets_interval']??1)===1?[$key,$inspect]:[];
+        if(($row['action']??'')==='inspected')return [$inspect];
+        return ($row['action']??'')==='replaced'&&(int)($row['resets_interval']??1)===1?[$key,$inspect]:[];
     }
     return (int)($row['resets_interval']??1)===1?[$key]:[];
 }
 function serviceIntervalNote(array $a): ?string {
-    if(isset(beltInspectionItems()[(string)($a['item_key']??'')])&&($a['action']??'')==='Tarkastettu')return 'Tarkastus kirjattu · Vaihtoväliä ei nollattu';
+    if(isset(beltInspectionItems()[(string)($a['item_key']??'')])&&($a['action']??'')==='inspected')return t('maint.note_inspection_logged');
     if((int)($a['resets_interval']??1)===1)return null;
-    return 'Huoltoväliä ei nollattu';
+    return t('maint.note_interval_not_reset');
 }
+/**
+ * Huoltokohteet. label/section ovat näytettävät (käännetyt) arvot; label_raw/section_raw ovat kantaan tallennetut
+ * (valmiin kohteen tyhjä label_raw tarkoittaa kielitiedoston oletusnimeä).
+ */
 function allItems(PDO $db,bool $onlyActive=false): array {
     $sql="SELECT * FROM item_catalog".($onlyActive?" WHERE active=1":"")." ORDER BY sort_order,section,label";
-    return $db->query($sql)->fetchAll();
+    return array_map('itemRowForDisplay',$db->query($sql)->fetchAll());
+}
+function itemRowForDisplay(array $r): array {
+    $r['label_raw']=(string)$r['label'];$r['section_raw']=(string)$r['section'];
+    $r['label']=itemLabelOf((string)$r['item_key'],(string)$r['label']);$r['section']=sectionLabel((string)$r['section']);
+    return $r;
 }
 function itemMap(PDO $db): array { $m=[]; foreach(allItems($db,false) as $r)$m[$r['item_key']]=$r; return $m; }
 function getServiceActions(PDO $db,int $sid): array {
-    $st=$db->prepare("SELECT sa.*,COALESCE(NULLIF(sa.item_label_snapshot,''),ic.label) label,COALESCE(NULLIF(sa.item_section_snapshot,''),ic.section) section FROM service_actions sa JOIN item_catalog ic ON ic.item_key=sa.item_key WHERE sa.service_id=? ORDER BY ic.sort_order,ic.section,ic.label");$st->execute([$sid]);return $st->fetchAll();
+    $st=$db->prepare("SELECT sa.*,COALESCE(NULLIF(sa.item_label_snapshot,''),ic.label) label,COALESCE(NULLIF(sa.item_section_snapshot,''),ic.section) section FROM service_actions sa JOIN item_catalog ic ON ic.item_key=sa.item_key WHERE sa.service_id=? ORDER BY ic.sort_order,ic.section,ic.label");$st->execute([$sid]);
+    return array_map(function(array $a): array{$a['label']=itemLabelOf((string)$a['item_key'],(string)$a['label']);$a['section']=sectionLabel((string)$a['section']);return $a;},$st->fetchAll());
 }
 function getCustomActions(PDO $db,int $sid): array { $st=$db->prepare("SELECT * FROM service_custom_actions WHERE service_id=? ORDER BY id");$st->execute([$sid]);return $st->fetchAll(); }
-function itemDefaultUnit(string $key): string { return in_array($key,['engine_oil','gearbox_oil','diff_oil','transfer_oil','brake_fluid','coolant','power_steering'],true)?'L':'kpl'; }
+function itemDefaultUnit(string $key): string { return in_array($key,['engine_oil','gearbox_oil','diff_oil','transfer_oil','brake_fluid','coolant','power_steering'],true)?'l':'pcs'; }
 function serviceWithDetails(PDO $db,int $sid): ?array { $st=$db->prepare("SELECT s.*,c.reg_plate,c.nickname,c.owner,c.make,c.model,c.year,c.engine,c.vin,c.first_registration_date,c.customer_address,c.customer_email,c.customer_phone,c.customer_business_id,c.current_customer_id,cu.name current_customer_name,cu.address current_customer_address,cu.postal_code current_customer_postal_code,cu.city current_customer_city,cu.email current_customer_email,cu.phone current_customer_phone,cu.business_id current_customer_business_id FROM services s JOIN cars c ON c.id=s.car_id LEFT JOIN customers cu ON cu.id=c.current_customer_id WHERE s.id=?");$st->execute([$sid]);$r=$st->fetch();if(!$r)return null;$r['actions']=getServiceActions($db,$sid);$r['custom_actions']=getCustomActions($db,$sid);$r['photos']=getServicePhotos($db,$sid);$r['inventory_usage']=serviceInventoryUsage($db,$sid);$detailRows=[$r];attachServiceIntervals($db,$detailRows);return $detailRows[0]; }
 function lastItemEvents(PDO $db,int $carId): array {
     $st=$db->prepare("SELECT sa.item_key,sa.action,sa.resets_interval,s.service_date,s.odometer,s.id service_id FROM service_actions sa JOIN services s ON s.id=sa.service_id WHERE s.car_id=? ORDER BY s.service_date DESC,s.id DESC,sa.id DESC");$st->execute([$carId]);$out=[];$seen=[];
@@ -147,16 +166,16 @@ function actionIntervalText(array $action): string {
     $key=(string)($info['tracking_key']??$action['item_key']??'');
     $inspection=in_array($key,array_values(beltInspectionItems()),true);$belt=isset(beltInspectionItems()[$key]);
     $previous=$info['previous'];
-    if(!$previous)$text=$inspection?'Ei aiempaa kirjattua hihnan tarkastusta tai vaihtoa':($belt?'Ei aiempaa kirjattua hihnan vaihtoa':'Ei aiempaa kirjattua huoltovälin aloitusta');
+    if(!$previous)$text=t($inspection?'maint.no_previous_belt_inspection':($belt?'maint.no_previous_belt_replace':'maint.no_previous_start'));
     else{
-        $interval=$info['interval']['text']?:'Väliä ei voida laskea';
+        $interval=$info['interval']['text']?:t('maint.interval_unknown');
         $baseline=fiDate($previous['service_date']).' · '.recordedKm((int)$previous['odometer']);
-        $prefix=$inspection?'Tarkastusväli: ':($belt?($info['resets']?'Toteutunut vaihtoväli: ':'Edellisestä vaihdosta: '):($info['resets']?'Toteutunut huoltoväli: ':'Edellisestä huoltovälin aloituksesta: '));
-        $text=$prefix.$interval.' (edellinen '.$baseline.')';
+        $textKey=$inspection?'maint.interval_inspection':($belt?($info['resets']?'maint.interval_belt_actual':'maint.interval_belt_since_replace'):($info['resets']?'maint.interval_actual':'maint.interval_since_start'));
+        $text=t($textKey,['interval'=>$interval,'baseline'=>$baseline]);
     }
     if($inspection&&isset(beltInspectionItems()[(string)($action['item_key']??'')])){
         $old=$info['replacement_previous']??null;
-        if($old)$text.=' · Edellisestä vaihdosta: '.($info['replacement_interval']['text']?:'Väliä ei voida laskea').' ('.fiDate($old['service_date']).')';
+        if($old)$text.=' · '.t('maint.interval_since_replace',['interval'=>($info['replacement_interval']['text']?:t('maint.interval_unknown')),'date'=>fiDate($old['service_date'])]);
     }
     return $text;
 }
@@ -168,8 +187,8 @@ function maintenanceItemStatus(array $car,array $events,array $setting,array $dr
     $actual=$last?intervalInfo($last,$previous):intervalInfo([],null);
     $due=dueInfo($car,$last,$setting);$forecast=forecastForDue($car,$due,$drive);$due['forecast']=$forecast;
     $warning='';
-    if($last&&(int)($car['current_km']??0)>0&&(int)$last['odometer']>(int)$car['current_km'])$warning='Nykyinen mittarilukema on pienempi kuin tämän kohteen viimeisessä huollossa. Tarkista kilometrit.';
-    if($last&&(string)$last['service_date']>$today)$warning=trim($warning.' Huoltovälin aloitus on tulevaisuudessa. Tarkista päiväys.');
+    if($last&&(int)($car['current_km']??0)>0&&(int)$last['odometer']>(int)$car['current_km'])$warning=t('maint.warn_km_lower');
+    if($last&&(string)$last['service_date']>$today)$warning=trim($warning.' '.t('maint.warn_start_future'));
     return ['last'=>$last,'previous'=>$previous,'elapsed'=>$elapsed,'actual'=>$actual,'due'=>$due,'forecast'=>$forecast,'warning'=>$warning];
 }
 function calculateMaintenanceStatus(PDO $db,array $car,?array $items=null,?array $settings=null,?array $events=null,?array $drive=null): array {
@@ -183,19 +202,19 @@ function calculateMaintenanceStatus(PDO $db,array $car,?array $items=null,?array
 /** Muodostaa huoltoajankohdan ennusteen annetusta huoltorajasta ja ajomääräarviosta. */
 function forecastForDue(array $car,array $due,array $drive): array {
     $status=(string)($due['status']??'');
-    if($status==='due')return ['date'=>'','km_date'=>'','first'=>'due','text'=>'Huolto on jo ajankohtainen'];
+    if($status==='due')return ['date'=>'','km_date'=>'','first'=>'due','text'=>t('maint.forecast_due_now')];
     $cur=(int)($car['current_km']??0); $dueKm=(int)($due['due_km']??0); $dueDate=(string)($due['due_date']??'');
-    $kmDate='';$basis=(!empty($drive['anchor_date'])&&(string)$drive['anchor_date']<date('Y-m-d'))?' · perustuu '.fiDate((string)$drive['anchor_date']).' mittarilukemaan':'';
+    $kmDate='';$basis=(!empty($drive['anchor_date'])&&(string)$drive['anchor_date']<date('Y-m-d'))?' · '.t('maint.forecast_basis',['date'=>fiDate((string)$drive['anchor_date'])]):'';
     if($dueKm>$cur&&!empty($drive['available'])&&(float)($drive['annual_km']??0)>0){
         $remaining=$dueKm-$cur;
         $days=(int)ceil($remaining/(float)$drive['annual_km']*365.0);
         if($days>=0&&$days<=36500){$d=new DateTime((string)($drive['anchor_date']??$drive['today']??date('Y-m-d')));$d->modify('+'.$days.' days');$kmDate=$d->format('Y-m-d');}
     }
     if($kmDate!==''&&$dueDate!==''){
-        if(strtotime($kmDate)<=strtotime($dueDate))return ['date'=>$kmDate,'km_date'=>$kmDate,'first'=>'km','text'=>'Arvioitu huolto '.fiDate($kmDate).' · kilometriraja tulee arviolta ensin'.$basis];
-        return ['date'=>$dueDate,'km_date'=>$kmDate,'first'=>'time','text'=>'Arvioitu huolto '.fiDate($dueDate).' · aikaraja tulee arviolta ensin (km-raja nykyajolla noin '.fiDate($kmDate).')'.$basis];
+        if(strtotime($kmDate)<=strtotime($dueDate))return ['date'=>$kmDate,'km_date'=>$kmDate,'first'=>'km','text'=>t('maint.forecast_km_first',['date'=>fiDate($kmDate),'basis'=>$basis])];
+        return ['date'=>$dueDate,'km_date'=>$kmDate,'first'=>'time','text'=>t('maint.forecast_time_first',['date'=>fiDate($dueDate),'km_date'=>fiDate($kmDate),'basis'=>$basis])];
     }
-    if($kmDate!=='')return ['date'=>$kmDate,'km_date'=>$kmDate,'first'=>'km','text'=>'Km-raja saavutetaan nykyajolla arviolta '.fiDate($kmDate).$basis];
+    if($kmDate!=='')return ['date'=>$kmDate,'km_date'=>$kmDate,'first'=>'km','text'=>t('maint.forecast_km_only',['date'=>fiDate($kmDate),'basis'=>$basis])];
     return ['date'=>'','km_date'=>'','first'=>'','text'=>''];
 }
 function dueInfo(array $car, ?array $last, array $setting): array {
@@ -203,24 +222,24 @@ function dueInfo(array $car, ?array $last, array $setting): array {
     $dueKm=0;$dueDate='';
     if($last){ if($ik>0&&(int)$last['odometer']>0)$dueKm=(int)$last['odometer']+$ik; if($im>0&&!empty($last['service_date']))$dueDate=addMonths($last['service_date'],$im); }
     else { if($firstKm>0)$dueKm=$firstKm; if($firstDate!=='')$dueDate=$firstDate; }
-    if(!$dueKm&&!$dueDate){ return ['status'=>$last?'neutral':'unknown','text'=>$last?'Ei huoltoväliä':'Ei lähtötietoa','detail'=>'','due_km'=>0,'due_date'=>'']; }
+    if(!$dueKm&&!$dueDate){ return ['status'=>$last?'neutral':'unknown','text'=>$last?t('maint.no_interval'):t('maint.no_baseline'),'detail'=>'','due_km'=>0,'due_date'=>'']; }
     $cur=(int)$car['current_km']; $today=date('Y-m-d'); $warnKm=max(0,(int)($car['warning_km']??3000)); $warnMonths=max(0,(int)($car['warning_months']??3));
     $overKm=$dueKm>0&&$cur>=$dueKm; $overDate=$dueDate!==''&&$today>=$dueDate;
     $nearKm=$dueKm>0&&!$overKm&&($dueKm-$cur)<=$warnKm;
     $warnDate=$warnMonths>0?addMonths($today,$warnMonths):$today;
     $nearDate=$dueDate!==''&&!$overDate&&$dueDate<=$warnDate;
     $status=($overKm||$overDate)?'due':(($nearKm||$nearDate)?'soon':'ok');
-    $parts=[]; if($dueKm)$parts[]='viimeistään '.km($dueKm); if($dueDate)$parts[]='viimeistään '.fiDate($dueDate);
-    $remain=[]; if($dueKm){$d=$dueKm-$cur;$remain[]=$d<0?number_format(abs($d),0,',',' ').' km yli':number_format($d,0,',',' ').' km jäljellä';}
-    if($dueDate){$days=(int)floor((strtotime($dueDate)-strtotime($today))/86400);$remain[]=$days<0?abs($days).' pv yli':$days.' pv jäljellä';}
+    $parts=[]; if($dueKm)$parts[]=t('maint.deadline',['value'=>km($dueKm)]); if($dueDate)$parts[]=t('maint.deadline',['value'=>fiDate($dueDate)]);
+    $remain=[]; if($dueKm){$d=$dueKm-$cur;$remain[]=$d<0?t('maint.km_over',['n'=>number_format(abs($d),0,',',' ')]):t('maint.km_left',['n'=>number_format($d,0,',',' ')]);}
+    if($dueDate){$days=(int)floor((strtotime($dueDate)-strtotime($today))/86400);$remain[]=$days<0?t('maint.days_over',['n'=>abs($days)]):t('maint.days_left',['n'=>$days]);}
     $mode=validScheduleType((string)($setting['schedule_type']??'replace'));
-    $dueLabel=$mode==='inspect'?'TARKASTUS AJANKOHTA':($mode==='condition'?'TARKISTA KUNTO':'HUOLTOAJANKOHTA');
-    $soonLabel=$mode==='inspect'?'TARKASTUS LÄHESTYY':($mode==='condition'?'TARKASTUS LÄHESTYY':'LÄHESTYY');
-    return ['status'=>$status,'text'=>$status==='due'?$dueLabel:($status==='soon'?$soonLabel:'OK'),'detail'=>implode(' · ',$parts),'remain'=>implode(' · ',$remain),'due_km'=>$dueKm,'due_date'=>$dueDate,'schedule_type'=>$mode];
+    $dueLabel=$mode==='inspect'?t('maint.status_due_inspect'):($mode==='condition'?t('maint.status_due_condition'):t('maint.status_due'));
+    $soonLabel=$mode==='inspect'?t('maint.status_soon_inspect'):($mode==='condition'?t('maint.status_soon_inspect'):t('maint.status_soon'));
+    return ['status'=>$status,'text'=>$status==='due'?$dueLabel:($status==='soon'?$soonLabel:t('maint.status_ok')),'detail'=>implode(' · ',$parts),'remain'=>implode(' · ',$remain),'due_km'=>$dueKm,'due_date'=>$dueDate,'schedule_type'=>$mode];
 }
 function mechanicsList(PDO $db,bool $activeOnly=false): array {
     $sql="SELECT * FROM mechanics".($activeOnly?" WHERE active=1":"")." ORDER BY is_default DESC,sort_order,name,id";
-    return $db->query($sql)->fetchAll();
+    return array_map(function(array $m):array{$m['name_raw']=(string)$m['name'];$m['name']=mechanicLabel((string)$m['name']);return $m;},$db->query($sql)->fetchAll());
 }
 function defaultMechanicId(PDO $db): int {
     $linked=(int)($GLOBALS['currentUser']['mechanic_id']??0);if($linked){$st=$db->prepare('SELECT id FROM mechanics WHERE id=? AND active=1');$st->execute([$linked]);if($st->fetchColumn())return $linked;}

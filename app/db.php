@@ -4,8 +4,9 @@ declare(strict_types=1);
 /**
  * app/db.php – tietokanta.
  * Tiedoston valinta, käyttölukko ja yhteys; skeema ja sen tarkistus; uuden kannan alustus; sovellusasetukset.
- * Tietokannan skeemaversio on 12 (SCHEMA_VERSION). Vanhempaa tai uudempaa kantaa ei avata (requireCurrentDatabaseVersion).
- * Ei migraatioita: jos skeema muuttuu, lisää migraatio tähän ja nosta SCHEMA_VERSION.
+ * Tietokannan skeemaversio on 13 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemasta 12 päivitetään automaattisesti
+ * (app/migrate.php, turvakopio otetaan ensin). Tätä vanhempaa kantaa ei avata (requireCurrentDatabaseVersion).
+ * Jos skeema tai tallennettujen arvojen muoto muuttuu, lisää migraatio app/migrate.php:hen ja nosta SCHEMA_VERSION.
  * Ladataan index.php:n alussa.
  */
 
@@ -13,10 +14,10 @@ declare(strict_types=1);
 /** Yksi pyyntö kerrallaan: lukko estää tietokannan ja kuvien vaihdon toisen sovelluspyynnön ollessa kesken. Vapautuu pyynnön päättyessä. */
 function dbAcquireLock(): void {
     $lock=@fopen(APP_DIR.'/.autohuolto-access-7f3c91.lock','c');
-    if(!$lock){http_response_code(503);exit('Huoltokirjan käyttölukkoa ei saatu avattua. Tarkista hakemiston kirjoitusoikeus.');}
+    if(!$lock){http_response_code(503);exit(t('db.err_lock_open'));}
     $deadline=microtime(true)+12;
     while(!flock($lock,LOCK_EX|LOCK_NB)){
-        if(microtime(true)>=$deadline){http_response_code(503);exit('Huoltokirja tekee parhaillaan toista tallennusta tai varmuuskopiota. Yritä hetken kuluttua uudelleen.');}
+        if(microtime(true)>=$deadline){http_response_code(503);exit(t('db.err_lock_busy'));}
         usleep(100000);
     }
     register_shutdown_function(static function() use ($lock){if(is_resource($lock)){flock($lock,LOCK_UN);fclose($lock);}});
@@ -47,17 +48,17 @@ function initialAppName(): string {
     } catch(Throwable) { return DEFAULT_APP_NAME; }
 }
 function consistentDatabaseCopy(PDO $db,string $target): void {
-    if(file_exists($target))throw new RuntimeException('Turvakopion kohdetiedosto on jo olemassa.');
+    if(file_exists($target))throw new RuntimeException(t('db.err_copy_target_exists'));
     try {
         // VACUUM INTO lukee yhtenäisen SQLite-snapshotin, myös WAL:ssa olevat tallennukset.
         $db->exec('VACUUM INTO '.$db->quote($target));
         @chmod($target,0600);
         $check=new PDO('sqlite:'.$target,null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
-        if($check->query('PRAGMA integrity_check')->fetchColumn()!=='ok')throw new RuntimeException('Tietokantakopion eheystarkistus epäonnistui.');
+        if($check->query('PRAGMA integrity_check')->fetchColumn()!=='ok')throw new RuntimeException(t('db.err_copy_integrity'));
         $check=null;
     } catch(Throwable $e) {
         @unlink($target);
-        throw new RuntimeException('Eheää tietokantakopiota ei saatu luotua: '.$e->getMessage(),0,$e);
+        throw new RuntimeException(t('db.err_copy_failed',['message'=>$e->getMessage()]),0,$e);
     }
 }
 
@@ -124,8 +125,8 @@ CREATE TABLE car_customer_history (
 CREATE TABLE item_catalog (
     item_key TEXT PRIMARY KEY, label TEXT NOT NULL, section TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
     is_custom INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1,
-    item_kind TEXT NOT NULL DEFAULT 'generic', default_action TEXT NOT NULL DEFAULT 'Vaihdettu / tehty',
-    default_unit TEXT NOT NULL DEFAULT 'kpl', default_quantity REAL DEFAULT NULL, default_resets_interval INTEGER NOT NULL DEFAULT 1
+    item_kind TEXT NOT NULL DEFAULT 'generic', default_action TEXT NOT NULL DEFAULT 'replaced',
+    default_unit TEXT NOT NULL DEFAULT 'pcs', default_quantity REAL DEFAULT NULL, default_resets_interval INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE car_item_settings (
     car_id INTEGER NOT NULL, item_key TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1,
@@ -137,7 +138,7 @@ CREATE TABLE car_item_settings (
 );
 CREATE TABLE services (
     id INTEGER PRIMARY KEY AUTOINCREMENT, car_id INTEGER NOT NULL, service_date TEXT NOT NULL, odometer INTEGER NOT NULL DEFAULT 0,
-    title TEXT NOT NULL DEFAULT 'Huolto', service_type TEXT NOT NULL DEFAULT 'Määräaikaishuolto', workshop TEXT NOT NULL DEFAULT '', total_cost REAL DEFAULT NULL, notes TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '', service_type TEXT NOT NULL DEFAULT 'scheduled', workshop TEXT NOT NULL DEFAULT '', total_cost REAL DEFAULT NULL, notes TEXT NOT NULL DEFAULT '',
     labor_hours REAL NOT NULL DEFAULT 0, labor_rate REAL DEFAULT NULL, labor_vat_rate REAL DEFAULT NULL,
     actual_work_seconds INTEGER NOT NULL DEFAULT 0,
     service_origin TEXT NOT NULL DEFAULT '',
@@ -149,7 +150,7 @@ CREATE TABLE services (
     FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE
 );
 CREATE TABLE service_actions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, service_id INTEGER NOT NULL, item_key TEXT NOT NULL, action TEXT NOT NULL DEFAULT 'Vaihdettu / tehty',
+    id INTEGER PRIMARY KEY AUTOINCREMENT, service_id INTEGER NOT NULL, item_key TEXT NOT NULL, action TEXT NOT NULL DEFAULT 'replaced',
     brand TEXT NOT NULL DEFAULT '', supplier_sku TEXT NOT NULL DEFAULT '', oem_number TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '',
     quantity REAL DEFAULT NULL, unit TEXT NOT NULL DEFAULT '', price_net REAL DEFAULT NULL, vat_rate REAL DEFAULT NULL,
     item_label_snapshot TEXT NOT NULL DEFAULT '', item_section_snapshot TEXT NOT NULL DEFAULT '', resets_interval INTEGER NOT NULL DEFAULT 1,
@@ -178,11 +179,11 @@ CREATE TABLE mechanics (
 CREATE TABLE parts (
     id INTEGER PRIMARY KEY AUTOINCREMENT, car_id INTEGER NOT NULL, item_key TEXT NOT NULL DEFAULT '', part_name TEXT NOT NULL,
     brand TEXT NOT NULL DEFAULT '', supplier_sku TEXT NOT NULL DEFAULT '', oem_number TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, stock_qty REAL NOT NULL DEFAULT 0, stock_unit TEXT NOT NULL DEFAULT 'kpl', shelf_location TEXT NOT NULL DEFAULT '', reorder_level REAL DEFAULT NULL, purchase_price REAL DEFAULT NULL, FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, stock_qty REAL NOT NULL DEFAULT 0, stock_unit TEXT NOT NULL DEFAULT 'pcs', shelf_location TEXT NOT NULL DEFAULT '', reorder_level REAL DEFAULT NULL, purchase_price REAL DEFAULT NULL, FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE
 );
 CREATE TABLE invoices (
     id INTEGER PRIMARY KEY AUTOINCREMENT, service_id INTEGER NOT NULL UNIQUE, invoice_number TEXT NOT NULL UNIQUE,
-    issue_date TEXT NOT NULL, due_date TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'Luonnos',
+    issue_date TEXT NOT NULL, due_date TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft',
     seller_name TEXT NOT NULL DEFAULT '', seller_business_id TEXT NOT NULL DEFAULT '', seller_address TEXT NOT NULL DEFAULT '', seller_email TEXT NOT NULL DEFAULT '', seller_phone TEXT NOT NULL DEFAULT '', seller_iban TEXT NOT NULL DEFAULT '', seller_bic TEXT NOT NULL DEFAULT '',
     seller_mobilepay_enabled INTEGER NOT NULL DEFAULT 0, seller_mobilepay_number TEXT NOT NULL DEFAULT '', seller_mobilepay_name TEXT NOT NULL DEFAULT '', seller_logo_path TEXT NOT NULL DEFAULT '',
     customer_name TEXT NOT NULL DEFAULT '', customer_address TEXT NOT NULL DEFAULT '', customer_email TEXT NOT NULL DEFAULT '', customer_business_id TEXT NOT NULL DEFAULT '',
@@ -191,7 +192,7 @@ CREATE TABLE invoices (
     FOREIGN KEY(service_id) REFERENCES services(id) ON DELETE RESTRICT
 );
 CREATE TABLE invoice_lines (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, invoice_id INTEGER NOT NULL, description TEXT NOT NULL, qty REAL NOT NULL DEFAULT 1, unit TEXT NOT NULL DEFAULT 'kpl',
+    id INTEGER PRIMARY KEY AUTOINCREMENT, invoice_id INTEGER NOT NULL, description TEXT NOT NULL, qty REAL NOT NULL DEFAULT 1, unit TEXT NOT NULL DEFAULT 'pcs',
     unit_price_net REAL NOT NULL DEFAULT 0, vat_rate REAL NOT NULL DEFAULT 25.5, sort_order INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
 );
@@ -221,7 +222,7 @@ CREATE TABLE service_inventory_usage (
     item_key TEXT NOT NULL,
     part_id INTEGER NOT NULL,
     quantity REAL NOT NULL,
-    unit TEXT NOT NULL DEFAULT 'kpl',
+    unit TEXT NOT NULL DEFAULT 'pcs',
     shelf_snapshot TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -268,13 +269,15 @@ function currentDatabaseDefinition(): array {
     }
     return $definition;
 }
-function requireCurrentDatabaseVersion(PDO $db): void {
-    if(!(int)$db->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='app_settings'")->fetchColumn())throw new RuntimeException('Tietokannasta puuttuu huoltokirjan asetustaulu.');
+/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanha tuettu skeema 12 hyväksytään ilman päivitystä. */
+function requireCurrentDatabaseVersion(PDO $db,bool $migrate=true): void {
+    if(!(int)$db->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='app_settings'")->fetchColumn())throw new RuntimeException(t('db.err_settings_table_missing'));
     $raw=$db->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
-    if($raw===false||!preg_match('/^[0-9]+$/D',(string)$raw))throw new RuntimeException('Tietokannan skeemaversio puuttuu tai on virheellinen.');
+    if($raw===false||!preg_match('/^[0-9]+$/D',(string)$raw))throw new RuntimeException(t('db.err_schema_invalid'));
     $version=(int)$raw;
-    if($version<SCHEMA_VERSION)throw new RuntimeException('Tietokannan skeemaversio '.$version.' on liian vanha. Tämä ohjelma tukee skeemaversiota '.SCHEMA_VERSION.'. Kanta on luotu ohjelman varhaisella kehitysversiolla, jota tämä versio ei enää päivitä.');
-    if($version>SCHEMA_VERSION)throw new RuntimeException('Tietokanta on tehty uudemmalla ohjelmaversiolla. Päivitä ohjelma ennen kannan käyttöä tai palautusta.');
+    if($version===12){if($migrate)migrateSchema12To13($db);}
+    elseif($version<SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_old',['version'=>$version,'supported'=>SCHEMA_VERSION]));
+    if($version>SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_new'));
 }
 function authSchema(PDO $db): void {
     $db->exec(<<<'SQL'
@@ -315,40 +318,55 @@ function defaultAppSettings(): array {
     return [
         'feature_invoicing'=>'0','feature_mechanics'=>'0','feature_customers'=>'0','feature_time_tracking'=>'0','feature_inventory'=>'0',
         'parts_markup_enabled'=>'0','parts_markup_percent'=>'15',
-        'theme'=>'dark','hourly_rate'=>'65.00','vat_rate'=>'25.5','price_input_mode'=>'net','payment_days'=>'14',
-        'shop_name'=>DEFAULT_APP_NAME,'home_title'=>DEFAULT_HOME_TITLE,'home_subtitle'=>DEFAULT_HOME_SUBTITLE,
+        'language'=>'fi','theme'=>'dark','hourly_rate'=>'65.00','vat_rate'=>'25.5','price_input_mode'=>'net','payment_days'=>'14',
+        'shop_name'=>DEFAULT_APP_NAME,'home_title'=>HOME_TEXT_DEFAULT,'home_subtitle'=>HOME_TEXT_DEFAULT,
         'business_id'=>'','shop_address'=>'','shop_email'=>'','shop_phone'=>'','iban'=>'','bic'=>'',
         'mobilepay_enabled'=>'0','mobilepay_number'=>'','mobilepay_name'=>'','logo_path'=>'',
         'show_logo_invoice'=>'1','show_logo_service_print'=>'1','show_logo_car_history'=>'1','show_logo_all_history'=>'1','show_logo_header'=>'0'
     ];
 }
-/** Valmiit kohteet saavat profiilinsa suoraan luonnissa, eivät vanhan kannan migraatiossa. */
+/**
+ * Valmiit huoltokohteet: [tunniste, ryhmä, järjestys, tyyppi, oletustoimenpide, oletusyksikkö, oletusmäärä, nollaa väli].
+ * Nimi ei ole kannassa: tyhjä nimi (label='') tarkoittaa kielitiedoston nimeä item.<tunniste> (ks. app/vocab.php).
+ */
 function defaultMaintenanceItems(): array {
     return [
-        ['engine_oil','Moottoriöljy','Moottori',10,'fluid','Vaihdettu / tehty','L',null,1],
-        ['oil_filter','Moottoriöljyn suodatin','Moottori',20,'part','Vaihdettu / tehty','kpl',1,1],
-        ['cabin_filter','Raitisilmasuodatin','Sisätila',30,'part','Vaihdettu / tehty','kpl',1,1],
-        ['air_filter','Ilmansuodatin','Moottori',40,'part','Vaihdettu / tehty','kpl',1,1],
-        ['fuel_filter','Polttoainesuodatin','Moottori',50,'part','Vaihdettu / tehty','kpl',1,1],
-        ['wipers','Pyyhkijänsulat','Muut',60,'part','Vaihdettu / tehty','kpl',1,1],
-        ['brake_fluid','Jarruneste','Alusta & nesteet',70,'fluid','Vaihdettu / tehty','L',null,1],
-        ['brakes_front','Etujarrut','Alusta & nesteet',80,'inspection','Tarkastettu','kpl',1,1],
-        ['brakes_rear','Takajarrut','Alusta & nesteet',90,'inspection','Tarkastettu','kpl',1,1],
-        ['spark_plugs','Sytytystulpat','Moottori',100,'part','Vaihdettu / tehty','kpl',null,1],
-        ['gearbox_oil','Vaihteistoöljy','Voimansiirto',110,'fluid','Vaihdettu / tehty','L',null,1],
-        ['gearbox_filter','Vaihteistoöljyn suodatin','Voimansiirto',120,'part','Vaihdettu / tehty','kpl',1,1],
-        ['coolant','Jäähdytysneste','Alusta & nesteet',130,'fluid','Vaihdettu / tehty','L',null,1],
-        ['aux_belt','Apulaitehihna','Moottori',140,'part','Vaihdettu / tehty','kpl',1,1],
-        ['aux_belt_inspect','Apulaitehihnan tarkastus','Moottori',141,'inspection','Tarkastettu','kpl',null,1],
-        ['timing_belt','Jakohihna / jakopää','Moottori',150,'part','Vaihdettu / tehty','kpl',1,1],
-        ['timing_belt_inspect','Jakohihnan tarkastus','Moottori',151,'inspection','Tarkastettu','kpl',null,1],
-        ['battery','Akku','Sähkö',160,'part','Vaihdettu / tehty','kpl',1,1],
-        ['power_steering','Ohjaustehostimen neste','Alusta & nesteet',170,'fluid','Vaihdettu / tehty','L',null,1],
-        ['diff_oil','Tasauspyörästön öljy','Voimansiirto',180,'fluid','Vaihdettu / tehty','L',null,1],
-        ['transfer_oil','Jakolaatikko / Haldex-öljy','Voimansiirto',190,'fluid','Vaihdettu / tehty','L',null,1],
-        ['transfer_filter','Haldex / voimansiirron suodatin','Voimansiirto',200,'part','Vaihdettu / tehty','kpl',1,1],
-        ['inspection','Katsastus','Muut',210,'inspection','Tehty','kpl',null,1],
+        ['engine_oil','engine',10,'fluid','replaced','l',null,1],
+        ['oil_filter','engine',20,'part','replaced','pcs',1,1],
+        ['cabin_filter','interior',30,'part','replaced','pcs',1,1],
+        ['air_filter','engine',40,'part','replaced','pcs',1,1],
+        ['fuel_filter','engine',50,'part','replaced','pcs',1,1],
+        ['wipers','other',60,'part','replaced','pcs',1,1],
+        ['brake_fluid','chassis',70,'fluid','replaced','l',null,1],
+        ['brakes_front','chassis',80,'inspection','inspected','pcs',1,1],
+        ['brakes_rear','chassis',90,'inspection','inspected','pcs',1,1],
+        ['spark_plugs','engine',100,'part','replaced','pcs',null,1],
+        ['gearbox_oil','driveline',110,'fluid','replaced','l',null,1],
+        ['gearbox_filter','driveline',120,'part','replaced','pcs',1,1],
+        ['coolant','chassis',130,'fluid','replaced','l',null,1],
+        ['aux_belt','engine',140,'part','replaced','pcs',1,1],
+        ['aux_belt_inspect','engine',141,'inspection','inspected','pcs',null,1],
+        ['timing_belt','engine',150,'part','replaced','pcs',1,1],
+        ['timing_belt_inspect','engine',151,'inspection','inspected','pcs',null,1],
+        ['battery','electrical',160,'part','replaced','pcs',1,1],
+        ['power_steering','chassis',170,'fluid','replaced','l',null,1],
+        ['diff_oil','driveline',180,'fluid','replaced','l',null,1],
+        ['transfer_oil','driveline',190,'fluid','replaced','l',null,1],
+        ['transfer_filter','driveline',200,'part','replaced','pcs',1,1],
+        ['inspection','other',210,'inspection','done','pcs',null,1],
+        ['spare_tyre_kit','chassis',220,'inspection','inspected','pcs',null,1],
+        ['ac_service','climate',230,'generic','replaced','pcs',null,1],
     ];
+}
+/** Lisää puuttuvat valmiit huoltokohteet (label='' = kielitiedoston nimi). Palauttaa lisättyjen tunnisteet. */
+function insertStandardItems(PDO $db,bool $active): array {
+    $have=array_flip($db->query('SELECT item_key FROM item_catalog')->fetchAll(PDO::FETCH_COLUMN));$added=[];
+    $item=$db->prepare("INSERT INTO item_catalog(item_key,label,section,sort_order,is_custom,active,item_kind,default_action,default_unit,default_quantity,default_resets_interval) VALUES(?,'',?,?,0,?,?,?,?,?,?)");
+    foreach(defaultMaintenanceItems() as $row){
+        if(isset($have[$row[0]]))continue;
+        $item->execute([$row[0],$row[1],$row[2],$active?1:0,$row[3],$row[4],$row[5],$row[6],$row[7]]);$added[]=$row[0];
+    }
+    return $added;
 }
 function initializeFreshDatabase(PDO $db): void {
     $db->beginTransaction();
@@ -356,8 +374,7 @@ function initializeFreshDatabase(PDO $db): void {
         $db->exec(currentDatabaseSql());
         $setting=$db->prepare('INSERT INTO app_settings(setting_key,setting_value) VALUES(?,?)');
         foreach(defaultAppSettings()+['schema_version'=>(string)SCHEMA_VERSION] as $key=>$value)$setting->execute([$key,$value]);
-        $item=$db->prepare('INSERT INTO item_catalog(item_key,label,section,sort_order,item_kind,default_action,default_unit,default_quantity,default_resets_interval) VALUES(?,?,?,?,?,?,?,?,?)');
-        foreach(defaultMaintenanceItems() as $row)$item->execute($row);
+        insertStandardItems($db,true);
         $db->commit();
     }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
 }

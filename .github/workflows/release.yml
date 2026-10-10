@@ -1,5 +1,5 @@
-# Luo GitHub-julkaisun (release) ja lataus-zipin automaattisesti,
-# kun main-haaraan viedään uusi versio (APP_VERSION index.php:ssä).
+# Luo GitHub-julkaisun (release) ja asennuspaketin (zip) automaattisesti, kun main-haaraan viedään uusi versio
+# (APP_VERSION tiedostossa index.php). Pakettiin ei oteta docs/- eikä .github/-kansiota.
 name: Release
 
 on:
@@ -39,7 +39,7 @@ jobs:
         if: steps.exists.outputs.exists == 'false'
         run: |
           zip -qr "autonhuolto-${{ steps.v.outputs.version }}.zip" \
-            index.php app assets views docs CHANGELOG.md BACKUP.md SETUP.md README.md LICENSE SECURITY.md .gitignore .github \
+            index.php app assets views lang CHANGELOG.md BACKUP.md SETUP.md README.md LICENSE SECURITY.md .gitignore \
             -x '*.sqlite3*'
 
       - name: Poimi muutosloki

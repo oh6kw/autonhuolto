@@ -12,7 +12,7 @@ function biltemaVehicleLink(string $registration=''): void {
     $plate=preg_replace('/\s+/u','',mb_strtoupper(trim($registration)));
     if(preg_match('/^([A-ZÅÄÖ]{1,3})-?([0-9]{1,3})$/u',$plate,$m))$plate=$m[1].'-'.$m[2];else $plate='';
     $url='https://www.biltema.fi/auton-varaosahaku/'.($plate!==''?rawurlencode($plate).'/':'');
-    ?><a class="btn2 biltema-open" style="margin-top:7px" target="_blank" rel="noopener noreferrer" href="<?=h($url)?>">Avaa Bilteman ajoneuvotiedot ↗</a><div class="tiny biltema-status" role="status" aria-live="polite">Katso tiedot Biltemasta ja täytä kentät käsin.</div><?php
+    ?><a class="btn2 biltema-open" style="margin-top:7px" target="_blank" rel="noopener noreferrer" href="<?=h($url)?>"><?=t('cars.biltema_open')?></a><div class="tiny biltema-status" role="status" aria-live="polite"><?=t('cars.biltema_status')?></div><?php
 }
 function getCar(PDO $db,int $id): ?array { $st=$db->prepare("SELECT * FROM cars WHERE id=?");$st->execute([$id]);$r=$st->fetch();return $r?:null; }
 function getAnnualCosts(PDO $db, int $carId): array {
@@ -106,7 +106,7 @@ function kilometerHistoryEntries(PDO $db,int $carId,bool $newestFirst=true): arr
     foreach($st->fetchAll() as $r){
         $rows[]=[
             'date'=>(string)$r['service_date'],'datetime'=>(string)$r['service_date'].' 12:00:00','km'=>(int)$r['odometer'],
-            'source'=>'service','source_label'=>(string)($r['service_type']?:'Huolto'),'id'=>(int)$r['id'],'service_id'=>(int)$r['id'],'reading_id'=>0,
+            'source'=>'service','type_code'=>(string)$r['service_type'],'source_label'=>($r['service_type']?serviceTypeLabel((string)$r['service_type']):t('vocab.service_title_default')),'id'=>(int)$r['id'],'service_id'=>(int)$r['id'],'reading_id'=>0,
             'title'=>(string)$r['title'],'note'=>(string)$r['title'],'warning'=>false,'warning_text'=>''
         ];
     }
@@ -115,8 +115,8 @@ function kilometerHistoryEntries(PDO $db,int $carId,bool $newestFirst=true): arr
         $src=(string)($r['source']?:'manual');
         $rows[]=[
             'date'=>substr((string)$r['recorded_at'],0,10),'datetime'=>(string)$r['recorded_at'],'km'=>(int)$r['odometer'],
-            'source'=>$src,'source_label'=>$src==='initial'?'Lähtölukema':($src==='old'?'Vanha lukema':'Päivitä km'),'id'=>(int)$r['id'],'service_id'=>0,'reading_id'=>(int)$r['id'],
-            'title'=>'','note'=>(string)($r['note']??''),'warning'=>false,'warning_text'=>''
+            'source'=>$src,'source_label'=>$src==='initial'?t('cars.source_initial'):($src==='old'?t('cars.source_old'):t('cars.source_update')),'id'=>(int)$r['id'],'service_id'=>0,'reading_id'=>(int)$r['id'],
+            'title'=>'','note'=>noteLabel((string)($r['note']??'')),'warning'=>false,'warning_text'=>''
         ];
     }
     usort($rows,function($a,$b){$c=strcmp((string)$a['datetime'],(string)$b['datetime']);if($c!==0)return $c;$sa=(string)$a['source']==='service'?0:1;$sb=(string)$b['source']==='service'?0:1;return $sa<=>$sb?:((int)$a['id']<=>(int)$b['id']);});
@@ -128,7 +128,7 @@ function kilometerHistoryEntries(PDO $db,int $carId,bool $newestFirst=true): arr
         $dayMax=0;
         foreach($indexes as $i){
             $v=(int)$rows[$i]['km'];if($v<=0)continue;
-            if($priorMax>0&&$v<$priorMax){$rows[$i]['warning']=true;$rows[$i]['warning_text']='Lukema on aiempaa tunnettua kilometrilukemaa pienempi.';}
+            if($priorMax>0&&$v<$priorMax){$rows[$i]['warning']=true;$rows[$i]['warning_text']=t('cars.reading_lower_warning');}
             $dayMax=max($dayMax,$v);
         }
         if($dayMax>0)$priorMax=max($priorMax,$dayMax);
@@ -174,7 +174,7 @@ function drivingRateEstimate(PDO $db,array $car): array {
     if(!$best)return ['available'=>false,'anchor_date'=>$anchor['date'],'anchor_source'=>$anchor['source']];
     $annual=(float)$best['delta_km']/(float)$best['days']*365.0;
     if(!is_finite($annual)||$annual<=0)return ['available'=>false,'anchor_date'=>$anchor['date'],'anchor_source'=>$anchor['source']];
-    $sourceLabel=function(string $src): string {return $src==='service'?'huolto':($src==='initial'?'lähtölukema':($src==='old'?'vanha mittarilukema':($src==='manual'?'mittarimerkintä':'mittarilukema')));};
+    $sourceLabel=function(string $src): string {return $src==='service'?t('cars.src_service'):($src==='initial'?t('cars.src_initial'):($src==='old'?t('cars.src_old'):($src==='manual'?t('cars.src_manual'):t('cars.src_reading'))));};
     return [
         'available'=>true,
         'annual_km'=>(int)round($annual),
@@ -186,52 +186,57 @@ function drivingRateEstimate(PDO $db,array $car): array {
         'anchor_source'=>$anchor['source'],
         'sample_days'=>$best['days'],
         'sample_km'=>$best['delta_km'],
-        'sample_text'=>'Mittarilukema '.fiDate((string)$anchor['date']).' · '.number_format((int)$best['delta_km'],0,',',' ').' km / '.elapsedText($best['date'],$anchor['date']).' · '.$sourceLabel((string)$best['source']).' → '.$sourceLabel((string)$anchor['source']),
+        'sample_text'=>t('cars.sample_text',['date'=>fiDate((string)$anchor['date']),'km'=>number_format((int)$best['delta_km'],0,',',' '),'elapsed'=>elapsedText($best['date'],$anchor['date']),'from'=>$sourceLabel((string)$best['source']),'to'=>$sourceLabel((string)$anchor['source'])]),
         'current_km'=>$cur,
         'today'=>$today,
     ];
 }
 function dataIssueGroup(array $di): string {
     if(($di['level']??'')==='error')return 'error';
-    if(str_ends_with((string)($di['title']??''),'puuttuva kuva'))return 'img';
+    if(str_starts_with((string)($di['key']??''),'missing-image-'))return 'img';
     return ($di['level']??'')==='warn'?'warn':'info';
 }
-function dataCheckIssues(PDO $db): array {
+/**
+ * Tietojen tarkistuksen löydökset. Jokaisella löydöksellä on kielineutraali tunniste (key), jolla hyväksytty poikkeama tunnistetaan
+ * kielestä riippumatta. $all=true palauttaa myös hyväksytyt löydökset; legacy_key on vanhan version tekstitiiviste (migraatio).
+ */
+function dataCheckIssues(PDO $db,bool $all=false): array {
     $out=[];$ignored=array_flip($db->query("SELECT issue_key FROM data_issue_ignores")->fetchAll(PDO::FETCH_COLUMN));
-    $add=function(string $level,string $title,string $detail,string $url='',string $key='') use (&$out,$ignored){$key=$key?:hash('sha256',$title."\n".$detail);if(isset($ignored[$key]))return;$out[]=['level'=>$level,'title'=>$title,'detail'=>$detail,'url'=>$url,'key'=>$key];};
-    try {$integrity=(string)$db->query('PRAGMA integrity_check')->fetchColumn(); if($integrity!=='ok')$add('error','SQLite-tietokannan eheystarkistus','PRAGMA integrity_check: '.$integrity);}
-    catch(Throwable $e){$add('error','Eheystarkistus epäonnistui',$e->getMessage());}
-    try { foreach($db->query('PRAGMA foreign_key_check')->fetchAll() as $r)$add('error','Rikkoutunut tietokantaviittaus','Taulu '.($r['table']??'?').' · rivi '.($r['rowid']??'?')); } catch(Throwable) {}
+    $add=function(string $level,string $title,string $detail,string $url,string $key) use (&$out,$ignored,$all){if(!$all&&isset($ignored[$key]))return;$out[]=['level'=>$level,'title'=>$title,'detail'=>$detail,'url'=>$url,'key'=>$key,'legacy_key'=>hash('sha256',$title."\n".$detail),'ignored'=>isset($ignored[$key])];};
+    try {$integrity=(string)$db->query('PRAGMA integrity_check')->fetchColumn(); if($integrity!=='ok')$add('error',t('cars.issue_integrity'),'PRAGMA integrity_check: '.$integrity,'','db-integrity');}
+    catch(Throwable $e){$add('error',t('cars.issue_integrity_failed'),$e->getMessage(),'','db-integrity-failed');}
+    try { foreach($db->query('PRAGMA foreign_key_check')->fetchAll() as $r)$add('error',t('cars.issue_broken_db_ref'),t('cars.issue_broken_db_ref_detail',['table'=>($r['table']??'?'),'row'=>($r['rowid']??'?')]),'','db-fk-'.preg_replace('/[^A-Za-z0-9_]/','',(string)($r['table']??'x')).'-'.(int)($r['rowid']??0)); } catch(Throwable) {}
 
     $sql="SELECT cis.*,c.id car_id,c.reg_plate,c.nickname,ic.label FROM car_item_settings cis JOIN cars c ON c.id=cis.car_id JOIN item_catalog ic ON ic.item_key=cis.item_key WHERE cis.interval_km>0 OR cis.interval_months>0";
     foreach($db->query($sql)->fetchAll() as $r){
         $ik=(int)$r['interval_km']; $im=(int)$r['interval_months']; $car=trim((string)($r['reg_plate']?:$r['nickname']));
-        if($ik>0&&$ik<500&&$im>1000)$add('warn',$car.' · '.$r['label'],'Huoltoväli näyttää mahdollisesti ristiin menneeltä: '.number_format($ik,0,',',' ').' km / '.number_format($im,0,',',' ').' kk.','?car='.(int)$r['car_id'].'#ohjelma');
-        elseif($im>240)$add('warn',$car.' · '.$r['label'],'Aikaväli '.number_format($im,0,',',' ').' kk on poikkeuksellisen suuri. Tarkista huoltoväli.','?car='.(int)$r['car_id'].'#ohjelma');
-        elseif($ik>0&&$ik<500)$add('info',$car.' · '.$r['label'],'Kilometriväli '.number_format($ik,0,',',' ').' km on hyvin lyhyt. Tarkista yksikkö.','?car='.(int)$r['car_id'].'#ohjelma');
+        $itemName=itemLabelOf((string)$r['item_key'],(string)$r['label']);$ikey=(int)$r['car_id'].'-'.preg_replace('/[^A-Za-z0-9_]/','',(string)$r['item_key']);
+        if($ik>0&&$ik<500&&$im>1000)$add('warn',$car.' · '.$itemName,t('cars.issue_interval_swapped',['km'=>number_format($ik,0,',',' '),'months'=>number_format($im,0,',',' ')]),'?car='.(int)$r['car_id'].'#ohjelma','interval-swapped-'.$ikey);
+        elseif($im>240)$add('warn',$car.' · '.$itemName,t('cars.issue_interval_large',['months'=>number_format($im,0,',',' ')]),'?car='.(int)$r['car_id'].'#ohjelma','interval-large-'.$ikey);
+        elseif($ik>0&&$ik<500)$add('info',$car.' · '.$itemName,t('cars.issue_interval_short',['km'=>number_format($ik,0,',',' ')]),'?car='.(int)$r['car_id'].'#ohjelma','interval-short-'.$ikey);
     }
     foreach($db->query("SELECT * FROM cars ORDER BY id")->fetchAll() as $c){
-        $cid=(int)$c['id']; $name=trim((string)($c['reg_plate']?:$c['nickname']?:('Auto #'.$cid)));
-        if((int)$c['current_km']<=0)$add('info',$name,'Nykyistä mittarilukemaa ei ole annettu.','?car='.$cid.'#autontiedot');
+        $cid=(int)$c['id']; $name=trim((string)($c['reg_plate']?:$c['nickname']?:(t('cars.car_number',['id'=>$cid]))));
+        if((int)$c['current_km']<=0)$add('info',$name,t('cars.issue_no_current_km'),'?car='.$cid.'#autontiedot','no-current-km-'.$cid);
         $st=$db->prepare("SELECT id,service_date,odometer,title FROM services WHERE car_id=? ORDER BY service_date,id");$st->execute([$cid]);$rows=$st->fetchAll();$prev=null;$maxKm=0;
         foreach($rows as $r){
             $odo=(int)$r['odometer']; $maxKm=max($maxKm,$odo);
-            if($odo<=0)$add('info',$name.' · '.fiDate($r['service_date']),'Huollolta puuttuu kilometrilukema.','?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto');
-            if((string)$r['service_date']>date('Y-m-d'))$add('warn',$name.' · '.fiDate($r['service_date']),'Huoltopäivä on tulevaisuudessa.','?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto');
-            if($prev&&$odo>0&&(int)$prev['odometer']>0&&$odo<(int)$prev['odometer'])$add('warn',$name.' · '.fiDate($r['service_date']),'Mittarilukema '.km($odo).' on pienempi kuin edellisessä päiväyksen mukaisessa merkinnässä '.fiDate($prev['service_date']).' ('.recordedKm((int)$prev['odometer']).'). Lähdetieto voi silti olla juuri tällainen.','?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto');
+            if($odo<=0)$add('info',$name.' · '.fiDate($r['service_date']),t('cars.issue_service_no_km'),'?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto','service-no-km-'.(int)$r['id']);
+            if((string)$r['service_date']>date('Y-m-d'))$add('warn',$name.' · '.fiDate($r['service_date']),t('cars.issue_service_future'),'?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto','service-future-'.(int)$r['id']);
+            if($prev&&$odo>0&&(int)$prev['odometer']>0&&$odo<(int)$prev['odometer'])$add('warn',$name.' · '.fiDate($r['service_date']),t('cars.issue_reading_lower_than_prev',['km'=>km($odo),'date'=>fiDate($prev['service_date']),'prev_km'=>recordedKm((int)$prev['odometer'])]),'?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto','service-km-lower-'.(int)$r['id'].'-'.$odo.'-'.(int)$prev['odometer']);
             $q=$db->prepare("SELECT (SELECT COUNT(*) FROM service_actions WHERE service_id=?)+(SELECT COUNT(*) FROM service_custom_actions WHERE service_id=?)");$q->execute([(int)$r['id'],(int)$r['id']]);
-            if((int)$q->fetchColumn()===0)$add('info',$name.' · '.fiDate($r['service_date']),'Merkinnässä ei ole valittua huoltokohdetta eikä Muu työ -riviä. Tieto voi olla vain huomautustekstissä.','?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto');
+            if((int)$q->fetchColumn()===0)$add('info',$name.' · '.fiDate($r['service_date']),t('cars.issue_no_work_items'),'?car='.$cid.'&edit_service='.(int)$r['id'].'#huolto','service-no-items-'.(int)$r['id']);
             $prev=$r;
         }
         $st=$db->prepare("SELECT id,recorded_at,odometer,source FROM odometer_readings WHERE car_id=? ORDER BY recorded_at,id");$st->execute([$cid]);$readPrev=null;
         foreach($st->fetchAll() as $rr){
             $odo=(int)$rr['odometer'];$maxKm=max($maxKm,$odo);$rd=(string)$rr['recorded_at'];
-            if($odo<=0)$add('info',$name.' · mittarimerkintä','Mittarimerkinnältä puuttuu kilometrilukema.','?car='.$cid);
-            if($rd!==''&&strtotime($rd)!==false&&strtotime($rd)>time()+300)$add('warn',$name.' · mittarimerkintä','Mittarimerkinnän aikaleima '.date('d.m.Y H:i',strtotime($rd)).' on tulevaisuudessa.','?car='.$cid);
-            if($readPrev&&$odo>0&&(int)$readPrev['odometer']>0&&$odo<(int)$readPrev['odometer'])$add('warn',$name.' · mittarilukemahistoria','Mittarimerkintä '.date('d.m.Y H:i',strtotime($rd)).' ('.km($odo).') on pienempi kuin edellinen manuaalinen merkintä '.date('d.m.Y H:i',strtotime((string)$readPrev['recorded_at'])).' ('.recordedKm((int)$readPrev['odometer']).').','?car='.$cid);
+            if($odo<=0)$add('info',$name.' · '.t('cars.reading_entry'),t('cars.issue_reading_no_km'),'?car='.$cid,'reading-no-km-'.(int)$rr['id']);
+            if($rd!==''&&strtotime($rd)!==false&&strtotime($rd)>time()+300)$add('warn',$name.' · '.t('cars.reading_entry'),t('cars.issue_reading_future',['time'=>date('d.m.Y H:i',strtotime($rd))]),'?car='.$cid,'reading-future-'.(int)$rr['id']);
+            if($readPrev&&$odo>0&&(int)$readPrev['odometer']>0&&$odo<(int)$readPrev['odometer'])$add('warn',$name.' · '.t('cars.reading_history'),t('cars.issue_reading_lower_than_prev_reading',['time'=>date('d.m.Y H:i',strtotime($rd)),'km'=>km($odo),'prev_time'=>date('d.m.Y H:i',strtotime((string)$readPrev['recorded_at'])),'prev_km'=>recordedKm((int)$readPrev['odometer'])]),'?car='.$cid,'reading-lower-'.(int)$rr['id'].'-'.$odo.'-'.(int)$readPrev['odometer']);
             $readPrev=$rr;
         }
-        if($maxKm>0&&(int)$c['current_km']>0&&(int)$c['current_km']<$maxKm)$add('warn',$name,'Nykyinen mittarilukema '.km((int)$c['current_km']).' on pienempi kuin historiasta löytyvä suurin lukema '.km($maxKm).'.','?car='.$cid.'#autontiedot');
+        if($maxKm>0&&(int)$c['current_km']>0&&(int)$c['current_km']<$maxKm)$add('warn',$name,t('cars.issue_current_lower_than_max',['km'=>km((int)$c['current_km']),'max'=>km($maxKm)]),'?car='.$cid.'#autontiedot','current-lower-max-'.$cid.'-'.(int)$c['current_km'].'-'.$maxKm);
     }
     /* Mekaanikkoa vaaditaan tarkistusmielessä vain omalta työltä. Ulkopuolisen korjaamon henkilön nimeä ei tarvitse tietää. */
     $mechanicsSetting=(string)($db->query("SELECT setting_value FROM app_settings WHERE setting_key='feature_mechanics'")->fetchColumn() ?: '0');
@@ -239,34 +244,34 @@ function dataCheckIssues(PDO $db): array {
         $sqlMissingMechanic="SELECT s.id,s.car_id,s.service_date,s.odometer,s.title,s.service_type,c.reg_plate,c.nickname,c.make,c.model FROM services s JOIN cars c ON c.id=s.car_id WHERE s.service_origin='own' AND TRIM(COALESCE(s.mechanic_name_snapshot,''))='' ORDER BY s.service_date DESC,s.id DESC";
         foreach($db->query($sqlMissingMechanic)->fetchAll() as $r){
             $carLabel=trim((string)($r['reg_plate']?:$r['nickname']?:(trim((string)(($r['make']??'').' '.($r['model']??''))))));
-            if($carLabel==='')$carLabel='Auto #'.(int)$r['car_id'];
-            $detail=fiDate((string)$r['service_date']).' · '.recordedKm((int)$r['odometer']).' · '.trim((string)($r['title']?:$r['service_type']?:'Huolto')).'. Oma työ on merkitty ilman mekaanikkoa.';
-            $add('info',$carLabel.' · mekaanikko puuttuu',$detail,'?car='.(int)$r['car_id'].'&edit_service='.(int)$r['id'].'#huolto','missing-mechanic-service-'.(int)$r['id']);
+            if($carLabel==='')$carLabel=t('cars.car_number',['id'=>(int)$r['car_id']]);
+            $detail=t('cars.issue_missing_mechanic_detail',['date'=>fiDate((string)$r['service_date']),'km'=>recordedKm((int)$r['odometer']),'title'=>trim((string)($r['title']?:serviceTypeLabel((string)$r['service_type'])?:t('vocab.service_title_default')))]);
+            $add('info',$carLabel.' · '.t('cars.mechanic_missing'),$detail,'?car='.(int)$r['car_id'].'&edit_service='.(int)$r['id'].'#huolto','missing-mechanic-service-'.(int)$r['id']);
         }
     }
     $customerSetting=(string)($db->query("SELECT setting_value FROM app_settings WHERE setting_key='feature_customers'")->fetchColumn() ?: '0');
     if($customerSetting==='1'){
         foreach($db->query("SELECT id,reg_plate,nickname,owner FROM cars WHERE current_customer_id IS NULL OR current_customer_id=0 ORDER BY id")->fetchAll() as $r){
-            $name=trim((string)($r['reg_plate']?:$r['nickname']?:('Auto #'.(int)$r['id'])));
+            $name=trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['id']]))));
             $legacy=trim((string)($r['owner']??''));
-            $detail='Autoa ei ole vielä liitetty asiakasrekisteriin.'.($legacy!==''?' Vanha omistaja / käyttäjä -tieto: '.$legacy.'.':'');
-            $add('info',$name.' · asiakaslinkki puuttuu',$detail,'?car='.(int)$r['id'].'#asiakkuus','unlinked-customer-car-'.(int)$r['id']);
+            $detail=$legacy!==''?t('cars.issue_unlinked_customer_legacy',['legacy'=>$legacy]):t('cars.issue_unlinked_customer');
+            $add('info',$name.' · '.t('cars.customer_link_missing'),$detail,'?car='.(int)$r['id'].'#asiakkuus','unlinked-customer-car-'.(int)$r['id']);
         }
         foreach($db->query("SELECT c.id,c.reg_plate,c.nickname,COUNT(s.id) cnt FROM cars c JOIN services s ON s.car_id=c.id WHERE c.current_customer_id IS NOT NULL AND c.current_customer_id<>0 AND TRIM(COALESCE(s.customer_name_snapshot,''))='' AND (s.customer_id IS NULL OR s.customer_id=0) GROUP BY c.id,c.reg_plate,c.nickname HAVING COUNT(s.id)>0 ORDER BY c.id")->fetchAll() as $r){
-            $name=trim((string)($r['reg_plate']?:$r['nickname']?:('Auto #'.(int)$r['id'])));$cnt=(int)$r['cnt'];
-            $add('info',$name.' · vanhoja asiakassnapshoteja puuttuu',$cnt.' huollolta puuttuu tapahtumahetken asiakassnapshot. Nykyistä asiakasta ei kopioida niihin automaattisesti; auton Asiakkuus-osiossa voit täydentää ne vahvistetusti ja tarvittaessa alkupäivästä alkaen.','?car='.(int)$r['id'].'#asiakkuus','missing-customer-snapshots-car-'.(int)$r['id']);
+            $name=trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['id']]))));$cnt=(int)$r['cnt'];
+            $add('info',$name.' · '.t('cars.customer_snapshots_missing'),t('cars.issue_customer_snapshots_detail',['n'=>$cnt]),'?car='.(int)$r['id'].'#asiakkuus','missing-customer-snapshots-car-'.(int)$r['id']);
         }
     }
 
     foreach($db->query("SELECT id,name,postal_code,city FROM customers WHERE TRIM(postal_code)<>'' AND postal_code NOT GLOB '[0-9][0-9][0-9][0-9][0-9]' ORDER BY name,id")->fetchAll() as $r){
-        $add('info',(string)$r['name'].' · postinumero','Postinumero "'.(string)$r['postal_code'].'" ei ole suomalaisen 5-numeroisen postinumeron muodossa. Tarkista myös postitoimipaikka "'.(string)$r['city'].'".','?view=customers&customer='.(int)$r['id'],'customer-postal-'.(int)$r['id']);
+        $add('info',(string)$r['name'].' · '.t('cars.postal_code'),t('cars.issue_postal_detail',['postal'=>(string)$r['postal_code'],'city'=>(string)$r['city']]),'?view=customers&customer='.(int)$r['id'],'customer-postal-'.(int)$r['id']);
     }
-    foreach($db->query("SELECT c.id,c.reg_plate,c.nickname,c.current_customer_id FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id WHERE c.current_customer_id IS NOT NULL AND c.current_customer_id<>0 AND cu.id IS NULL")->fetchAll() as $r)$add('error','Rikkoutunut auton asiakasviittaus',trim((string)($r['reg_plate']?:$r['nickname']?:('Auto #'.(int)$r['id']))).' viittaa puuttuvaan asiakkaaseen #'.(int)$r['current_customer_id'],'?car='.(int)$r['id'].'#asiakkuus','orphan-car-customer-'.(int)$r['id']);
-    foreach($db->query("SELECT s.id,s.car_id,s.customer_id,c.reg_plate,c.nickname FROM services s JOIN cars c ON c.id=s.car_id LEFT JOIN customers cu ON cu.id=s.customer_id WHERE s.customer_id IS NOT NULL AND s.customer_id<>0 AND cu.id IS NULL")->fetchAll() as $r)$add('error','Rikkoutunut huollon asiakasviittaus',trim((string)($r['reg_plate']?:$r['nickname']?:('Auto #'.(int)$r['car_id']))).' · huolto #'.(int)$r['id'].' viittaa puuttuvaan asiakkaaseen #'.(int)$r['customer_id'],'?car='.(int)$r['car_id'].'&edit_service='.(int)$r['id'].'#huolto','orphan-service-customer-'.(int)$r['id']);
-    foreach($db->query("SELECT s.id,s.car_id,s.mechanic_id,c.reg_plate,c.nickname FROM services s JOIN cars c ON c.id=s.car_id LEFT JOIN mechanics m ON m.id=s.mechanic_id WHERE s.mechanic_id IS NOT NULL AND s.mechanic_id<>0 AND m.id IS NULL")->fetchAll() as $r)$add('error','Rikkoutunut huollon mekaanikkoviittaus',trim((string)($r['reg_plate']?:$r['nickname']?:('Auto #'.(int)$r['car_id']))).' · huolto #'.(int)$r['id'].' viittaa puuttuvaan mekaanikkoon #'.(int)$r['mechanic_id'],'?car='.(int)$r['car_id'].'&edit_service='.(int)$r['id'].'#huolto','orphan-service-mechanic-'.(int)$r['id']);
+    foreach($db->query("SELECT c.id,c.reg_plate,c.nickname,c.current_customer_id FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id WHERE c.current_customer_id IS NOT NULL AND c.current_customer_id<>0 AND cu.id IS NULL")->fetchAll() as $r)$add('error',t('cars.issue_broken_car_customer'),t('cars.issue_broken_car_customer_detail',['name'=>trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['id']])))),'id'=>(int)$r['current_customer_id']]),'?car='.(int)$r['id'].'#asiakkuus','orphan-car-customer-'.(int)$r['id']);
+    foreach($db->query("SELECT s.id,s.car_id,s.customer_id,c.reg_plate,c.nickname FROM services s JOIN cars c ON c.id=s.car_id LEFT JOIN customers cu ON cu.id=s.customer_id WHERE s.customer_id IS NOT NULL AND s.customer_id<>0 AND cu.id IS NULL")->fetchAll() as $r)$add('error',t('cars.issue_broken_service_customer'),t('cars.issue_broken_service_customer_detail',['name'=>trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['car_id']])))),'service'=>(int)$r['id'],'id'=>(int)$r['customer_id']]),'?car='.(int)$r['car_id'].'&edit_service='.(int)$r['id'].'#huolto','orphan-service-customer-'.(int)$r['id']);
+    foreach($db->query("SELECT s.id,s.car_id,s.mechanic_id,c.reg_plate,c.nickname FROM services s JOIN cars c ON c.id=s.car_id LEFT JOIN mechanics m ON m.id=s.mechanic_id WHERE s.mechanic_id IS NOT NULL AND s.mechanic_id<>0 AND m.id IS NULL")->fetchAll() as $r)$add('error',t('cars.issue_broken_service_mechanic'),t('cars.issue_broken_service_mechanic_detail',['name'=>trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['car_id']])))),'service'=>(int)$r['id'],'id'=>(int)$r['mechanic_id']]),'?car='.(int)$r['car_id'].'&edit_service='.(int)$r['id'].'#huolto','orphan-service-mechanic-'.(int)$r['id']);
 
-    foreach($db->query("SELECT vin,COUNT(*) cnt,GROUP_CONCAT(reg_plate, ', ') regs FROM cars WHERE TRIM(vin)<>'' GROUP BY vin HAVING COUNT(*)>1")->fetchAll() as $r)$add('warn','Sama VIN usealla autolla',(string)$r['vin'].' · '.(string)$r['regs']);
-    foreach($db->query("SELECT reg_plate,COUNT(*) cnt FROM cars WHERE TRIM(reg_plate)<>'' GROUP BY UPPER(reg_plate) HAVING COUNT(*)>1")->fetchAll() as $r)$add('warn','Sama rekisteritunnus usealla autolla',(string)$r['reg_plate']);
-    foreach($db->query("SELECT sp.file_path,c.id car_id,c.reg_plate FROM service_photos sp JOIN cars c ON c.id=sp.car_id")->fetchAll() as $r){$abs=photoAbsolutePath((string)$r['file_path']);if(!$abs||!is_file($abs))$add('warn',($r['reg_plate']?:'Auto').' · puuttuva kuva','Tietokannassa on kuvatieto, mutta tiedostoa ei löydy: '.(string)$r['file_path'],'?car='.(int)$r['car_id'].'#historia');}
+    foreach($db->query("SELECT vin,COUNT(*) cnt,GROUP_CONCAT(reg_plate, ', ') regs FROM cars WHERE TRIM(vin)<>'' GROUP BY vin HAVING COUNT(*)>1")->fetchAll() as $r)$add('warn',t('cars.issue_duplicate_vin'),(string)$r['vin'].' · '.(string)$r['regs'],'','dup-vin-'.md5((string)$r['vin']));
+    foreach($db->query("SELECT reg_plate,COUNT(*) cnt FROM cars WHERE TRIM(reg_plate)<>'' GROUP BY UPPER(reg_plate) HAVING COUNT(*)>1")->fetchAll() as $r)$add('warn',t('cars.issue_duplicate_plate'),(string)$r['reg_plate'],'','dup-plate-'.md5(strtoupper((string)$r['reg_plate'])));
+    foreach($db->query("SELECT sp.file_path,c.id car_id,c.reg_plate FROM service_photos sp JOIN cars c ON c.id=sp.car_id")->fetchAll() as $r){$abs=photoAbsolutePath((string)$r['file_path']);if(!$abs||!is_file($abs))$add('warn',($r['reg_plate']?:t('cars.car')).' · '.t('cars.missing_image'),t('cars.issue_missing_image_detail',['path'=>(string)$r['file_path']]),'?car='.(int)$r['car_id'].'#historia','missing-image-'.md5((string)$r['file_path']));}
     $rank=['error'=>0,'warn'=>1,'info'=>2]; usort($out,fn($a,$b)=>($rank[$a['level']]<=>$rank[$b['level']])?:strcmp($a['title'],$b['title'])); return $out;
 }

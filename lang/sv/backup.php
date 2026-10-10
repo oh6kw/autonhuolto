@@ -1,0 +1,83 @@
+<?php
+declare(strict_types=1);
+return [
+/* --- genomgång av programträdet --- */
+'backup.err_app_dir_missing'=>'Programkatalogen hittades inte.',
+'backup.err_invalid_path'=>'Programkatalogen innehåller en ogiltig filsökväg: {path}.',
+'backup.err_symlink'=>'Någon fullständig säkerhetskopia skapades inte eftersom programkatalogen innehåller en symbolisk länk: {path}.',
+'backup.err_unreadable'=>'Någon fullständig säkerhetskopia skapades inte eftersom programmet inte kan läsa filen: {path}. Flytta filen bort från programkatalogen eller rätta till dess ägare och rättigheter.',
+'backup.err_prepare'=>'Förberedelsen av säkerhetskopian misslyckades.',
+/* --- kontroll av databasen som ska återställas --- */
+'backup.err_not_sqlite'=>'Säkerhetskopian är inte en giltig SQLite-databas.',
+'backup.err_db_corrupt'=>'Databasen i säkerhetskopian är skadad.',
+'backup.err_foreign_structures'=>'Säkerhetskopian innehåller databasstrukturer som inte hör till servicebokens databas.',
+'backup.err_missing_table'=>'Säkerhetskopian saknar servicebokens tabell: {table}.',
+'backup.err_missing_column'=>'Säkerhetskopian saknar kolumnen {table}.{column}.',
+'backup.err_bad_column'=>'Säkerhetskopians kolumnstruktur är felaktig: {table}.{column}.',
+'backup.err_missing_fk'=>'Säkerhetskopian saknar referensskyddet: {table}.{column}.',
+'backup.err_broken_ref'=>'Säkerhetskopian innehåller en trasig databasreferens: {table}.{column}.',
+'backup.err_missing_unique'=>'Säkerhetskopian saknar databasens unikhetsbegränsning: {table}.',
+'backup.err_broken_refs'=>'Säkerhetskopian innehåller trasiga databasreferenser.',
+'backup.err_missing_customer_mechanic'=>'Säkerhetskopian innehåller en saknad kund- eller mekanikerreferens.',
+'backup.err_missing_image'=>'ZIP-säkerhetskopian saknar en bild eller logo: {path}.',
+/* --- skapande av fullständig ZIP-säkerhetskopia --- */
+'backup.err_zip_ext_backup'=>'Fullständig ZIP-säkerhetskopia kräver PHP-tillägget ZipArchive.',
+'backup.err_snapshot_missing'=>'Databasens säkerhetskopieringsögonblicksbild hittades inte.',
+'backup.err_zip_create'=>'ZIP-säkerhetskopian kunde inte skapas (ZipArchive-kod {code}).',
+'backup.err_zip_add_db'=>'Databasen kunde inte läggas till i ZIP-säkerhetskopian.',
+'backup.err_file_vanished'=>'En programfil försvann under säkerhetskopieringen: {path}.',
+'backup.err_zip_add_file'=>'Filen kunde inte läggas till i säkerhetskopian: {path}.',
+'backup.err_zip_finalize'=>'Slutförandet av ZIP-säkerhetskopian misslyckades.',
+/* --- uppackning av ZIP-säkerhetskopia --- */
+'backup.err_zip_ext_restore'=>'ZIP-återställning kräver PHP-tillägget ZipArchive.',
+'backup.err_zip_open'=>'ZIP-säkerhetskopian kunde inte öppnas eller är skadad.',
+'backup.err_zip_too_many'=>'ZIP-säkerhetskopian innehåller för många filer.',
+'backup.err_zip_index'=>'ZIP-filens katalog är skadad.',
+'backup.err_zip_too_big'=>'ZIP-säkerhetskopian överskrider storleksgränsen för återställning.',
+'backup.err_zip_bad_path'=>'ZIP-säkerhetskopian innehåller en ogiltig filsökväg.',
+'backup.err_zip_symlink'=>'ZIP-säkerhetskopian får inte innehålla symboliska länkar.',
+'backup.err_restore_dir_prepare'=>'Förberedelsen av återställningskatalogen misslyckades.',
+'backup.err_zip_extract'=>'Uppackningen av ZIP-filen misslyckades: {name}.',
+'backup.err_zip_content'=>'ZIP-filens innehåll är skadat eller ofullständigt: {name}.',
+'backup.err_zip_no_db'=>'Den fullständiga ZIP-säkerhetskopian saknar autohuolto.sqlite3.',
+/* --- kontroll av manifestet --- */
+'backup.err_manifest_unknown'=>'Säkerhetskopians manifest är okänt.',
+'backup.err_schema_version'=>'Säkerhetskopians databasschemaversion stämmer inte med den här programversionen.',
+'backup.err_manifest_db'=>'Säkerhetskopians databasfil stämmer inte med manifestet.',
+'backup.err_manifest_file'=>'En fil i säkerhetskopian stämmer inte med manifestet: {path}.',
+/* --- säkerhetskopia och återställning av programfiler --- */
+'backup.err_safety_target_exists'=>'Målet för programmets säkerhetskopia finns redan.',
+'backup.err_safety_create'=>'Programmets säkerhetskopia kunde inte skapas.',
+'backup.err_safety_dir_create'=>'Skapandet av programmets säkerhetskatalog misslyckades.',
+'backup.err_safety_dir_prepare'=>'Förberedelsen av programmets säkerhetskatalog misslyckades.',
+'backup.err_safety_copy'=>'Säkerhetskopieringen av programfilen misslyckades: {path}.',
+'backup.err_app_restore_dir_create'=>'Skapandet av programmets återställningskatalog misslyckades: {path}.',
+'backup.err_app_restore_dir_prepare'=>'Förberedelsen av programmets återställningskatalog misslyckades.',
+'backup.err_app_restore_file'=>'Återställningen av programfilen misslyckades: {path}.',
+'backup.err_app_restore_move'=>'Placeringen av programfilen på plats misslyckades: {path}.',
+/* --- kontroll av programversion --- */
+'backup.err_version_unknown'=>'Säkerhetskopians programversion kunde inte läsas. Återställningen kan byta hela programmet till en okänd version. Återställ helst bara SQLite-säkerhetskopian (programmet bevaras) eller kryssa i "Tillåt återställning till äldre programversion" om du är säker.',
+'backup.note_version_unknown'=>'Säkerhetskopians programversion var okänd.',
+'backup.err_version_older'=>'Återställningen gjordes inte: säkerhetskopians programversion ({backup}) är äldre än den som används nu ({current}). Efter en fullständig ZIP-återställning vore hela programmet den gamla versionen och din uppdatering skulle försvinna. Om du bara vill ha tillbaka data, återställ enbart SQLite-säkerhetskopian: programmet förblir oförändrat. Om du säkert vill gå tillbaka till den gamla versionen, kryssa i "Tillåt återställning till äldre programversion".',
+'backup.note_version_downgraded'=>'Programmet återställdes till den äldre versionen {backup} (tidigare {current}).',
+/* --- återställning --- */
+'backup.err_stage_create'=>'Återställningens tillfälliga katalog kunde inte skapas.',
+'backup.err_db_in_use'=>'Databasen används av en annan anslutning. Återställningen gjordes inte.',
+'backup.err_db_sidefile'=>'Frigörandet av databasens sidofil misslyckades.',
+'backup.err_db_move_old'=>'Den nuvarande databasen kunde inte flyttas undan.',
+'backup.err_db_replace'=>'Ersättandet av databasen misslyckades.',
+'backup.err_missing_core_file'=>'Den fullständiga säkerhetskopian saknar en viktig programfil: {file}.',
+'backup.err_missing_required_file'=>'Den fullständiga säkerhetskopian saknar en fil som index.php behöver: {file}.',
+/* --- meddelanden vid lyckad återställning --- */
+'backup.restored'=>'Säkerhetskopian återställdes. Databasens säkerhetskopia som togs före återställningen: {file}.',
+'backup.restored_full'=>' Hela programträdet, databasen, bilderna samt säkerhetskopians användare och behörigheter återställdes.',
+'backup.restored_db_only'=>' Databasen återställdes; programfilerna och bildkatalogen berördes inte. Säkerhetskopians användare och behörigheter återställdes.',
+'backup.restored_skipped'=>' {n} filer eller kataloger som inte hör till programmet hoppades över och lämnades som de var.',
+'backup.restored_pruned'=>' Återställningens säkerhetskopior som var över {days} dagar gamla ({n} st.) städades bort.',
+/* --- meddelanden vid misslyckad återställning --- */
+'backup.err_restore_incomplete'=>'Återställningen misslyckades och den automatiska återställningen av det gamla läget blev ofullständig. Säkerhetskopia: {file}. {message}',
+'backup.err_restore_failed'=>'Återställningen gjordes inte; de nuvarande uppgifterna finns kvar. {message}',
+/* --- nedladdning (GET) --- */
+'backup.err_unknown_type'=>'Okänd typ av säkerhetskopia.',
+'backup.failed'=>'Säkerhetskopieringen misslyckades: {message}',
+];

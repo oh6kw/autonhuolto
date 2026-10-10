@@ -20,6 +20,7 @@ Käyttöliittymä mukautuu automaattisesti näytön kokoon, joten samaa ohjelmaa
 - Laskut (myös MobilePay-tiedot), tulosteet / PDF ja Excel-viennit
 - Käyttäjät ja roolit (ylläpitäjä, tallentaja, katselija), tapahtumaloki
 - Verottomat tai verolliset hinnat valittavissa, ALV-muunnos varastossa
+- Suomi ja ruotsi (svenska): kieli valitaan asennuksessa, oletuskieli Asetuksissa ja halutessa käyttäjäkohtaisesti Oma tili -sivulla
 - Tietojen tarkistus, SQLite- ja täysi ZIP-varmuuskopio sekä palautus selaimesta
 - Ei ulkoisia kirjastoja: yksi PHP-sovellus ja yksi SQLite-tiedosto
 

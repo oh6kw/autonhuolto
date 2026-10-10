@@ -1,0 +1,83 @@
+<?php
+declare(strict_types=1);
+return [
+/* --- sovelluspuun läpikäynti --- */
+'backup.err_app_dir_missing'=>'Sovellushakemistoa ei löydy.',
+'backup.err_invalid_path'=>'Sovellushakemistossa on epäkelpo tiedostopolku: {path}.',
+'backup.err_symlink'=>'Täyttä varmuuskopiota ei luotu, koska sovellushakemistossa on symbolinen linkki: {path}.',
+'backup.err_unreadable'=>'Täyttä varmuuskopiota ei luotu, koska ohjelma ei voi lukea tiedostoa: {path}. Siirrä tiedosto pois ohjelman hakemistosta tai korjaa sen omistaja ja oikeudet.',
+'backup.err_prepare'=>'Varmuuskopion valmistelu epäonnistui.',
+/* --- palautettavan tietokannan tarkistus --- */
+'backup.err_not_sqlite'=>'Varmuuskopio ei ole kelvollinen SQLite-tietokanta.',
+'backup.err_db_corrupt'=>'Varmuuskopion tietokanta on vioittunut.',
+'backup.err_foreign_structures'=>'Varmuuskopiossa on huoltokirjaan kuulumattomia tietokantarakenteita.',
+'backup.err_missing_table'=>'Varmuuskopiosta puuttuu huoltokirjan taulu: {table}.',
+'backup.err_missing_column'=>'Varmuuskopiosta puuttuu sarake {table}.{column}.',
+'backup.err_bad_column'=>'Varmuuskopion sarakerakenne on virheellinen: {table}.{column}.',
+'backup.err_missing_fk'=>'Varmuuskopiosta puuttuu viittauksen suoja: {table}.{column}.',
+'backup.err_broken_ref'=>'Varmuuskopiossa on rikkoutunut tietokantaviittaus: {table}.{column}.',
+'backup.err_missing_unique'=>'Varmuuskopiosta puuttuu tietokannan yksikäsitteisyysraja: {table}.',
+'backup.err_broken_refs'=>'Varmuuskopiossa on rikkoutuneita tietokantaviittauksia.',
+'backup.err_missing_customer_mechanic'=>'Varmuuskopiossa on puuttuva asiakas- tai mekaanikkoviittaus.',
+'backup.err_missing_image'=>'ZIP-varmuuskopiosta puuttuu kuva tai logo: {path}.',
+/* --- täyden ZIP-varmuuskopion luonti --- */
+'backup.err_zip_ext_backup'=>'Täysi ZIP-backup vaatii PHP ZipArchive -laajennuksen.',
+'backup.err_snapshot_missing'=>'Tietokannan backup-snapshotia ei löytynyt.',
+'backup.err_zip_create'=>'ZIP-varmuuskopiota ei saatu luotua (ZipArchive-koodi {code}).',
+'backup.err_zip_add_db'=>'Tietokantaa ei saatu lisättyä ZIP-varmuuskopioon.',
+'backup.err_file_vanished'=>'Sovellustiedosto katosi backupin aikana: {path}.',
+'backup.err_zip_add_file'=>'Tiedostoa ei saatu lisättyä varmuuskopioon: {path}.',
+'backup.err_zip_finalize'=>'ZIP-varmuuskopion viimeistely epäonnistui.',
+/* --- ZIP-varmuuskopion purku --- */
+'backup.err_zip_ext_restore'=>'ZIP-palautus vaatii PHP ZipArchive -laajennuksen.',
+'backup.err_zip_open'=>'ZIP-varmuuskopiota ei saatu avattua tai se on vioittunut.',
+'backup.err_zip_too_many'=>'ZIP-varmuuskopiossa on liikaa tiedostoja.',
+'backup.err_zip_index'=>'ZIP-tiedoston hakemisto on vioittunut.',
+'backup.err_zip_too_big'=>'ZIP-varmuuskopio ylittää palautuksen kokorajan.',
+'backup.err_zip_bad_path'=>'ZIP-varmuuskopiossa on virheellinen tiedostopolku.',
+'backup.err_zip_symlink'=>'ZIP-varmuuskopio ei saa sisältää symbolisia linkkejä.',
+'backup.err_restore_dir_prepare'=>'Palautuksen hakemiston valmistelu epäonnistui.',
+'backup.err_zip_extract'=>'ZIP-tiedoston purkaminen epäonnistui: {name}.',
+'backup.err_zip_content'=>'ZIP-tiedoston sisältö on vioittunut tai jäi vajaaksi: {name}.',
+'backup.err_zip_no_db'=>'Täydestä ZIP-varmuuskopiosta puuttuu autohuolto.sqlite3.',
+/* --- manifestin tarkistus --- */
+'backup.err_manifest_unknown'=>'Varmuuskopion manifest on tuntematon.',
+'backup.err_schema_version'=>'Varmuuskopion tietokannan skeemaversio ei täsmää tähän ohjelmaversioon.',
+'backup.err_manifest_db'=>'Varmuuskopion tietokantatiedosto ei täsmää manifestiin.',
+'backup.err_manifest_file'=>'Varmuuskopion tiedosto ei täsmää manifestiin: {path}.',
+/* --- turvakopio ja sovellustiedostojen palautus --- */
+'backup.err_safety_target_exists'=>'Sovelluksen turvakopion kohde on jo olemassa.',
+'backup.err_safety_create'=>'Sovelluksen turvakopiota ei saatu luotua.',
+'backup.err_safety_dir_create'=>'Sovelluksen turvakansion luonti epäonnistui.',
+'backup.err_safety_dir_prepare'=>'Sovelluksen turvakansion valmistelu epäonnistui.',
+'backup.err_safety_copy'=>'Sovellustiedoston turvakopiointi epäonnistui: {path}.',
+'backup.err_app_restore_dir_create'=>'Sovelluksen palautuksen hakemiston luonti epäonnistui: {path}.',
+'backup.err_app_restore_dir_prepare'=>'Sovelluksen palautuksen hakemiston valmistelu epäonnistui.',
+'backup.err_app_restore_file'=>'Sovellustiedoston palautus epäonnistui: {path}.',
+'backup.err_app_restore_move'=>'Sovellustiedoston paikalleenvienti epäonnistui: {path}.',
+/* --- ohjelmaversion tarkistus --- */
+'backup.err_version_unknown'=>'Varmuuskopion ohjelmaversiota ei voitu lukea. Palautus voi vaihtaa koko ohjelman tuntemattomaan versioon. Palauta mieluummin pelkkä SQLite-varmuuskopio (ohjelma säilyy), tai rastita "Salli palautus vanhempaan ohjelmaversioon", jos olet varma.',
+'backup.note_version_unknown'=>'Varmuuskopion ohjelmaversio oli tuntematon.',
+'backup.err_version_older'=>'Palautusta ei tehty: varmuuskopion ohjelmaversio ({backup}) on vanhempi kuin nyt käytössä oleva ({current}). Täyden ZIP-palautuksen jälkeen koko ohjelma olisi vanha versio ja päivityksesi katoaisi. Jos haluat vain tiedot takaisin, palauta pelkkä SQLite-varmuuskopio: ohjelma säilyy ennallaan. Jos haluat varmasti palata vanhaan versioon, rastita "Salli palautus vanhempaan ohjelmaversioon".',
+'backup.note_version_downgraded'=>'Ohjelma palautui vanhempaan versioon {backup} (aiemmin {current}).',
+/* --- palautus --- */
+'backup.err_stage_create'=>'Palautuksen väliaikaishakemistoa ei saatu luotua.',
+'backup.err_db_in_use'=>'Tietokanta on käytössä toisessa yhteydessä. Palautusta ei tehty.',
+'backup.err_db_sidefile'=>'Tietokannan sivutiedoston vapautus epäonnistui.',
+'backup.err_db_move_old'=>'Nykyistä tietokantaa ei saatu siirrettyä turvaan.',
+'backup.err_db_replace'=>'Tietokannan korvaaminen epäonnistui.',
+'backup.err_missing_core_file'=>'Täydestä varmuuskopiosta puuttuu ohjelman tärkeä tiedosto: {file}.',
+'backup.err_missing_required_file'=>'Täydestä varmuuskopiosta puuttuu tiedosto, jota index.php tarvitsee: {file}.',
+/* --- palautuksen onnistumisviestit --- */
+'backup.restored'=>'Varmuuskopio palautettiin. Ennen palautusta tehty tietokannan turvakopio: {file}.',
+'backup.restored_full'=>' Koko sovelluspuu, tietokanta, kuvat sekä backupin käyttäjät ja oikeudet palautettiin.',
+'backup.restored_db_only'=>' Tietokanta palautettiin; sovellustiedostoihin ja kuvakansioon ei koskettu. Varmuuskopion käyttäjät ja oikeudet palautettiin.',
+'backup.restored_skipped'=>' Ohjelmaan kuulumattomat {n} tiedostoa tai kansiota ohitettiin ja jätettiin ennalleen.',
+'backup.restored_pruned'=>' Yli {days} päivää vanhat palautuksen turvakopiot ({n} kpl) siivottiin.',
+/* --- palautuksen epäonnistumisviestit --- */
+'backup.err_restore_incomplete'=>'Palautus epäonnistui ja vanhan tilanteen automaattinen palautus jäi vajaaksi. Turvakopio: {file}. {message}',
+'backup.err_restore_failed'=>'Palautusta ei tehty; nykyiset tiedot säilyivät. {message}',
+/* --- lataus (GET) --- */
+'backup.err_unknown_type'=>'Tuntematon varmuuskopiotyyppi.',
+'backup.failed'=>'Varmuuskopio epäonnistui: {message}',
+];

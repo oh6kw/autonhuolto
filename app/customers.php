@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Vain funktiot; ei suoriteta mitään latauksessa. Ladataan index.php:n alussa.
  */
 
-function customerTypeLabel(string $type): string { return $type==='company'?'Yritys':'Yksityinen'; }
+function customerTypeLabel(string $type): string { return $type==='company'?t('cust.type_company'):t('cust.type_private'); }
 function customersList(PDO $db,bool $activeOnly=false): array {
     $sql="SELECT cu.*,(SELECT COUNT(*) FROM cars c WHERE c.current_customer_id=cu.id) current_car_count FROM customers cu".($activeOnly?" WHERE cu.active=1":"")." ORDER BY cu.active DESC,LOWER(cu.name),cu.id";
     return $db->query($sql)->fetchAll();

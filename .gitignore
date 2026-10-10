@@ -6,6 +6,7 @@
 *.db
 .autohuolto-*
 .pre-restore-*
+.pre-migration-*
 .restore-*
 autohuolto-*backup*
 

@@ -39,24 +39,24 @@ function invoicePeriodSummary(PDO $db,string $from,string $to): array {
     $out=['all_count'=>0,'billed_count'=>0,'billed_net'=>0.0,'billed_vat'=>0.0,'billed_gross'=>0.0,'paid_gross'=>0.0,'paid_count'=>0,'open_gross'=>0.0,'draft_gross'=>0.0,'draft_count'=>0,'credited_gross'=>0.0,'credited_count'=>0];
     foreach($st->fetchAll() as $r){
         $status=(string)$r['status'];$count=(int)$r['invoice_count'];$net=(float)$r['net_total'];$vat=(float)$r['vat_total'];$gross=$net+$vat;$out['all_count']+=$count;
-        if(in_array($status,['Lähetetty','Maksettu'],true)){$out['billed_count']+=$count;$out['billed_net']+=$net;$out['billed_vat']+=$vat;$out['billed_gross']+=$gross;}
-        if($status==='Lähetetty')$out['open_gross']+=$gross;
-        elseif($status==='Luonnos'){$out['draft_gross']+=$gross;$out['draft_count']+=$count;}
-        elseif($status==='Hyvitetty'){$out['credited_gross']+=$gross;$out['credited_count']+=$count;}
+        if(in_array($status,['sent','paid'],true)){$out['billed_count']+=$count;$out['billed_net']+=$net;$out['billed_vat']+=$vat;$out['billed_gross']+=$gross;}
+        if($status==='sent')$out['open_gross']+=$gross;
+        elseif($status==='draft'){$out['draft_gross']+=$gross;$out['draft_count']+=$count;}
+        elseif($status==='credited'){$out['credited_gross']+=$gross;$out['credited_count']+=$count;}
     }
     $paidSql="SELECT COUNT(*) cnt,
                     COALESCE(SUM((SELECT SUM(il.qty*il.unit_price_net*(1+il.vat_rate/100.0)) FROM invoice_lines il WHERE il.invoice_id=i.id)),0) gross_total
               FROM invoices i
-              WHERE i.status='Maksettu' AND COALESCE(NULLIF(substr(i.paid_at,1,10),''),i.issue_date)>=? AND COALESCE(NULLIF(substr(i.paid_at,1,10),''),i.issue_date)<?";
+              WHERE i.status='paid' AND COALESCE(NULLIF(substr(i.paid_at,1,10),''),i.issue_date)>=? AND COALESCE(NULLIF(substr(i.paid_at,1,10),''),i.issue_date)<?";
     $pst=$db->prepare($paidSql);$pst->execute([$from,$to]);$pr=$pst->fetch()?:[];$out['paid_count']=(int)($pr['cnt']??0);$out['paid_gross']=(float)($pr['gross_total']??0);
     return $out;
 }
 function invoiceCanDelete(array $invoice): bool {
-    return ($invoice['status']??'')==='Luonnos'&&empty($invoice['sent_at'])&&empty($invoice['paid_at'])&&empty($invoice['credited_at']);
+    return ($invoice['status']??'')==='draft'&&empty($invoice['sent_at'])&&empty($invoice['paid_at'])&&empty($invoice['credited_at']);
 }
 function invoiceAllowedStatuses(array $invoice): array {
-    if(!empty($invoice['credited_at'])||($invoice['status']??'')==='Hyvitetty')return ['Hyvitetty'];
-    if(!empty($invoice['paid_at'])||($invoice['status']??'')==='Maksettu')return ['Maksettu','Hyvitetty'];
-    if(!empty($invoice['sent_at'])||($invoice['status']??'')==='Lähetetty')return ['Lähetetty','Maksettu','Hyvitetty'];
-    return ['Luonnos','Lähetetty','Maksettu','Hyvitetty'];
+    if(!empty($invoice['credited_at'])||($invoice['status']??'')==='credited')return ['credited'];
+    if(!empty($invoice['paid_at'])||($invoice['status']??'')==='paid')return ['paid','credited'];
+    if(!empty($invoice['sent_at'])||($invoice['status']??'')==='sent')return ['sent','paid','credited'];
+    return ['draft','sent','paid','credited'];
 }

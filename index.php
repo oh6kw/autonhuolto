@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * AUTONHUOLTO – kevyt korjaamojärjestelmä
- * Versio 1.0.6 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
+ * Versio 1.1.0-alpha.1 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
  *
  * Autonhuolto – vapaa ohjelmisto, lisenssi GNU AGPL v3 (tiedosto LICENSE).
  * Copyright (C) 2026 Jarno Jaskari
@@ -23,12 +23,13 @@ declare(strict_types=1);
 umask(0077);
 /* Ympäristötarkistus: selkeä virheilmoitus puuttuvista PHP-laajennuksista ennen kuin mikään muu ehtii kaatua. */
 (function(): void {
-    $missing=[];
-    if(version_compare(PHP_VERSION,'8.2.0','<'))$missing[]='PHP 8.2 tai uudempi (nyt '.PHP_VERSION.')';
+    $missing=[];$oldPhp=version_compare(PHP_VERSION,'8.2.0','<');
     foreach(['pdo_sqlite'=>'PDO SQLite (pdo_sqlite)','mbstring'=>'mbstring'] as $ext=>$label)if(!extension_loaded($ext))$missing[]=$label;
-    if($missing){
+    if($oldPhp||$missing){
+        require_once __DIR__ . '/app/i18n.php';
+        if($oldPhp)array_unshift($missing,t('sys.env_php_version',['version'=>PHP_VERSION]));
         http_response_code(500);header('Content-Type: text/plain; charset=utf-8');
-        exit("Autonhuolto ei voi käynnistyä, koska palvelimelta puuttuu:\n- ".implode("\n- ",$missing)."\n\nSuositeltavia lisäksi: zip (ZIP-backup, Excel-viennit) ja gd (kuvien ja logon pienennys).");
+        exit(t('sys.env_missing',['list'=>implode("\n- ",$missing)]));
     }
 })();
 function authHttps(): bool {
@@ -52,10 +53,10 @@ date_default_timezone_set('Europe/Helsinki');
 const DEFAULT_APP_NAME      = 'Autonhuolto';
 const DEFAULT_HOME_TITLE    = 'Huoltokirja';
 const DEFAULT_HOME_SUBTITLE = 'Pidä omat, perheen ja tuttujen autot samassa huoltohistoriassa.';
-const APP_VERSION           = '1.0.6';
+const APP_VERSION           = '1.1.0';
 /* AGPL v3 §13: verkossa ajettavan ohjelman käyttäjille on tarjottava lähdekoodi. Aseta tähän julkisen koodivaraston osoite (esim. 'https://github.com/KÄYTTÄJÄ/autonhuolto'); tyhjänä linkkiä ei näytetä. */
 const APP_SOURCE_URL        = 'https://github.com/oh6kw/autonhuolto';
-const SCHEMA_VERSION   = 12;
+const SCHEMA_VERSION   = 13;
 /* Tietokanta on aina autohuolto.sqlite3 sovelluskansiossa. Ympäristömuuttuja AUTOHUOLTO_DB_PATH voi osoittaa sen muualle (esim. web-juuren ulkopuolelle). */
 if(trim((string)getenv('AUTOHUOLTO_DB_PATH'))!=='')define('DB_FILE',(string)getenv('AUTOHUOLTO_DB_PATH'));
 else define('DB_FILE',__DIR__.'/autohuolto.sqlite3');
@@ -64,8 +65,11 @@ const APP_DIR        = __DIR__; /* Käytä näkymissä (views/) __DIR__:n sijaan
 const CURRENCY     = '€';
 const IMAGE_DIR    = __DIR__ . '/kuvat';
 
+require __DIR__ . '/app/i18n.php';
+require __DIR__ . '/app/vocab.php';
 require __DIR__ . '/app/helpers.php';
 require __DIR__ . '/app/db.php';
+require __DIR__ . '/app/migrate.php';
 require __DIR__ . '/app/auth.php';
 require __DIR__ . '/app/exports.php';
 require __DIR__ . '/app/cars.php';
@@ -84,10 +88,11 @@ try{
     $db=dbConnect();
     authBootstrap($db);
     $app=appSettings($db)+defaultAppSettings();
+    i18nLang(authUserLanguage($app));
     $appName=trim((string)$app['shop_name'])?:DEFAULT_APP_NAME;
 }catch(Throwable $e){
     http_response_code(503);header('Content-Type: text/plain; charset=utf-8');
-    exit('Huoltokirjan tietokantaa ei voitu avata: '.$e->getMessage());
+    exit(t('sys.err_db_open',['message'=>$e->getMessage()]));
 }
 
 /* Myös aiemmin ladattu nykyinen logo saa johdannaisversiot automaattisesti. Alkuperäiseen ei kosketa. */
@@ -96,14 +101,14 @@ $configuredLogo=(string)($app['logo_path']??'');if($configuredLogo!==''&&logoAbs
 /* Huoltokuvien näyttö kulkee sovelluksen kirjautumisen kautta. */
 if(isset($_GET['image'])){
     $pid=(int)$_GET['image'];$variant=(string)($_GET['variant']??'thumb');if(!in_array($variant,['thumb','web','original'],true))$variant='thumb';$st=$db->prepare("SELECT file_path,mime_type FROM service_photos WHERE id=?");$st->execute([$pid]);$ph=$st->fetch();
-    if(!$ph){http_response_code(404);exit('Kuvaa ei löytynyt.');}$relative=(string)$ph['file_path'];$display=$variant==='original'?$relative:photoDisplayRelative($relative,$variant);$abs=photoAbsolutePath($display);if(!$abs||!is_file($abs)){http_response_code(404);exit('Kuvatiedostoa ei löytynyt.');}$info=@getimagesize($abs);$mime=(string)($info['mime']??($ph['mime_type']?:'application/octet-stream'));
+    if(!$ph){http_response_code(404);exit(t('sys.err_image_not_found'));}$relative=(string)$ph['file_path'];$display=$variant==='original'?$relative:photoDisplayRelative($relative,$variant);$abs=photoAbsolutePath($display);if(!$abs||!is_file($abs)){http_response_code(404);exit(t('sys.err_image_file_not_found'));}$info=@getimagesize($abs);$mime=(string)($info['mime']??($ph['mime_type']?:'application/octet-stream'));
     header('Content-Type: '.$mime);header('Content-Length: '.filesize($abs));header('Cache-Control: private, max-age=604800');readfile($abs);exit;
 }
 /* Yrityksen logo näytetään kirjautumisen takaa. Vain /kuvat/logo/-hakemiston tiedostot sallitaan. */
 if(isset($_GET['brand_logo'])){
     $name=basename((string)$_GET['brand_logo']);$relative='kuvat/logo/'.$name;$abs=logoAbsolutePath($relative);
-    if(!$abs||!is_file($abs)){http_response_code(404);exit('Logoa ei löytynyt.');}
-    $img=@getimagesize($abs);$mime=(string)($img['mime']??'');if(!in_array($mime,['image/jpeg','image/png','image/webp'],true)){http_response_code(415);exit('Virheellinen logotiedosto.');}
+    if(!$abs||!is_file($abs)){http_response_code(404);exit(t('sys.err_logo_not_found'));}
+    $img=@getimagesize($abs);$mime=(string)($img['mime']??'');if(!in_array($mime,['image/jpeg','image/png','image/webp'],true)){http_response_code(415);exit(t('sys.err_logo_invalid'));}
     header('Content-Type: '.$mime);header('Content-Length: '.filesize($abs));header('Cache-Control: private, max-age=604800');readfile($abs);exit;
 }
 
@@ -117,7 +122,7 @@ $app=appSettings($db);$appName=trim((string)($app['shop_name']??DEFAULT_APP_NAME
 $flash=$_SESSION['flash']??null;unset($_SESSION['flash']);
 $cars=$db->query("SELECT c.*,cu.name current_customer_name,cu.customer_number current_customer_number,(SELECT MAX(service_date) FROM services s WHERE s.car_id=c.id) last_service_date,(SELECT odometer FROM services s WHERE s.car_id=c.id ORDER BY service_date DESC,id DESC LIMIT 1) last_service_km,(SELECT COUNT(*) FROM services s WHERE s.car_id=c.id) service_count FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id ORDER BY COALESCE(NULLIF(cu.name,''),NULLIF(c.owner,''),'~'),COALESCE(NULLIF(c.nickname,''),c.reg_plate),c.id DESC")->fetchAll();
 $allServices=[];if($showAll){$allServices=$db->query("SELECT s.*,c.reg_plate,c.nickname,c.owner,c.make,c.model FROM services s JOIN cars c ON c.id=s.car_id ORDER BY s.service_date DESC,s.id DESC")->fetchAll();foreach($allServices as &$r){$r['actions']=getServiceActions($db,(int)$r['id']);$r['custom_actions']=getCustomActions($db,(int)$r['id']);$r['photos']=getServicePhotos($db,(int)$r['id']);$r['inventory_usage']=serviceInventoryUsage($db,(int)$r['id']);}unset($r);attachServiceIntervals($db,$allServices);$per=[];foreach($allServices as $i=>$r)$per[(int)$r['car_id']][]=$i;foreach($per as $idxs)foreach($idxs as $p=>$idx)$allServices[$idx]['gap']=intervalInfo($allServices[$idx],isset($idxs[$p+1])?$allServices[$idxs[$p+1]]:null);}
-$settings=[];$events=[];$maintenance=[];$services=[];$parts=[];$partDefaults=[];$partCompatIds=[];$partCompatText=[];$kilometerHistory=[];$currentOwnershipHistory=null;$editService=null;$editActionMap=[];$editCustom=[];$editPhotos=[];$editStockUsage=[];$recommend=[];$driveEstimate=['available'=>false];$dataIssues=$showSettings?dataCheckIssues($db):[];$acceptedIssues=$showSettings?$db->query("SELECT * FROM data_issue_ignores ORDER BY accepted_at DESC")->fetchAll():[];
+$settings=[];$events=[];$maintenance=[];$services=[];$parts=[];$partDefaults=[];$partCompatIds=[];$partCompatText=[];$kilometerHistory=[];$currentOwnershipHistory=null;$editService=null;$editActionMap=[];$editCustom=[];$editPhotos=[];$editStockUsage=[];$recommend=[];$driveEstimate=['available'=>false];$dataIssues=$showSettings?dataCheckIssues($db):[];$acceptedIssues=[];if($showSettings){$acceptedIssues=$db->query("SELECT * FROM data_issue_ignores ORDER BY accepted_at DESC")->fetchAll();$currentIssueText=[];foreach(dataCheckIssues($db,true) as $ci)if(!empty($ci['ignored']))$currentIssueText[$ci['key']]=$ci;foreach($acceptedIssues as &$ai){if(isset($currentIssueText[$ai['issue_key']])){$ai['issue_title']=$currentIssueText[$ai['issue_key']]['title'];$ai['issue_detail']=$currentIssueText[$ai['issue_key']]['detail'];}}unset($ai);}
 if($car){$car['current_customer']=currentCustomerForCar($db,$carId);$car['customer_history']=carCustomerHistory($db,$carId);foreach($car['customer_history'] as $ch){if((int)($ch['customer_id']??0)===(int)($car['current_customer_id']??0)&&(string)($ch['end_date']??'')===''){$currentOwnershipHistory=$ch;break;}}$st=$db->prepare("SELECT * FROM car_item_settings WHERE car_id=?");$st->execute([$carId]);foreach($st->fetchAll() as $r)$settings[$r['item_key']]=$r;$settings=normalizeBeltSettings($settings);$events=lastItemEvents($db,$carId);$st=$db->prepare("SELECT * FROM services WHERE car_id=? ORDER BY service_date DESC,id DESC");$st->execute([$carId]);$services=$st->fetchAll();foreach($services as &$r){$r['actions']=getServiceActions($db,(int)$r['id']);$r['custom_actions']=getCustomActions($db,(int)$r['id']);$r['photos']=getServicePhotos($db,(int)$r['id']);$r['inventory_usage']=serviceInventoryUsage($db,(int)$r['id']);}unset($r);attachServiceIntervals($db,$services);$parts=partsForCar($db,$carId);foreach($parts as $p){$pid=(int)$p['id'];$partCompatIds[$pid]=partCompatibleCarIds($db,$pid);$partCompatText[$pid]=partCompatibilityText($db,$pid);$pk=(string)($p['item_key']??'');if($pk!==''&&!isset($partDefaults[$pk]))$partDefaults[$pk]=$p;}usort($parts,fn($a,$b)=>strnatcasecmp((string)$a['part_name'],(string)$b['part_name']));$eid=(int)($_GET['edit_service']??0);if($eid){$st=$db->prepare("SELECT * FROM services WHERE id=? AND car_id=?");$st->execute([$eid,$carId]);$editService=$st->fetch()?:null;if($editService){foreach(getServiceActions($db,$eid) as $a)$editActionMap[$a['item_key']]=$a;$editCustom=getCustomActions($db,$eid);$editPhotos=getServicePhotos($db,$eid);foreach(serviceInventoryUsage($db,$eid) as $u)$editStockUsage[(string)$u['item_key']]=$u;}}
     $kilometerHistory=kilometerHistoryEntries($db,$carId,true);
     $driveEstimate=drivingRateEstimate($db,$car);
@@ -132,7 +137,7 @@ $customerCars=[];$customerHistoryCars=[];$customerServices=[];$customerDeleteRef
     $customerDeleteRefs=customerDeleteReferences($db,$customerId);
 }
 
-$invoiceRows=[];$invoiceYears=[];$invoiceMonth=preg_match('/^\d{4}-\d{2}$/',(string)($_GET['month']??''))?(string)$_GET['month']:date('Y-m');$invoiceYear=preg_match('/^\d{4}$/',(string)($_GET['year']??''))?(string)$_GET['year']:date('Y');$invoiceListYear=preg_match('/^\d{4}$/',(string)($_GET['list_year']??''))?(string)$_GET['list_year']:'';$invoiceFilterStatus=in_array((string)($_GET['status']??''),['Luonnos','Lähetetty','Maksettu','Hyvitetty'],true)?(string)$_GET['status']:'';$invoiceQ=trim((string)($_GET['q']??''));$monthSummary=[];$yearSummary=[];
+$invoiceRows=[];$invoiceYears=[];$invoiceMonth=preg_match('/^\d{4}-\d{2}$/',(string)($_GET['month']??''))?(string)$_GET['month']:date('Y-m');$invoiceYear=preg_match('/^\d{4}$/',(string)($_GET['year']??''))?(string)$_GET['year']:date('Y');$invoiceListYear=preg_match('/^\d{4}$/',(string)($_GET['list_year']??''))?(string)$_GET['list_year']:'';$invoiceFilterStatus=vocabMatch('invstatus',(string)($_GET['status']??''))??'';$invoiceQ=trim((string)($_GET['q']??''));$monthSummary=[];$yearSummary=[];
 $inventoryParts=[];$inventoryValue=0.0;$inventoryLow=0;if($showInventory){$inventoryParts=inventoryPartRows($db);foreach($inventoryParts as $ip){$inventoryValue+=(float)$ip['stock_qty']*(float)($ip['purchase_price']??0);if($ip['reorder_level']!==null&&(float)$ip['stock_qty']<=(float)$ip['reorder_level'])$inventoryLow++;}}
 if($showInvoices){
     $invoiceYears=$db->query("SELECT DISTINCT substr(issue_date,1,4) y FROM invoices WHERE length(issue_date)>=4 ORDER BY y DESC")->fetchAll(PDO::FETCH_COLUMN);if(!in_array(date('Y'),$invoiceYears,true))array_unshift($invoiceYears,date('Y'));

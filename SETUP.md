@@ -41,7 +41,9 @@ autonhuolto/
 ├── index.php            Pääohjain: asetukset, istunto, tietokannan avaus, kuvien tarjoilu, sivun datan haku ja näkymän valinta. Ei omia funktioita (paitsi authHttps)
 ├── app/
 │   ├── helpers.php      Yleiset apufunktiot: lomakkeen luku, muotoilu, päivämäärät, hinnat ja ALV (ei tietokantaa)
-│   ├── db.php           Tietokanta: tiedoston valinta, lukko, yhteys, skeema (versio 12), alustus ja sovellusasetukset
+│   ├── db.php           Tietokanta: tiedoston valinta, lukko, yhteys, skeema (versio 13), alustus ja sovellusasetukset
+│   ├── vocab.php        Tietokannan kielineutraalit koodit (toimenpiteet, yksiköt, laskun tilat, huoltotyypit, ryhmät, vakiokohteet) ja niiden näyttönimet kielitiedostosta
+│   ├── migrate.php      Tietokannan päivitys skeemasta 12 skeemaan 13 (ottaa turvakopion ensin)
 │   ├── auth.php         Käyttäjät ja kirjautuminen: salasanat, istunto, roolit ja oikeudet, käyttäjähallinta, tapahtumaloki
 │   ├── exports.php      Excel-viennit (.xlsx): auton, kaikkien autojen ja varaston vienti
 │   ├── cars.php         Auton tiedot: haku, vuosikulut, kilometrihistoria ja -aikajana, ajomääräarvio, tietojen tarkistus
@@ -66,15 +68,18 @@ autonhuolto/
 │   ├── inventory.php    Varaosavarasto ja varastotapahtumat (?view=inventory)
 │   ├── settings.php     Asetukset: käyttäjät, ulkoasu, mekaanikot, huoltokohteet, backup (?view=settings)
 │   └── account.php      Oma tili ja salasanan vaihto (?view=account)
+├── lang/
+│   ├── fi/              Kielitiedostot (suomi): kaikki käyttäjälle näkyvät tekstit avain => teksti -taulukkoina
+│   └── sv/              Kielitiedostot (ruotsi, svenska): samat tiedostot ja avaimet kuin suomessa
 ├── assets/
 │   ├── app.css          Ulkoasu ja teemat
 │   └── app.js           Selaimen toiminnot (lomakkeet, lajittelu, laskurit, varaston +/− ja lisäysdialogit)
-├── docs/screenshots/    Esimerkkikuvakaappaukset README:tä varten (keksittyä tietoa; ei tarvita palvelimella)
+├── docs/screenshots/    Vain GitHub-koodivarastossa: esimerkkikuvakaappaukset README:tä varten (ei asennuspaketissa)
 ├── LICENSE              GNU AGPL v3 -lisenssi
 ├── README.md            Lyhyt esittely (GitHubin etusivu)
 ├── SECURITY.md          Tietoturvailmoitusten ohje
 ├── .gitignore           Git: tietokanta, kuvat ja varmuuskopiot eivät mene versionhallintaan
-├── .github/FUNDING.yml  GitHubin Sponsor-napin asetus (valinnainen; ei tarvita palvelimella)
+├── .github/             Vain GitHub-koodivarastossa: Sponsor-napin asetus ja julkaisun automaatio (ei asennuspaketissa)
 ├── SETUP.md       Tämä tiedosto: tiedostorakenne, asennus, käyttö ja varmuuskopiointi
 ├── CHANGELOG.md         Muutoshistoria (vain muutokset versiosta toiseen)
 ├── BACKUP.md            Varmuuskopioinnin ja palautuksen tekninen ohje
@@ -83,7 +88,8 @@ autonhuolto/
 ├── autohuolto.sqlite3   Tietokanta (chmod 600!). Mukana -wal ja -shm -tiedostot käytön aikana
 ├── kuvat/               Ladatut huoltokuvat ja logot (ohjelma tarjoilee ne PHP:n kautta)
 ├── .autohuolto-access-7f3c91.lock   Lukitustiedosto tietokantakirjoituksille
-└── .pre-restore-*       Palautuksen turvakopiot (siivotaan automaattisesti 30 päivän jälkeen)
+├── .pre-restore-*       Palautuksen turvakopiot (siivotaan automaattisesti 30 päivän jälkeen)
+└── .pre-migration-*     Tietokannan rakennepäivityksen (migraation) turvakopio, syntyy ennen päivitystä
 ```
 
 ### Mitä mikäkin tiedosto tekee
@@ -91,6 +97,10 @@ autonhuolto/
 | Tiedosto | Tehtävä |
 |---|---|
 | `index.php` | Käynnistyy ensimmäisenä. Tarkistaa PHP-ympäristön, avaa istunnon ja suojaotsikot, määrittelee vakiot ja lataa kaikki funktiotiedostot (`app/helpers.php` … `app/edits.php`). Avaa tietokannan, tarjoilee kuvat (`?image=`, `?brand_logo=`), lataa lopuksi `app/backup.php`, `app/printing.php` ja `app/actions.php`, hakee sivun datan ja valitsee, mikä `views/`-tiedosto näytetään. Funktioita siinä ei ole (paitsi `authHttps()`).|
+| `app/i18n.php` | Kielituki: `t('avain')` hakee tekstin kielitiedostoista (`lang/<kieli>/*.php`), `i18nLang()` kertoo käytössä olevan kielen. Puuttuva käännös haetaan suomesta. Selainpuolen tekstit (`js.*`) välitetään sivulle `i18nJsPayload()`-funktiolla ja luetaan `assets/app.js`:ssä funktiolla `tt()`. |
+| `lang/<kieli>/*.php` | Kielitiedostot (`lang/fi/` suomi, `lang/sv/` ruotsi). Suomenkieliset tekstit: yksi tiedosto kutakin ohjelman osaa kohti (esim. `car.php`, `settings.php`, `print.php`, `js.php`). Kukin tiedosto palauttaa taulukon `'alue.avain' => 'Teksti'`. Tekstin muuttujat ovat muotoa `{nimi}`. |
+| `app/vocab.php` | Kielineutraalit koodit: tietokantaan tallennetaan koodit (`replaced`, `pcs`, `paid`, `@initial_balance` …) ja ne näytetään kielitiedoston `vocab.*`-teksteinä (`vocabLabel()`, `unitLabel()`, `actionLabel()`, `noteLabel()`). Käyttäjän itse kirjoittamat tekstit säilyvät sellaisinaan. |
+| `app/migrate.php` | `migrateSchema12To13()`: muuntaa skeeman 12 tekstiarvot koodeiksi, ottaa ensin turvakopion (`.pre-migration-…`) ja peruu muutokset virheessä. Ajetaan automaattisesti, kun ohjelma avaa skeemaversion 12 kannan. |
 | `app/helpers.php` | Pieniä, yleisiä apufunktioita: `post()`, `intpost()`, `floatpost()` (lomakkeen luku), `h()` (HTML-escape), `money()`, `km()`, `fiDate()`, `addMonths()`, `priceNetFromInput()` ym. Ei tietokantaa, joten näitä voi kutsua mistä tahansa. |
 | `app/db.php` | Tietokannan tiedosto (`autohuolto.sqlite3`), käyttölukko, yhteys ja versiotarkistus, koko skeema (`currentDatabaseSql()`), uuden kannan alustus ja sovellusasetusten luku/kirjoitus (`appSettings()`, `appSet()`). Ei migraatioita: vain skeemaversio 12 hyväksytään. |
 | `app/auth.php` | Kaikki käyttäjiin liittyvä: salasanan tarkistus ja tiivisteet, kirjautumisen epäonnistumisten rajoitus, istunto (`authCurrent()`), käyttäjähallinnan lomakkeiden käsittely (`authHandlePost()`), roolit (admin / muokkaaja / katselija), `canAction()` ja katselijan lomakkeiden suodatus (`authFilterHtml()`), tapahtumaloki (`authAudit()`) ja ensimmäisen käyttäjän luonti (`authBootstrap()`). |
@@ -111,11 +121,12 @@ autonhuolto/
 ### Lataus- ja suoritusjärjestys (tärkeä kehittäjälle)
 
 1. `index.php` alkaa: ympäristötarkistus → istunto ja suojaotsikot → vakiot (mm. `DB_FILE`, `APP_DIR`).
-2. Heti vakioiden jälkeen ladataan **`app/helpers.php` → `db.php` → `auth.php` → `exports.php` → `cars.php` → `maintenance.php` → `invoices.php` → `inventory.php` → `customers.php` → `images.php` → `edits.php`**. Näiden funktioita käytetään kaikkialla (auth jo tietokannan avauksessa: `authBootstrap()`), joten ne ladataan ensimmäisinä. Ne sisältävät vain funktioita ja vakioita eivätkä suorita mitään latautuessaan.
+2. Heti vakioiden jälkeen ladataan **`app/i18n.php` → `app/vocab.php` → `app/helpers.php` → `db.php` → `migrate.php` → `auth.php` → `exports.php` → `cars.php` → `maintenance.php` → `invoices.php` → `inventory.php` → `customers.php` → `images.php` → `edits.php`**. Näiden funktioita käytetään kaikkialla (auth jo tietokannan avauksessa: `authBootstrap()`), joten ne ladataan ensimmäisinä. Ne sisältävät vain funktioita ja vakioita eivätkä suorita mitään latautuessaan.
 3. Tietokanta avataan: `dbAcquireLock()` → `dbConnect()` → `authBootstrap()` → asetukset.
 4. `index.php` lataa tiedostot tässä järjestyksessä: **`app/backup.php` → `app/printing.php` → `app/actions.php`**.
-5. `app/actions.php` ajaa POST-käsittelijänsä heti latautuessaan ja kutsuu mm. `backupRestore()`-funktiota. Siksi sen täytyy olla ladattuna **viimeisenä**. Väärä järjestys rikkoisi varmuuskopion palautuksen.
-6. `index.php` hakee sivun datan ja lataa lopuksi näkymät: `views/layout_top.php` → yksi näkymä (valinta `if/elseif`-ketjussa tiedoston lopussa) → `views/layout_bottom.php`.
+5. Kieli (`i18nLang()`) asetetaan heti, kun asetukset on luettu: kirjautuneella käyttäjällä oma kieli (`user_lang_<id>`), muuten järjestelmän oletuskieli (`language`); kirjautumattomalla `?lang=`-valinta tai asennuksessa selaimen kieli. Sitä ennen käytetään suomea.
+6. `app/actions.php` ajaa POST-käsittelijänsä heti latautuessaan ja kutsuu mm. `backupRestore()`-funktiota. Siksi sen täytyy olla ladattuna **viimeisenä**. Väärä järjestys rikkoisi varmuuskopion palautuksen.
+7. `index.php` hakee sivun datan ja lataa lopuksi näkymät: `views/layout_top.php` → yksi näkymä (valinta `if/elseif`-ketjussa tiedoston lopussa) → `views/layout_bottom.php`.
 
 Funktiot, jotka on siirretty omaan tiedostoonsa, ovat käytössä vasta kun tiedosto on ladattu (toisin kuin `index.php`:n omat funktiot, jotka PHP tuntee jo ennen suoritusta). Siksi uuden tiedoston lataus pitää lisätä kohtaan, jossa mikään sen funktioita käyttävä koodi ei ehdi ajaa ennen sitä.
 
@@ -186,7 +197,7 @@ PHP ei voi estää web-palvelinta jakamasta tiedostoja suoraan. Jos tietokantati
 
 ```apache
 # Tietokanta, lukitus, turvakopiot ja ohjetiedostot eivät saa latautua selaimella
-<FilesMatch "(\.sqlite3|\.lock|\.md)(-wal|-shm)?$|^\.pre-restore-|^\.autohuolto-">
+<FilesMatch "(\.sqlite3|\.lock|\.md)(-wal|-shm)?$|^\.pre-(restore|migration)-|^\.autohuolto-">
     Require all denied
 </FilesMatch>
 
@@ -202,7 +213,7 @@ Apachen sivuston asetuksessa pitää olla `AllowOverride All` (tai vähintään 
 ```nginx
 location ~ ^/autonhuolto/(app|views|kuvat)/ { deny all; }
 location ~ ^/autonhuolto/.*\.(sqlite3|lock|md)(-wal|-shm)?$ { deny all; }
-location ~ ^/autonhuolto/\.(pre-restore|autohuolto) { deny all; }
+location ~ ^/autonhuolto/\.(pre-restore|pre-migration|autohuolto) { deny all; }
 ```
 
 Tarkista Nginx-asetus komennolla `sudo nginx -t` ja lataa se: `sudo systemctl reload nginx`.
@@ -231,7 +242,7 @@ Jos ohjelma on HTTPS-käänteisproxyn takana eikä näe HTTPS:ää itse, aseta y
 ### 3.6 Ensimmäinen käynnistys
 
 1. Avaa selaimessa `https://osoite/autonhuolto/`.
-2. Ohjelma näyttää sivun **Ensimmäinen käyttöönotto**. Täytä korjaamon nimi, oma nimi, käyttäjätunnus ja salasana (vähintään 12 merkkiä). Erillistä käyttöönottokoodia ei tarvita.
+2. Ohjelma näyttää sivun **Ensimmäinen käyttöönotto**. Valitse ensin **kieli** (Suomi / Svenska; ehdotus tulee selaimen kielestä; valinta vaihtaa sivun kielen heti ja siitä tulee järjestelmän oletuskieli, jota voi muuttaa myöhemmin Asetuksissa). Täytä sitten korjaamon nimi, oma nimi, käyttäjätunnus ja salasana (vähintään 12 merkkiä). Erillistä käyttöönottokoodia ei tarvita.
 3. Kirjautumisen jälkeen ohjelma ehdottaa toisen ylläpitäjän luomista. **Luo vähintään kaksi ylläpitäjää** (Asetukset → Käyttäjät → Luo käyttäjä, rooli Ylläpitäjä). Jos toinen unohtaa salasanansa, toinen ylläpitäjä asettaa hänelle uuden väliaikaisen salasanan. Ohjelmassa ei ole erillistä hätäpalautuskoodia eikä hätäpalautussivua.
 4. Tarkista Asetukset → Turva → Backup & Restore: ota ensimmäinen SQLite-varmuuskopio heti.
 
@@ -304,12 +315,14 @@ Auton sivulta ja Varasto-sivulta löytyvät 🖨-napit (huoltotilanne, koko huol
 
 | Välilehti | Sisältö |
 |---|---|
-| Yleiset | Korjaamon nimi ja logo, teema (tumma / hämärä / vaalea), hintojen syöttötapa ja ALV-prosentti, korjaamon ja laskuttajan tiedot |
+| Yleiset | Korjaamon nimi ja logo, järjestelmän oletuskieli (suomi / ruotsi), teema (tumma / hämärä / vaalea), hintojen syöttötapa ja ALV-prosentti, korjaamon ja laskuttajan tiedot |
 | Mekaanikot | Mekaanikkojen lisäys ja käytöstä poisto. Poistettu mekaanikko säilyy vanhoissa huolloissa |
 | Huoltotoimet | Huoltokohteet ja toimenpiteet, joita huoltolomakkeella tarjotaan |
 | Käyttäjät | Käyttäjät, roolit ja salasanojen nollaus |
 | Tietojen tarkistus | Ohjelma etsii epäjohdonmukaisuuksia (esim. mittarilukemat menevät taaksepäin). Hyväksyttyjä poikkeamia voi merkitä tarkoituksellisiksi |
 | Turva | Backup & Restore, kirjautumisen suojaus, kirjautumisen suojaus ja käyttäjähallinnan tapahtumaloki |
+
+**Kieli.** Järjestelmän oletuskieli valitaan asennuksessa ja sitä voi muuttaa Asetukset → Yleiset → Kieli. Jokainen käyttäjä voi lisäksi valita oman kielensä sivulla **Oma tili → Kieli**; tyhjä valinta tarkoittaa järjestelmän oletusta. Kirjautumissivulla kielen voi vaihtaa sivun yläosan linkeistä (vain tähän selainistuntoon). Kielen vaihto muuttaa ohjelman omat tekstit, valmiiden huoltokohteiden nimet, tulosteet ja Excel-viennit. Päivämäärä- ja lukumuodot ovat samat kaikilla kielillä (suomalainen muoto). Itse kirjoittamasi tekstit (huollon otsikko, muistiinpanot, varaosien nimet, omat huoltokohteet) ja jo tallennetut huoltojen otsikot ja laskurivien tekstit (esim. "Työ:") säilyvät sillä kielellä, jolla ne tallennettiin. Uusi kieli lisätään kopioimalla `lang/fi/` uudeksi kansioksi (kaksikirjaiminen kielikoodi) ja kääntämällä tekstit; ohjelma löytää kielen automaattisesti ja tarjoaa sen kielivalinnoissa (`lang.name` tiedostossa `layout.php` on kielen nimi).
 
 ---
 
@@ -368,11 +381,11 @@ Käytä `.backup`-komentoa, älä tavallista tiedoston kopiointia, koska tietoka
 
 1. **Ota SQLite-varmuuskopio** (ja mielellään täysi ZIP) ja lataa se omalle koneelle.
 2. Pura uuden version ZIP omalla koneellasi.
-3. Kopioi uudet `index.php`, `app/`, `assets/`, `views/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE`, `SECURITY.md` ja `docs/` palvelimella vanhojen päälle. **Älä koske** tietokantaan, `kuvat/`-kansioon tai omaan `.htaccess`-tiedostoosi.
+3. Kopioi uudet `index.php`, `app/`, `assets/`, `views/`, `lang/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE` ja `SECURITY.md` palvelimella vanhojen päälle. **Älä koske** tietokantaan, `kuvat/`-kansioon tai omaan `.htaccess`-tiedostoosi.
 4. Varmista oikeudet: `sudo chown -R www-data:www-data kansio` ja `sudo find kansio -type f -exec chmod 644 {} \;` (tietokanta pysyy 600).
 5. Avaa ohjelma ja tarkista versionumero sivun alatunnisteesta. Lue muutokset tiedostosta `CHANGELOG.md`.
 
-Tietokannan skeemaversion on oltava 12. Ohjelma ei päivitä tietokantaa itse: eri skeemaversion kanta hylätään selkeällä virheilmoituksella.
+Tietokannan skeemaversio on 13. Skeemaversion 12 kanta (versiot 1.0.x ja 1.1.0-alpha.1) päivitetään automaattisesti ensimmäisellä avauksella: ohjelma ottaa ensin turvakopion (`.pre-migration-12-to-13-<aika>.sqlite3` tietokannan viereen) ja jos päivitys epäonnistuu, kantaan ei jää muutoksia. Ota silti aina oma varmuuskopio ennen päivitystä. Muun skeemaversion kanta hylätään selkeällä virheilmoituksella. Päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla; jos joudut palaamaan, palauta ennen päivitystä ottamasi varmuuskopio.
 
 ---
 
