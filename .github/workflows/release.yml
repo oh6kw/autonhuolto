@@ -1,0 +1,64 @@
+# Luo GitHub-julkaisun (release) ja lataus-zipin automaattisesti,
+# kun main-haaraan viedään uusi versio (APP_VERSION index.php:ssä).
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: [index.php]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lue versio
+        id: v
+        run: |
+          VERSION=$(grep -oP "const APP_VERSION\s*=\s*'\K[^']+" index.php)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versio: $VERSION"
+
+      - name: Onko julkaisu jo olemassa?
+        id: exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.v.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Rakenna zip (ilman tietokantaa)
+        if: steps.exists.outputs.exists == 'false'
+        run: |
+          zip -qr "autonhuolto-${{ steps.v.outputs.version }}.zip" \
+            index.php app assets views docs CHANGELOG.md BACKUP.md SETUP.md README.md LICENSE SECURITY.md .gitignore .github \
+            -x '*.sqlite3*'
+
+      - name: Poimi muutosloki
+        if: steps.exists.outputs.exists == 'false'
+        run: |
+          awk -v v="${{ steps.v.outputs.version }}" '
+            $0 ~ "^## "v"( |$)" {p=1; next}
+            /^## / && p {exit}
+            p {print}
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Katso CHANGELOG.md." > notes.md
+
+      - name: Luo julkaisu
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.v.outputs.version }}" \
+            "autonhuolto-${{ steps.v.outputs.version }}.zip" \
+            --title "${{ steps.v.outputs.version }}" \
+            --notes-file notes.md \
+            --target "${{ github.sha }}"

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * AUTONHUOLTO – kevyt korjaamojärjestelmä
- * Versio 1.0.5 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
+ * Versio 1.0.6 · PHP 8.2+ / PDO_SQLITE · tietokannan skeema 12
  *
  * Autonhuolto – vapaa ohjelmisto, lisenssi GNU AGPL v3 (tiedosto LICENSE).
  * Copyright (C) 2026 Jarno Jaskari
@@ -52,7 +52,7 @@ date_default_timezone_set('Europe/Helsinki');
 const DEFAULT_APP_NAME      = 'Autonhuolto';
 const DEFAULT_HOME_TITLE    = 'Huoltokirja';
 const DEFAULT_HOME_SUBTITLE = 'Pidä omat, perheen ja tuttujen autot samassa huoltohistoriassa.';
-const APP_VERSION           = '1.0.5';
+const APP_VERSION           = '1.0.6';
 /* AGPL v3 §13: verkossa ajettavan ohjelman käyttäjille on tarjottava lähdekoodi. Aseta tähän julkisen koodivaraston osoite (esim. 'https://github.com/KÄYTTÄJÄ/autonhuolto'); tyhjänä linkkiä ei näytetä. */
 const APP_SOURCE_URL        = 'https://github.com/oh6kw/autonhuolto';
 const SCHEMA_VERSION   = 12;

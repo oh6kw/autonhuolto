@@ -4,6 +4,11 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 12.
 
+## 1.0.6
+
+- **Automaattinen GitHub-julkaisu:** uusi `.github/workflows/release.yml`. Kun `main`-haaraan viedään uusi versio (`APP_VERSION` tiedostossa `index.php`), GitHub luo itse julkaisun `vX.Y.Z`, rakentaa lataus-zipin (ilman tietokantaa) ja liittää siihen kyseisen version muutoslokin. Jo olemassa olevaa julkaisua ei luoda uudelleen. Työnkulun voi ajaa myös käsin Actions-välilehdeltä.
+- Ohjelman toiminta ei muutu. Versio 1.0.6, ei tietokantamuutoksia (skeema 12).
+
 ## 1.0.5
 
 Siivous: kaikki viittaukset ennen julkaisua käytettyihin 0.x-kehitysversioihin poistettu.
