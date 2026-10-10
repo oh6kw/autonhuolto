@@ -25,6 +25,7 @@ return [
 'vocab.unit.l'=>'L',
 'vocab.unit.set'=>'sats',
 'vocab.unit.pack'=>'förp.',
+'vocab.unit.h'=>'h',
 
 /* --- fakturans status (invoices.status) --- */
 'vocab.invstatus.draft'=>'Utkast',

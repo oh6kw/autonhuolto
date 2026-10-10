@@ -26,6 +26,7 @@ return [
 'vocab.unit.l'=>'L',
 'vocab.unit.set'=>'sarja',
 'vocab.unit.pack'=>'pkt',
+'vocab.unit.h'=>'h',
 
 /* --- laskun tila (invoices.status) --- */
 'vocab.invstatus.draft'=>'Luonnos',

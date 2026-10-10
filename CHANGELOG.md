@@ -4,6 +4,14 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 13.
 
+## 1.2.1
+
+Korjausversio. Ei tietokantamuutoksia (skeema 13).
+
+- **Korjaus:** työtunnin yksikkö näkyi laskulla (näyttö ja tuloste) tekstinä `vocab.unit.h` (esim. "1,50 vocab.unit.h") versioissa 1.1.0 ja 1.2.0. Yksikön "h" nimi puuttui kielitiedostoista; lisätty suomeksi ja ruotsiksi (`vocab.unit.h`). Löytyi esimerkkilaskua tehdessä.
+- **Tarkistus:** kaikkien tietokannan koodien (toimenpiteet, huoltotyypit, yksiköt, laskun tilat, ryhmät) näyttönimet on tarkistettu molemmista kielitiedostoista; muita puuttuvia ei löytynyt.
+- **README:** laskun esimerkkikuvat (näyttö ja PDF-tuloste) on tehty uudella laskupohjalla.
+
 ## 1.2.0
 
 Laskun tulostus uudistettu: kompakti laskupohja, suomalainen tilisiirtolomake ja pankkiviivakoodi. Ei tietokantamuutoksia (skeema 13); päivitys vain kopioimalla tiedostot vanhojen päälle.
