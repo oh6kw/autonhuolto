@@ -32,7 +32,7 @@ function authEventLabel(string $event): string {
     return $key!==null?t($key):$event;
 }
 function authActionRoles(): array {
-    $writer=['save_car','add_service','update_service','add_part','update_part','adjust_part_stock','bulk_update_inventory','save_item_settings','add_customer','update_customer','create_customer_from_car','set_car_customer','update_car_customer_history','update_km','add_old_odometer','create_invoice','update_invoice_status','update_invoice','send_invoice_email'];
+    $writer=['save_car','add_service','update_service','add_part','update_part','adjust_part_stock','bulk_update_inventory','save_item_settings','add_customer','update_customer','set_car_customer','update_car_customer_history','update_km','add_old_odometer','create_invoice','update_invoice_status','update_invoice','send_invoice_email','send_service_email'];
     $admin=['save_app_settings','add_catalog_item','update_catalog_item','add_mechanic','update_mechanic','delete_mechanic','accept_data_issue','accept_data_issues','restore_data_issue','backfill_service_customer_snapshots','restore_db','delete_car','delete_service','delete_part','delete_customer','delete_photo','delete_odometer_reading','delete_invoice','add_user','update_user','reset_user_password','delete_user','clear_auth_audit','clear_inventory_history','save_mail_settings','send_test_mail','snooze_backup_reminder'];
     $map=[];foreach($writer as $a)$map[$a]=['editor','admin'];foreach($admin as $a)$map[$a]=['admin'];
     $map['change_password']=['viewer','editor','admin'];$map['logout_others']=['viewer','editor','admin'];$map['update_own_mechanic']=['viewer','editor','admin'];$map['update_own_language']=['viewer','editor','admin'];$map['logout']=['viewer','editor','admin'];return $map;

@@ -28,4 +28,7 @@ return [
 /* --- 1.2.5 --- */
 'mail.invoice_subject_corrected'=>"Korjattu lasku {number} – {shop}",
 'mail.invoice_body_corrected'=>"Hei,\n\nliitteenä korjattu lasku {number}. Tämä lasku korvaa aiemmin lähettämämme laskun, joten maksathan vain tämän korjatun laskun.\n\nMaksettava summa: {amount}\nEräpäivä: {due}\n{pay}\n\nYstävällisin terveisin\n{shop}",
+/* --- 1.2.7 --- */
+'mail.service_subject'=>"Huoltosivu: {title} – {car} ({shop})",
+'mail.service_body'=>"Hei,\n\nalla huoltosivu auton {car} huollosta {date}. Siitä näet tarkasti, mitä huollossa tehtiin.\n\nYstävällisin terveisin\n{shop}",
 ];

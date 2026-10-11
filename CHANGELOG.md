@@ -2,7 +2,20 @@
 
 Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, asennus-, käyttö- ja varmuuskopio-ohje ovat tiedostossa `SETUP.md`; varmuuskopioinnin tekninen tiivistelmä on tiedostossa `BACKUP.md`.
 
-Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 14.
+Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 15.
+
+## 1.2.7
+
+Vanhojen omistajatietojen poisto ja tietokannan siivous. **Tietokannan skeema päivittyy 14 → 15** ensimmäisellä avauksella (ohjelma ottaa ensin turvakopion `.pre-migration-14-to-15-<aika>.sqlite3` tietokannan viereen). Ota silti oma varmuuskopio ennen päivitystä.
+
+- **Auton vanhat omistajakentät poistettu:** auton lomakkeilta (uusi auto, auton tiedot), "Vanhan auton sisäiset asiakastiedot" -osio ja "Luo asiakkaaksi" -toiminto, hausta, vienneistä (Excel: "Vanha omistaja" -sarakkeet), tietojen tarkistuksesta ("asiakkaaseen kytkemätön auto") ja laskun luonnista. Asiakastiedot hoituvat jatkossa vain asiakasrekisterin, omistushistorian ja huoltojen asiakaskopioiden kautta.
+- **Tietokannan siirto 14 → 15:** jos autolla oli vanha omistajateksti mutta ei asiakaslinkkiä, siitä luodaan asiakas asiakasrekisteriin (huomautus "Luotu auton vanhoista asiakastiedoista"; yritykseksi, jos Y-tunnus tai Oy/Oyj/Ab/Ky/Tmi-pääte), asiakas kytketään autoon ja omistushistoriaan tulee rivi. Saman nimen ja yhteystietojen autot saavat saman asiakkaan. Sen jälkeen sarakkeet `cars.owner`, `customer_address`, `customer_email`, `customer_phone` ja `customer_business_id` poistetaan. Jos SQLite on vanhempi kuin 3.35 eikä sarakkeita voi poistaa, ne jäävät käyttämättömiksi eikä siitä ole haittaa.
+- **Muu vanha kökkö siivottu:** tarpeettomat vanhat asetusavaimet (`auth_legacy_setup`, `migration_060_service_types`, `migration_070_item_profiles`, `migration_077_feature_flags`, `migration_0822_part_compatibility`, `feature_0824_belt_inspections`, `use_mode`) ja tietojen tarkistuksen vanhat ohituskuittaukset poistetaan kannasta.
+- **Uutta: huoltosivun lähetys sähköpostilla:** jokaisen huollon kohdalla autosivun huoltohistoriassa on painike **✉ Lähetä huoltosivu sähköpostilla**. Viestin perään liitetään huoltosivu (tehdyt työt, osat, vaihtovälit, työaika, mekaanikko ja huomautukset) sekä HTML- että tekstimuodossa, jotta asiakas näkee tarkasti, mitä huollossa tehtiin. Vastaanottajaksi ehdotetaan huollon asiakaskopion sähköpostia (tai auton nykyisen asiakkaan), otsikko ja viesti ovat muokattavissa. Hintoja ja omia kustannuksia ei lähetetä. Käyttää samoja sähköpostiasetuksia kuin laskun lähetys.
+- **Auton lista:** autot järjestetään nykyisen asiakkaan nimen mukaan.
+- **Varmuuskopio:** skeemojen 12, 13 ja 14 varmuuskopiot kelpaavat edelleen palautukseen ja päivittyvät heti skeemaan 15.
+- **Korjaus:** skeemasiirto 13 → 14 kirjoittaa nyt oman skeemaversionsa (14) eikä uusinta, jotta ketjutettu päivitys 12 → 15 etenee oikein.
+- **Dokumentaatio:** README:n kuvakaappaukset päivitetty uuteen ulkoasuun (autosivun välilehdet, uusi laskun ulkoasu).
 
 ## 1.2.6
 

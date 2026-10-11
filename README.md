@@ -18,6 +18,7 @@ Käyttöliittymä mukautuu automaattisesti näytön kokoon, joten samaa ohjelmaa
 - Varaosamuistio, moniautosopivuus ja varasto saldoineen sekä varastotapahtumat
 - Asiakkaat ja auton omistushistoria
 - Laskut (tilisiirtolomake ja pankkiviivakoodi, myös MobilePay-tiedot), luonnoksen muokkaus, PDF-lasku, lähetys sähköpostilla (oma SMTP tai palvelimen posti), tulosteet ja Excel-viennit
+- Huoltosivun lähetys sähköpostilla asiakkaalle (tehdyt työt, osat ja vaihtovälit)
 - Yleishaku, favicon yrityksen logosta ja muistutus varmuuskopiosta
 - Käyttäjät ja roolit (ylläpitäjä, tallentaja, katselija), tapahtumaloki
 - Verottomat tai verolliset hinnat valittavissa, ALV-muunnos varastossa
@@ -33,9 +34,9 @@ Kuvissa on keksittyä esimerkkitietoa (kuvitteellinen korjaamo, autot ja asiakka
 
 ![Huoltotilanne ja ennuste: ennakkovaroitus lähestyvistä huolloista](docs/screenshots/huoltotilanne.png)
 
-![Auton sivu: mittarilukema ja vuosikulut](docs/screenshots/auto.png)
+![Auton sivu: välilehdet (yleiskatsaus, kirjaa huolto, huoltohistoria, ohjelma, varaosat, asiakas), mittarilukema ja vuosikulut](docs/screenshots/auto.png)
 
-![Huoltohistoria](docs/screenshots/huoltohistoria.png)
+![Huoltohistoria: huoltosivun tulostus ja lähetys sähköpostilla asiakkaalle](docs/screenshots/huoltohistoria.png)
 
 ![Huoltotilanne ja ennuste tulostettuna / PDF-muodossa](docs/screenshots/huoltotilanne-tuloste.png)
 

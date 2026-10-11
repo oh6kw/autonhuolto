@@ -29,7 +29,7 @@ Huomaa: palautus ei ole täysi peilikuva. ZIP:stä kirjoitetaan vain ohjelman om
 
 - **SQLite-tiedosto** palauttaa tietokannan käyttäjineen. Sovellustiedostoihin ja kuviin ei kosketa.
 - **Täysi ZIP** palauttaa tietokannan ja ohjelman omat tiedostot (`index.php`, `app/`, `assets/`, `views/`, `kuvat/`, `docs/`, `CHANGELOG.md`, `SETUP.md`, `BACKUP.md`, `README.md`, `LICENSE`, `SECURITY.md`, `.gitignore`). Muita kansion tiedostoja (esim. oma `.htaccess`) ei kirjoiteta eikä poisteta. Kansioon `kuvat/` palautetaan vain kuvia.
-- Skeemaversion 12 ja 13 varmuuskopio (versiot 1.0.x–1.2.3) kelpaa palautukseen: kanta päivitetään skeemaan 14 heti palautuksen jälkeen, eikä palautus tarvitse `docs/`-kansiota. Skeemaa 14 uudempaa varmuuskopiota ei palauteta.
+- Skeemaversion 12, 13 ja 14 varmuuskopio (versiot 1.0.x–1.2.6) kelpaa palautukseen: kanta päivitetään skeemaan 15 heti palautuksen jälkeen, eikä palautus tarvitse `docs/`-kansiota. Skeemaa 15 uudempaa varmuuskopiota ei palauteta.
 - Täyden ZIP-palautuksen jälkeen ohjelma tyhjentää PHP:n koodivälimuistin, jotta seuraava pyyntö käyttää palautettuja tiedostoja.
 - Palautus tekee ensin turvakopion nykyisestä tilanteesta (`.pre-restore-*`) ja päättää kaikki kirjautumisistunnot. Yli 30 päivää vanhat turvakopiot siivotaan automaattisesti seuraavan onnistuneen palautuksen yhteydessä.
 - Jos palautus epäonnistuu, vanha tila palautetaan ja virheilmoitus kertoo syyn. Palautus myös tarkistaa ennen muutoksia, että ZIPissä ovat kaikki tiedostot, joita sen `index.php` tarvitsee.

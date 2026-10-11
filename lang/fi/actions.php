@@ -181,4 +181,6 @@ return [
 'act.err_invoice_status_invalid'=>"Virheellinen laskun tila.",
 'act.invoice_back_to_draft'=>"Lasku on palautettu luonnokseksi. Voit nyt muokata sitä ja lähettää korjatun laskun.",
 'act.invoice_status_moved_back'=>"Laskun tila palautettu. Myöhempien tilojen aikaleimat nollattiin.",
+/* --- 1.2.7 --- */
+'act.service_mailed'=>"Huoltosivu lähetetty: {to}",
 ];

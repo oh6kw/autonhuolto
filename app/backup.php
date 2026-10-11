@@ -169,7 +169,7 @@ function backupExtractZip(string $upload,string $stage): array {
 }
 function backupValidateManifest(array $manifest,string $root,string $db): void {
     if(($manifest['format']??'')!=='autohuolto-full-backup'||(int)($manifest['format_version']??0)!==4)throw new RuntimeException(t('backup.err_manifest_unknown'));
-    if(!in_array((int)($manifest['schema_version']??0),[12,13,SCHEMA_VERSION],true))throw new RuntimeException(t('backup.err_schema_version'));
+    if(!in_array((int)($manifest['schema_version']??0),[12,13,14,SCHEMA_VERSION],true))throw new RuntimeException(t('backup.err_schema_version'));
     $dbh=(string)($manifest['database']['sha256']??'');if($dbh===''||!hash_equals($dbh,(string)hash_file('sha256',$db)))throw new RuntimeException(t('backup.err_manifest_db'));
     foreach((array)($manifest['files']??[]) as $entry){$path=(string)($entry['path']??'');$full=$root.'/'.$path;if(!backupRelativeSafe($path)||!is_file($full)||!hash_equals((string)($entry['sha256']??''),(string)hash_file('sha256',$full)))throw new RuntimeException(t('backup.err_manifest_file',['path'=>$path]));}
 }

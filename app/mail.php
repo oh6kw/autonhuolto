@@ -147,3 +147,52 @@ function mailSend(array $app,array $msg): void {
     if((string)($app['mail_copy_self']??'0')==='1'&&empty($msg['bcc']))$msg['bcc']=trim((string)$app['mail_from']);
     if(mailMethod($app)==='smtp')mailSendSmtp($app,$msg);else mailSendPhp($app,$msg);
 }
+
+/**
+ * Huoltosivun sisältö sähköpostiin (versio 1.2.7): [teksti, html]. Sisältää tehdyt työt, osat, vaihtovälit, työajan ja huomautukset;
+ * hintoja ja omia kustannuksia ei lähetetä (ne kuuluvat laskulle).
+ */
+function serviceMailContent(PDO $db,int $sid): array {
+    $s=serviceWithDetails($db,$sid);if(!$s)throw new RuntimeException(t('print.err_service_not_found'));
+    $car=trim(trim((string)($s['reg_plate']?:$s['nickname'])).' · '.trim($s['make'].' '.$s['model']),' ·');
+    $head=implode(' · ',array_filter([serviceTypeLabel((string)($s['service_type']??'scheduled')),fiDate((string)$s['service_date']),recordedKm((int)$s['odometer'])]));
+    $meta=[$car];
+    $cust=trim((string)($s['customer_name_snapshot']??''));if($cust!=='')$meta[]=t('print.customer_owner',['name'=>$cust]);
+    if(trim((string)$s['workshop'])!=='')$meta[]=t('print.workshop_line',['name'=>(string)$s['workshop']]);
+    if(!empty($s['mechanic_name_snapshot']))$meta[]=t('print.mechanic_label').' '.mechanicLabel($s['mechanic_name_snapshot']);
+    $blocks=[]; /* [otsikko, rivit[ [pää, lisärivit[]] ]] */
+    $rows=[];
+    foreach($s['actions'] as $a){
+        $main=implode(' · ',array_filter([serviceActionLabel($a),serviceActionQuantityText($a),$a['brand'],$a['supplier_sku'],$a['oem_number'],serviceIntervalNote($a)],fn($v)=>$v!==null&&$v!==''));
+        $sub=[];if($iv=actionIntervalText($a))$sub[]=$iv;if(trim((string)$a['notes'])!=='')$sub[]=trim((string)$a['notes']);
+        $rows[]=[(string)$a['label'],$main,$sub];
+    }
+    if($rows)$blocks[]=[t('print.works_done'),$rows];
+    $rows=[];
+    foreach($s['custom_actions'] as $a){$sub=[];if(trim((string)$a['notes'])!=='')$sub[]=trim((string)$a['notes']);$rows[]=[(string)$a['description'],'',$sub];}
+    if($rows)$blocks[]=[t('print.works_other'),$rows];
+    $times=[];
+    if((int)($s['actual_work_seconds']??0)>0)$times[]=[strip_tags(t('print.actual_time',['time'=>formatDuration((int)$s['actual_work_seconds'])])),'',[]];
+    if((float)($s['labor_hours']??0)>0)$times[]=[strip_tags(t('print.billable_time',['hours'=>dec((float)$s['labor_hours'],2)])),'',[]];
+    if($times)$blocks[]=[t('print.work_time'),$times];
+    if(trim((string)$s['notes'])!=='')$blocks[]=[t('print.notes_heading'),[[trim((string)$s['notes']),'',[]]]];
+    $title=(string)$s['title'];
+    $text=$title."\n".$head."\n".implode("\n",$meta)."\n";
+    foreach($blocks as [$bt,$rs]){$text.="\n".$bt."\n";foreach($rs as [$ti,$main,$sub]){$text.='- '.$ti.($main!==''?' ('.$main.')':'')."\n";foreach($sub as $x)$text.='    '.$x."\n";}}
+    $e=fn(string $v)=>nl2br(h($v));
+    $html='<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45;color:#1f2933;border:1px solid #d5dbe1;border-radius:6px;padding:16px;max-width:640px">'
+        .'<div style="font-size:18px;font-weight:bold">'.h($title).'</div>'
+        .'<div style="color:#52606d;margin-bottom:8px">'.h($head).'</div>';
+    foreach($meta as $m)$html.='<div>'.h($m).'</div>';
+    foreach($blocks as [$bt,$rs]){
+        $html.='<div style="margin-top:14px;padding-bottom:3px;border-bottom:2px solid #d5dbe1;font-weight:bold">'.h($bt).'</div>';
+        foreach($rs as [$ti,$main,$sub]){
+            $html.='<div style="padding:6px 0;border-bottom:1px solid #eceff2">'.($main!==''||$sub?'<strong>'.$e($ti).'</strong>':$e($ti));
+            if($main!=='')$html.='<div style="color:#52606d">'.h($main).'</div>';
+            foreach($sub as $x)$html.='<div style="color:#52606d">'.$e($x).'</div>';
+            $html.='</div>';
+        }
+    }
+    $html.='</div>';
+    return ['text'=>$text,'html'=>$html];
+}

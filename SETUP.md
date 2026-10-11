@@ -41,9 +41,9 @@ autonhuolto/
 ├── index.php            Pääohjain: asetukset, istunto, tietokannan avaus, kuvien tarjoilu, sivun datan haku ja näkymän valinta. Ei omia funktioita (paitsi authHttps)
 ├── app/
 │   ├── helpers.php      Yleiset apufunktiot: lomakkeen luku, muotoilu, päivämäärät, hinnat ja ALV (ei tietokantaa)
-│   ├── db.php           Tietokanta: tiedoston valinta, lukko, yhteys, skeema (versio 14), alustus ja sovellusasetukset
+│   ├── db.php           Tietokanta: tiedoston valinta, lukko, yhteys, skeema (versio 15), alustus ja sovellusasetukset
 │   ├── vocab.php        Tietokannan kielineutraalit koodit (toimenpiteet, yksiköt, laskun tilat, huoltotyypit, ryhmät, vakiokohteet) ja niiden näyttönimet kielitiedostosta
-│   ├── migrate.php      Tietokannan päivitys skeemasta 12 → 13 → 14 (ottaa turvakopion ensin)
+│   ├── migrate.php      Tietokannan päivitys skeemasta 12 → 13 → 14 → 15 (ottaa turvakopion ensin)
 │   ├── auth.php         Käyttäjät ja kirjautuminen: salasanat, istunto, roolit ja oikeudet, käyttäjähallinta, tapahtumaloki
 │   ├── exports.php      Excel-viennit (.xlsx): auton, kaikkien autojen ja varaston vienti
 │   ├── cars.php         Auton tiedot: haku, vuosikulut, kilometrihistoria ja -aikajana, ajomääräarvio, tietojen tarkistus
@@ -70,6 +70,7 @@ autonhuolto/
 │   ├── invoice.php      Yksittäinen lasku (?invoice=N)
 │   ├── invoice_edit.php Luonnoslaskun muokkauslomake ja lukitun laskun palautus luonnokseksi (ladataan invoice.php:stä)
 │   ├── invoice_mail.php Laskun sähköpostilähetys (ladataan invoice.php:stä)
+│   ├── service_mail.php Huoltosivun sähköpostilähetys (ladataan car.php:n huoltohistoriasta)
 │   ├── search.php       Hakutulokset (?view=search)
 │   ├── inventory.php    Varaosavarasto ja varastotapahtumat (?view=inventory)
 │   ├── settings.php     Asetukset: käyttäjät, ulkoasu, mekaanikot, huoltokohteet, backup (?view=settings)
@@ -107,7 +108,7 @@ autonhuolto/
 | `app/i18n.php` | Kielituki: `t('avain')` hakee tekstin kielitiedostoista (`lang/<kieli>/*.php`), `i18nLang()` kertoo käytössä olevan kielen. Puuttuva käännös haetaan suomesta. Selainpuolen tekstit (`js.*`) välitetään sivulle `i18nJsPayload()`-funktiolla ja luetaan `assets/app.js`:ssä funktiolla `tt()`. |
 | `lang/<kieli>/*.php` | Kielitiedostot (`lang/fi/` suomi, `lang/sv/` ruotsi). Suomenkieliset tekstit: yksi tiedosto kutakin ohjelman osaa kohti (esim. `car.php`, `settings.php`, `print.php`, `js.php`). Kukin tiedosto palauttaa taulukon `'alue.avain' => 'Teksti'`. Tekstin muuttujat ovat muotoa `{nimi}`. |
 | `app/vocab.php` | Kielineutraalit koodit: tietokantaan tallennetaan koodit (`replaced`, `pcs`, `paid`, `@initial_balance` …) ja ne näytetään kielitiedoston `vocab.*`-teksteinä (`vocabLabel()`, `unitLabel()`, `actionLabel()`, `noteLabel()`). Käyttäjän itse kirjoittamat tekstit säilyvät sellaisinaan. |
-| `app/migrate.php` | `migrateSchema12To13()` muuntaa skeeman 12 tekstiarvot koodeiksi ja `migrateSchema13To14()` lisää laskuille viitenumeron, lisätiedon ja sähköpostin lähetystiedot; ottavat ensin turvakopion (`.pre-migration-…`) ja peruvat muutokset virheessä. Ajetaan automaattisesti, kun ohjelma avaa skeemaversion 12 kannan. |
+| `app/migrate.php` | `migrateSchema12To13()` muuntaa skeeman 12 tekstiarvot koodeiksi, `migrateSchema13To14()` lisää laskuille viitenumeron, lisätiedon ja sähköpostin lähetystiedot ja `migrateSchema14To15()` poistaa auton vanhat omistaja- ja asiakaskentät (ennen poistoa omistajatekstillä varustetut, asiakkaaseen kytkemättömät autot muutetaan asiakasrekisterin asiakkaiksi) sekä vanhat käyttämättömät asetusavaimet; ottavat ensin turvakopion (`.pre-migration-…`) ja peruvat muutokset virheessä. Ajetaan automaattisesti, kun ohjelma avaa skeemaversion 12 kannan. |
 | `app/helpers.php` | Pieniä, yleisiä apufunktioita: `post()`, `intpost()`, `floatpost()` (lomakkeen luku), `h()` (HTML-escape), `money()`, `km()`, `fiDate()`, `addMonths()`, `priceNetFromInput()` ym. Ei tietokantaa, joten näitä voi kutsua mistä tahansa. |
 | `app/db.php` | Tietokannan tiedosto (`autohuolto.sqlite3`), käyttölukko, yhteys ja versiotarkistus, koko skeema (`currentDatabaseSql()`), uuden kannan alustus ja sovellusasetusten luku/kirjoitus (`appSettings()`, `appSet()`). Ei migraatioita: vain skeemaversio 12 hyväksytään. |
 | `app/auth.php` | Kaikki käyttäjiin liittyvä: salasanan tarkistus ja tiivisteet, kirjautumisen epäonnistumisten rajoitus, istunto (`authCurrent()`), käyttäjähallinnan lomakkeiden käsittely (`authHandlePost()`), roolit (admin / muokkaaja / katselija), `canAction()` ja katselijan lomakkeiden suodatus (`authFilterHtml()`), tapahtumaloki (`authAudit()`) ja ensimmäisen käyttäjän luonti (`authBootstrap()`). |
@@ -332,6 +333,8 @@ Huollosta voi muodostaa laskun (**🧾 Muodosta lasku**). Laskut numeroidaan aut
 
 Testiviesti-painike (Asetukset → Sähköposti) kertoo heti, toimiiko lähetys.
 
+**Huoltosivu sähköpostilla.** Jokaisen huollon kohdalla autosivun Huoltohistoriassa on **✉ Lähetä huoltosivu sähköpostilla**. Viestin perään liitetään huoltosivu (tehdyt työt, osat, vaihtovälit, työaika, mekaanikko ja huomautukset), jotta asiakas näkee tarkasti, mitä tehtiin. Vastaanottajaksi ehdotetaan huollon asiakaskopion sähköpostia; otsikko ja viesti ovat muokattavissa. Hintoja ei lähetetä. Vaatii samat sähköpostiasetukset kuin laskun lähetys.
+
 **Haku.** Valikon hakukenttä hakee autoista, asiakkaista, laskuista, huolloista ja varaosista (vähintään kaksi merkkiä).
 
 **Varmuuskopiomuistutus.** Ylläpitäjälle näytetään ilmoitus, kun viimeisimmästä varmuuskopiosta on yli 30 päivää. Ilmoituksen saa pois kuukaudeksi ruksilla tai ottamalla varmuuskopion.
@@ -415,7 +418,7 @@ Käytä `.backup`-komentoa, älä tavallista tiedoston kopiointia, koska tietoka
 4. Varmista oikeudet: `sudo chown -R www-data:www-data kansio` ja `sudo find kansio -type f -exec chmod 644 {} \;` (tietokanta pysyy 600).
 5. Avaa ohjelma ja tarkista versionumero sivun alatunnisteesta. Lue muutokset tiedostosta `CHANGELOG.md`.
 
-Tietokannan skeemaversio on 14. Skeemaversion 12 ja 13 kanta (versiot 1.0.x–1.2.3) päivitetään automaattisesti ensimmäisellä avauksella: ohjelma ottaa ensin turvakopion (`.pre-migration-<vanha>-to-<uusi>-<aika>.sqlite3` tietokannan viereen) ja jos päivitys epäonnistuu, kantaan ei jää muutoksia. Ota silti aina oma varmuuskopio ennen päivitystä. Muun skeemaversion kanta hylätään selkeällä virheilmoituksella. Päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla; jos joudut palaamaan, palauta ennen päivitystä ottamasi varmuuskopio.
+Tietokannan skeemaversio on 15. Skeemaversion 12, 13 ja 14 kanta (versiot 1.0.x–1.2.6) päivitetään automaattisesti ensimmäisellä avauksella: ohjelma ottaa ensin turvakopion (`.pre-migration-<vanha>-to-<uusi>-<aika>.sqlite3` tietokannan viereen) ja jos päivitys epäonnistuu, kantaan ei jää muutoksia. Ota silti aina oma varmuuskopio ennen päivitystä. Muun skeemaversion kanta hylätään selkeällä virheilmoituksella. Päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla; jos joudut palaamaan, palauta ennen päivitystä ottamasi varmuuskopio.
 
 ---
 

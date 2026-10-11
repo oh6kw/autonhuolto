@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * app/db.php – tietokanta.
  * Tiedoston valinta, käyttölukko ja yhteys; skeema ja sen tarkistus; uuden kannan alustus; sovellusasetukset.
- * Tietokannan skeemaversio on 14 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemoista 12 ja 13 päivitetään automaattisesti
+ * Tietokannan skeemaversio on 15 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemoista 12, 13 ja 14 päivitetään automaattisesti
  * (app/migrate.php, turvakopio otetaan ensin). Tätä vanhempaa kantaa ei avata (requireCurrentDatabaseVersion).
  * Jos skeema tai tallennettujen arvojen muoto muuttuu, lisää migraatio app/migrate.php:hen ja nosta SCHEMA_VERSION.
  * Ladataan index.php:n alussa.
@@ -89,14 +89,13 @@ CREATE TABLE customers (
 );
 CREATE TABLE cars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    reg_plate TEXT NOT NULL DEFAULT '', nickname TEXT NOT NULL DEFAULT '', owner TEXT NOT NULL DEFAULT '',
+    reg_plate TEXT NOT NULL DEFAULT '', nickname TEXT NOT NULL DEFAULT '',
     make TEXT NOT NULL DEFAULT '', model TEXT NOT NULL DEFAULT '', year TEXT NOT NULL DEFAULT '', engine TEXT NOT NULL DEFAULT '', vin TEXT NOT NULL DEFAULT '',
     current_km INTEGER NOT NULL DEFAULT 0, notes TEXT NOT NULL DEFAULT '', first_registration_date TEXT NOT NULL DEFAULT '',
     warning_km INTEGER NOT NULL DEFAULT 3000, warning_months INTEGER NOT NULL DEFAULT 3,
     engine_oil_capacity REAL DEFAULT NULL, engine_oil_spec TEXT NOT NULL DEFAULT '',
     gearbox_oil_capacity REAL DEFAULT NULL, gearbox_oil_spec TEXT NOT NULL DEFAULT '',
     coolant_capacity REAL DEFAULT NULL, coolant_spec TEXT NOT NULL DEFAULT '',
-    customer_address TEXT NOT NULL DEFAULT '', customer_email TEXT NOT NULL DEFAULT '', customer_phone TEXT NOT NULL DEFAULT '', customer_business_id TEXT NOT NULL DEFAULT '',
     current_customer_id INTEGER DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -271,14 +270,15 @@ function currentDatabaseDefinition(): array {
     }
     return $definition;
 }
-/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanhat tuetut skeemat (12, 13) hyväksytään ilman päivitystä. */
+/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanhat tuetut skeemat (12, 13, 14) hyväksytään ilman päivitystä. */
 function requireCurrentDatabaseVersion(PDO $db,bool $migrate=true): void {
     if(!(int)$db->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='app_settings'")->fetchColumn())throw new RuntimeException(t('db.err_settings_table_missing'));
     $raw=$db->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
     if($raw===false||!preg_match('/^[0-9]+$/D',(string)$raw))throw new RuntimeException(t('db.err_schema_invalid'));
     $version=(int)$raw;
-    if($version===12){if($migrate){migrateSchema12To13($db);migrateSchema13To14($db);}}
-    elseif($version===13){if($migrate)migrateSchema13To14($db);}
+    if($version===12){if($migrate){migrateSchema12To13($db);migrateSchema13To14($db);migrateSchema14To15($db);}}
+    elseif($version===13){if($migrate){migrateSchema13To14($db);migrateSchema14To15($db);}}
+    elseif($version===14){if($migrate)migrateSchema14To15($db);}
     elseif($version<SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_old',['version'=>$version,'supported'=>SCHEMA_VERSION]));
     if($version>SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_new'));
 }

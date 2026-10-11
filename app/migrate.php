@@ -128,7 +128,7 @@ function migrateSchema13To14(PDO $db): void {
             $used[$ref]=true;$upd->execute([$ref,(int)$r['id']]);
         }
         $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_reference ON invoices(reference) WHERE reference<>''");
-        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute([(string)SCHEMA_VERSION]);
+        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute(['14']);
         $db->commit();
     }catch(Throwable $e){
         if($db->inTransaction())$db->rollBack();
@@ -142,4 +142,52 @@ function migrateSchema13To14(PDO $db): void {
             if(preg_match('/\.(?:thumb|web)\.jpe?g$/i',$path))@unlink($path);
         }
     }catch(Throwable $e){}
+}
+
+/**
+ * Skeema 14 → 15 (versio 1.2.7): auton vanhat omistaja- ja asiakastiedot (cars.owner, customer_address, customer_email, customer_phone,
+ * customer_business_id) poistuvat; asiakastiedot hoitaa asiakasrekisteri, omistushistoria ja huoltojen asiakaskopiot.
+ * Ettei mitään tietoa katoa, autosta, jolla ei ole asiakaslinkkiä mutta jolla on vanha omistajan nimi, luodaan ensin asiakas (samat tiedot
+ * yhdistetään yhdeksi asiakkaaksi) ja auto linkitetään siihen. Sen jälkeen sarakkeet poistetaan (SQLite 3.35+; jos poisto ei onnistu,
+ * sarakkeet jäävät käyttämättöminä paikoilleen). Samalla poistetaan vanhojen versioiden käyttämättömät asetusrivit. Turvakopio otetaan ensin.
+ */
+function migrateSchema14To15(PDO $db): void {
+    $dir=dirname(DB_FILE);
+    $copy=$dir.'/.pre-migration-14-to-15-'.date('Ymd-His').'.sqlite3';
+    try{ consistentDatabaseCopy($db,$copy); }
+    catch(Throwable $e){ throw new RuntimeException(t('db.err_migration_backup',['message'=>$e->getMessage()]),0,$e); }
+    $db->beginTransaction();
+    try{
+        $have=[];foreach($db->query('PRAGMA table_info("cars")')->fetchAll() as $c)$have[(string)$c['name']]=true;
+        $legacy=array_values(array_filter(['owner','customer_address','customer_email','customer_phone','customer_business_id'],fn($c)=>isset($have[$c])));
+        if(isset($have['owner'])){
+            $sel=array_map(fn($c)=>isset($have[$c])?$c:"'' AS $c",['owner','customer_address','customer_email','customer_phone','customer_business_id']);
+            $rows=$db->query('SELECT id,'.implode(',',$sel)." FROM cars WHERE (current_customer_id IS NULL OR current_customer_id=0) AND TRIM(owner)<>'' ORDER BY id")->fetchAll();
+            $made=[];
+            $insCustomer=$db->prepare("INSERT INTO customers(customer_number,customer_type,name,phone,email,address,business_id,notes,active) VALUES(?,?,?,?,?,?,?,'Luotu auton vanhoista asiakastiedoista',1)");
+            $insHistory=$db->prepare("INSERT INTO car_customer_history(car_id,customer_id,start_date,end_date,customer_name_snapshot,notes) VALUES(?,?,'','',?,'Alkuperäinen alkupäivä ei tiedossa')");
+            $link=$db->prepare('UPDATE cars SET current_customer_id=? WHERE id=?');
+            foreach($rows as $r){
+                $name=trim((string)$r['owner']);$email=trim((string)$r['customer_email']);$phone=trim((string)$r['customer_phone']);$bid=trim((string)$r['customer_business_id']);$addr=trim((string)$r['customer_address']);
+                $key=mb_strtolower($name).'|'.mb_strtolower($email).'|'.$phone.'|'.$bid.'|'.mb_strtolower($addr);
+                if(!isset($made[$key])){
+                    $insCustomer->execute([nextCustomerNumber($db),($bid!==''||preg_match('/\\b(oy|oyj|ab|ky|tmi|ltd|gmbh)\\.?$/iu',$name))?'company':'private',$name,$phone,$email,$addr,$bid]);
+                    $made[$key]=(int)$db->lastInsertId();
+                }
+                $link->execute([$made[$key],(int)$r['id']]);
+                $insHistory->execute([(int)$r['id'],$made[$key],$name]);
+            }
+        }
+        $db->exec("DELETE FROM data_issue_ignores WHERE issue_key LIKE 'unlinked-customer-car-%'");
+        $db->exec("DELETE FROM app_settings WHERE setting_key IN ('auth_legacy_setup','migration_060_service_types','migration_070_item_profiles','migration_077_feature_flags','migration_0822_part_compatibility','feature_0824_belt_inspections','use_mode')");
+        foreach($legacy as $col){
+            try{ $db->exec('ALTER TABLE cars DROP COLUMN "'.$col.'"'); }
+            catch(Throwable $e){ /* vanha SQLite (alle 3.35): sarake jää käyttämättömänä, sillä on oletusarvo eikä se haittaa */ }
+        }
+        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute([(string)SCHEMA_VERSION]);
+        $db->commit();
+    }catch(Throwable $e){
+        if($db->inTransaction())$db->rollBack();
+        throw new RuntimeException(t('db.err_migration_failed',['message'=>$e->getMessage(),'copy'=>basename($copy)]),0,$e);
+    }
 }

@@ -251,12 +251,6 @@ function dataCheckIssues(PDO $db,bool $all=false): array {
     }
     $customerSetting=(string)($db->query("SELECT setting_value FROM app_settings WHERE setting_key='feature_customers'")->fetchColumn() ?: '0');
     if($customerSetting==='1'){
-        foreach($db->query("SELECT id,reg_plate,nickname,owner FROM cars WHERE current_customer_id IS NULL OR current_customer_id=0 ORDER BY id")->fetchAll() as $r){
-            $name=trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['id']]))));
-            $legacy=trim((string)($r['owner']??''));
-            $detail=$legacy!==''?t('cars.issue_unlinked_customer_legacy',['legacy'=>$legacy]):t('cars.issue_unlinked_customer');
-            $add('info',$name.' · '.t('cars.customer_link_missing'),$detail,'?car='.(int)$r['id'].'#asiakkuus','unlinked-customer-car-'.(int)$r['id']);
-        }
         foreach($db->query("SELECT c.id,c.reg_plate,c.nickname,COUNT(s.id) cnt FROM cars c JOIN services s ON s.car_id=c.id WHERE c.current_customer_id IS NOT NULL AND c.current_customer_id<>0 AND TRIM(COALESCE(s.customer_name_snapshot,''))='' AND (s.customer_id IS NULL OR s.customer_id=0) GROUP BY c.id,c.reg_plate,c.nickname HAVING COUNT(s.id)>0 ORDER BY c.id")->fetchAll() as $r){
             $name=trim((string)($r['reg_plate']?:$r['nickname']?:(t('cars.car_number',['id'=>(int)$r['id']]))));$cnt=(int)$r['cnt'];
             $add('info',$name.' · '.t('cars.customer_snapshots_missing'),t('cars.issue_customer_snapshots_detail',['n'=>$cnt]),'?car='.(int)$r['id'].'#asiakkuus','missing-customer-snapshots-car-'.(int)$r['id']);

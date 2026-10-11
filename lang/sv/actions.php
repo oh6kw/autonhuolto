@@ -181,4 +181,6 @@ return [
 'act.err_invoice_status_invalid'=>"Ogiltig fakturastatus.",
 'act.invoice_back_to_draft'=>"Fakturan har återställts till utkast. Du kan nu redigera den och skicka den korrigerade fakturan.",
 'act.invoice_status_moved_back'=>"Fakturans status har återställts. Tidsstämplarna för senare statusar nollställdes.",
+/* --- 1.2.7 --- */
+'act.service_mailed'=>"Servicesidan skickad: {to}",
 ];

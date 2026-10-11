@@ -180,18 +180,6 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             $db->prepare("UPDATE car_customer_history SET start_date=?,end_date=? WHERE id=? AND car_id=?")->execute([$startDate,$endDate,$hid,$cid]);
             flash(t('act.ownership_history_updated'));redirect('?car='.$cid.'#asiakkuus');
         }
-        if($action==='create_customer_from_car'){
-            if(!customersEnabled($app))throw new RuntimeException(t('act.err_customers_disabled'));
-            $cid=intpost('car_id');$carRow=getCar($db,$cid);if(!$carRow)throw new RuntimeException(t('act.err_car_not_found'));if((int)($carRow['current_customer_id']??0)>0)throw new RuntimeException(t('act.err_car_already_linked'));
-            $name=post('customer_name')?:trim((string)$carRow['owner']);if($name==='')throw new RuntimeException(t('act.err_customer_name_for_car'));$ownershipStart=post('ownership_start_date');if(!validOptionalIsoDate($ownershipStart))throw new RuntimeException(t('act.err_ownership_start_invalid'));
-            $db->beginTransaction();$number=nextCustomerNumber($db);
-            $st=$db->prepare("INSERT INTO customers(customer_number,customer_type,name,phone,email,address,business_id,notes,active) VALUES(?,'private',?,?,?,?,?,'Luotu auton vanhoista asiakastiedoista',1)");
-            $st->execute([$number,$name,(string)$carRow['customer_phone'],(string)$carRow['customer_email'],(string)$carRow['customer_address'],(string)$carRow['customer_business_id']]);$customerId=(int)$db->lastInsertId();
-            $db->prepare("UPDATE cars SET current_customer_id=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$customerId,$cid]);
-            $db->prepare("INSERT INTO car_customer_history(car_id,customer_id,start_date,end_date,customer_name_snapshot,notes) VALUES(?,?,?,'',?,'Alkuperäinen alkupäivä ei tiedossa')")->execute([$cid,$customerId,$ownershipStart,$name]);
-            $db->commit();flash(t('act.customer_created_from_car'));redirect('?view=customers&customer='.$customerId);
-        }
-
         if($action==='backfill_service_customer_snapshots'){
             if(!customersEnabled($app))throw new RuntimeException(t('act.err_customers_disabled'));
             $cid=intpost('car_id');$carRow=getCar($db,$cid);if(!$carRow)throw new RuntimeException(t('act.err_car_not_found'));
@@ -211,11 +199,11 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
                jotta jokainen manuaalinen muutos saa oman aikaleimatun historiarivin. */
             $currentKm=$existingCar?(int)$existingCar['current_km']:max(0,intpost('current_km'));
             if(!validOptionalIsoDate(post('first_registration_date')))throw new RuntimeException(t('act.err_first_registration_invalid'));
-            $vals=[$reg,$nick,post('owner'),post('make'),post('model'),post('year'),post('engine'),post('vin'),$currentKm,post('notes'),post('first_registration_date'),max(0,intpost('warning_km',3000)),max(0,intpost('warning_months',3)),floatpost('engine_oil_capacity'),post('engine_oil_spec'),floatpost('gearbox_oil_capacity'),post('gearbox_oil_spec'),floatpost('coolant_capacity'),post('coolant_spec'),post('customer_address'),post('customer_email'),post('customer_phone'),post('customer_business_id')];
-            if($id>0){$st=$db->prepare("UPDATE cars SET reg_plate=?,nickname=?,owner=?,make=?,model=?,year=?,engine=?,vin=?,current_km=?,notes=?,first_registration_date=?,warning_km=?,warning_months=?,engine_oil_capacity=?,engine_oil_spec=?,gearbox_oil_capacity=?,gearbox_oil_spec=?,coolant_capacity=?,coolant_spec=?,customer_address=?,customer_email=?,customer_phone=?,customer_business_id=?,updated_at=CURRENT_TIMESTAMP WHERE id=?");$st->execute([...$vals,$id]);flash(t('act.car_updated'));redirect('?car='.$id);}
+            $vals=[$reg,$nick,post('make'),post('model'),post('year'),post('engine'),post('vin'),$currentKm,post('notes'),post('first_registration_date'),max(0,intpost('warning_km',3000)),max(0,intpost('warning_months',3)),floatpost('engine_oil_capacity'),post('engine_oil_spec'),floatpost('gearbox_oil_capacity'),post('gearbox_oil_spec'),floatpost('coolant_capacity'),post('coolant_spec')];
+            if($id>0){$st=$db->prepare("UPDATE cars SET reg_plate=?,nickname=?,make=?,model=?,year=?,engine=?,vin=?,current_km=?,notes=?,first_registration_date=?,warning_km=?,warning_months=?,engine_oil_capacity=?,engine_oil_spec=?,gearbox_oil_capacity=?,gearbox_oil_spec=?,coolant_capacity=?,coolant_spec=?,updated_at=CURRENT_TIMESTAMP WHERE id=?");$st->execute([...$vals,$id]);flash(t('act.car_updated'));redirect('?car='.$id);}
             $selectedCustomer=customersEnabled($app)?max(0,intpost('new_car_customer_id')):0;if($selectedCustomer>0&&!getCustomer($db,$selectedCustomer))throw new RuntimeException(t('act.err_selected_customer_not_found'));
             $newCarOwnershipStart=post('new_car_ownership_start_date');if($selectedCustomer>0&&!validOptionalIsoDate($newCarOwnershipStart))throw new RuntimeException(t('act.err_ownership_start_invalid'));
-            $st=$db->prepare("INSERT INTO cars(reg_plate,nickname,owner,make,model,year,engine,vin,current_km,notes,first_registration_date,warning_km,warning_months,engine_oil_capacity,engine_oil_spec,gearbox_oil_capacity,gearbox_oil_spec,coolant_capacity,coolant_spec,customer_address,customer_email,customer_phone,customer_business_id,current_customer_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");$st->execute([...$vals,$selectedCustomer?:null]);$id=(int)$db->lastInsertId();
+            $st=$db->prepare("INSERT INTO cars(reg_plate,nickname,make,model,year,engine,vin,current_km,notes,first_registration_date,warning_km,warning_months,engine_oil_capacity,engine_oil_spec,gearbox_oil_capacity,gearbox_oil_spec,coolant_capacity,coolant_spec,current_customer_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");$st->execute([...$vals,$selectedCustomer?:null]);$id=(int)$db->lastInsertId();
             if($currentKm>0)$db->prepare("INSERT INTO odometer_readings(car_id,odometer,recorded_at,source,note) VALUES(?,?,?,?,?)")->execute([$id,$currentKm,date('Y-m-d H:i:s'),'initial','@initial_km']);
             if($selectedCustomer>0){$cu=getCustomer($db,$selectedCustomer);$db->prepare("INSERT INTO car_customer_history(car_id,customer_id,start_date,end_date,customer_name_snapshot,notes) VALUES(?,?,?,'',?,'')")->execute([$id,$selectedCustomer,$newCarOwnershipStart,(string)($cu['name']??'')]);}
             flash(t('act.car_added'));redirect('?car='.$id);
@@ -450,7 +438,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             $sid=intpost('service_id');$s=serviceWithDetails($db,$sid);if(!$s)throw new RuntimeException(t('act.err_service_not_found'));
             $st=$db->prepare("SELECT id FROM invoices WHERE service_id=?");$st->execute([$sid]);$existing=(int)$st->fetchColumn();if($existing)redirect('?invoice='.$existing);
             $number=nextInvoiceNumber($db);$issue=date('Y-m-d');$due=addMonths($issue,0);$due=date('Y-m-d',strtotime('+'.max(0,(int)($app['payment_days']??14)).' days',strtotime($issue)));
-            $invoiceCustomerName=trim((string)($s['customer_name_snapshot']??''));$invoiceCustomerAddress=(string)($s['customer_address_snapshot']??'');$invoiceCustomerEmail=(string)($s['customer_email_snapshot']??'');$invoiceCustomerBusiness=(string)($s['customer_business_id_snapshot']??'');if($invoiceCustomerName===''){if(customersEnabled($app)&&!empty($s['current_customer_id']))throw new RuntimeException(t('act.err_invoice_snapshot_missing'));$invoiceCustomerName=(string)($s['owner']??'');$invoiceCustomerAddress=(string)($s['customer_address']??'');$invoiceCustomerEmail=(string)($s['customer_email']??'');$invoiceCustomerBusiness=(string)($s['customer_business_id']??'');}
+            $invoiceCustomerName=trim((string)($s['customer_name_snapshot']??''));$invoiceCustomerAddress=(string)($s['customer_address_snapshot']??'');$invoiceCustomerEmail=(string)($s['customer_email_snapshot']??'');$invoiceCustomerBusiness=(string)($s['customer_business_id_snapshot']??'');if($invoiceCustomerName===''){if(customersEnabled($app)&&!empty($s['current_customer_id']))throw new RuntimeException(t('act.err_invoice_snapshot_missing'));}
             $invoiceReferenceNew=invoiceReference($number);if($invoiceReferenceNew!==''){$rq=$db->prepare('SELECT COUNT(*) FROM invoices WHERE reference=?');$rq->execute([$invoiceReferenceNew]);if((int)$rq->fetchColumn()>0)throw new RuntimeException(t('act.err_invoice_reference_taken',['ref'=>$invoiceReferenceNew]));}
             $db->beginTransaction();$st=$db->prepare("INSERT INTO invoices(service_id,invoice_number,issue_date,due_date,status,seller_name,seller_business_id,seller_address,seller_email,seller_phone,seller_iban,seller_bic,seller_mobilepay_enabled,seller_mobilepay_number,seller_mobilepay_name,seller_logo_path,customer_name,customer_address,customer_email,customer_business_id,reference) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");$st->execute([$sid,$number,$issue,$due,'draft',$app['shop_name']??DEFAULT_APP_NAME,$app['business_id']??'',$app['shop_address']??'',$app['shop_email']??'',$app['shop_phone']??'',$app['iban']??'',$app['bic']??'',(($app['mobilepay_enabled']??'0')==='1'?1:0),$app['mobilepay_number']??'',$app['mobilepay_name']??'',$app['logo_path']??'',$invoiceCustomerName,$invoiceCustomerAddress,$invoiceCustomerEmail,$invoiceCustomerBusiness,$invoiceReferenceNew]);$iid=(int)$db->lastInsertId();
             $vat=(float)($app['vat_rate']??25.5);$line=$db->prepare("INSERT INTO invoice_lines(invoice_id,description,qty,unit,unit_price_net,vat_rate,sort_order) VALUES(?,?,?,?,?,?,?)");$sort=10;$lineCount=0;
@@ -537,6 +525,21 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             $db->prepare('UPDATE invoices SET emailed_at=?,emailed_to=? WHERE id=?')->execute([$now,implode(', ',$recipients),$iid]);
             if(isset($_POST['mail_mark_sent'])&&(string)$invoiceRow['status']==='draft')$db->prepare("UPDATE invoices SET status='sent',sent_at=CASE WHEN sent_at='' THEN ? ELSE sent_at END WHERE id=? AND status='draft'")->execute([$now,$iid]);
             flash(t('act.invoice_mailed',['to'=>implode(', ',$recipients)]));redirect('?invoice='.$iid);
+        }
+        if($action==='send_service_email'){
+            $sid=intpost('service_id');$appNow=appSettings($db)+defaultAppSettings();
+            if(!mailConfigured($appNow))throw new RuntimeException(t('mail.err_not_configured'));
+            $st=$db->prepare('SELECT id,car_id FROM services WHERE id=?');$st->execute([$sid]);$svcRow=$st->fetch();if(!$svcRow)throw new RuntimeException(t('print.err_service_not_found'));
+            $recipients=array_values(array_unique(array_filter(array_map('trim',preg_split('/[,;\s]+/',post('mail_to'))?:[]))));
+            if(!$recipients)throw new RuntimeException(t('mail.err_no_recipient'));
+            if(count($recipients)>5)throw new RuntimeException(t('mail.err_too_many_recipients'));
+            foreach($recipients as $r)if(!mailValidAddress($r))throw new RuntimeException(t('mail.err_bad_recipient',['address'=>$r]));
+            $subject=post('mail_subject');$body=(string)($_POST['mail_message']??'');if($subject==='')throw new RuntimeException(t('mail.err_no_subject'));if(mb_strlen($body)>5000)throw new RuntimeException(t('mail.err_message_long'));
+            $sheet=serviceMailContent($db,$sid);
+            $msg=['to'=>$recipients,'subject'=>$subject,'text'=>$body."\n\n".str_repeat('-',32)."\n".$sheet['text'],'html'=>'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5">'.nl2br(h($body)).'</div><br>'.$sheet['html']];
+            $shopMail=trim((string)($appNow['shop_email']??''));if(trim((string)($appNow['mail_reply_to']??''))===''&&mailValidAddress($shopMail))$msg['reply_to']=$shopMail;
+            mailSend($appNow,$msg);
+            flash(t('act.service_mailed',['to'=>implode(', ',$recipients)]));redirect('?car='.(int)$svcRow['car_id'].'#historia');
         }
         if($action==='snooze_backup_reminder'){
             appSet($db,'backup_reminder_snooze_until',date('Y-m-d',strtotime('+30 days')));

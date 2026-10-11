@@ -22,15 +22,10 @@ function currentCustomerForCar(PDO $db,int $carId): ?array {
     $st=$db->prepare("SELECT cu.* FROM cars c JOIN customers cu ON cu.id=c.current_customer_id WHERE c.id=?");$st->execute([$carId]);$r=$st->fetch();return $r?:null;
 }
 function customerAddressText(array $c): string { return trim(implode("\n",array_filter([trim((string)($c['address']??'')),trim((string)(($c['postal_code']??'').' '.($c['city']??'')))]))); }
-function carOwnerLabel(PDO $db,array $car): string {
-    if(!empty($car['current_customer_name']))return (string)$car['current_customer_name'];
-    if(!empty($car['current_customer_id'])){ $c=currentCustomerForCar($db,(int)$car['id']); if($c)return (string)$c['name']; }
-    return trim((string)($car['owner']??''));
-}
 function customerSnapshotForCar(PDO $db,array $car): array {
     $cu=!empty($car['current_customer_id'])?getCustomer($db,(int)$car['current_customer_id']):null;
     if($cu)return ['id'=>(int)$cu['id'],'name'=>(string)$cu['name'],'address'=>customerAddressText($cu),'email'=>(string)$cu['email'],'phone'=>(string)$cu['phone'],'business_id'=>(string)$cu['business_id']];
-    return ['id'=>null,'name'=>(string)($car['owner']??''),'address'=>(string)($car['customer_address']??''),'email'=>(string)($car['customer_email']??''),'phone'=>(string)($car['customer_phone']??''),'business_id'=>(string)($car['customer_business_id']??'')];
+    return ['id'=>null,'name'=>'','address'=>'','email'=>'','phone'=>'','business_id'=>''];
 }
 function carCustomerHistory(PDO $db,int $carId): array {
     $st=$db->prepare("SELECT h.*,cu.customer_number,cu.name current_name FROM car_customer_history h LEFT JOIN customers cu ON cu.id=h.customer_id WHERE h.car_id=? ORDER BY CASE WHEN h.start_date='' THEN 1 ELSE 0 END,h.start_date DESC,h.id DESC");$st->execute([$carId]);return $st->fetchAll();

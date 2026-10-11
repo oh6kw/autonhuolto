@@ -28,4 +28,7 @@ return [
 /* --- 1.2.5 --- */
 'mail.invoice_subject_corrected'=>"Korrigerad faktura {number} – {shop}",
 'mail.invoice_body_corrected'=>"Hej,\n\nbifogat finns den korrigerade fakturan {number}. Den ersätter den faktura vi skickade tidigare, så betala bara denna korrigerade faktura.\n\nBelopp att betala: {amount}\nFörfallodag: {due}\n{pay}\n\nMed vänliga hälsningar\n{shop}",
+/* --- 1.2.7 --- */
+'mail.service_subject'=>"Servicesida: {title} – {car} ({shop})",
+'mail.service_body'=>"Hej,\n\nnedan finns servicesidan för bilen {car}, service {date}. Där ser du exakt vad som gjordes.\n\nMed vänliga hälsningar\n{shop}",
 ];

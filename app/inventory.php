@@ -38,7 +38,7 @@ function syncPartCompatibility(PDO $db,int $partId,int $primaryCarId,array $carI
     $db->prepare('UPDATE parts SET car_id=? WHERE id=?')->execute([$primaryCarId,$partId]);
 }
 function partCompatibilityCars(PDO $db,int $partId): array {
-    $st=$db->prepare("SELECT c.id,c.reg_plate,c.nickname,c.make,c.model,c.owner,cu.name current_customer_name FROM part_car_compatibility pc JOIN cars c ON c.id=pc.car_id LEFT JOIN customers cu ON cu.id=c.current_customer_id WHERE pc.part_id=? ORDER BY COALESCE(NULLIF(c.reg_plate,''),NULLIF(c.nickname,''),c.make),c.model,c.id");$st->execute([$partId]);return $st->fetchAll();
+    $st=$db->prepare("SELECT c.id,c.reg_plate,c.nickname,c.make,c.model,cu.name current_customer_name FROM part_car_compatibility pc JOIN cars c ON c.id=pc.car_id LEFT JOIN customers cu ON cu.id=c.current_customer_id WHERE pc.part_id=? ORDER BY COALESCE(NULLIF(c.reg_plate,''),NULLIF(c.nickname,''),c.make),c.model,c.id");$st->execute([$partId]);return $st->fetchAll();
 }
 function partCompatibilityText(PDO $db,int $partId): string { $labels=[];foreach(partCompatibilityCars($db,$partId) as $c){$id=trim((string)($c['reg_plate']?:$c['nickname']));$model=trim((string)$c['make'].' '.(string)$c['model']);$labels[]=trim($id.($id!==''&&$model!==''?' · ':'').$model);}return implode(', ',array_filter($labels)); }
 function partsForCar(PDO $db,int $carId): array { $st=$db->prepare("SELECT p.* FROM parts p WHERE EXISTS (SELECT 1 FROM part_car_compatibility pc WHERE pc.part_id=p.id AND pc.car_id=?) ORDER BY p.id DESC");$st->execute([$carId]);return $st->fetchAll(); }
@@ -48,8 +48,8 @@ function learnPartForCar(PDO $db,int $carId,string $itemKey,string $partName,str
     $db->prepare("INSERT OR IGNORE INTO part_car_compatibility(part_id,car_id) VALUES(?,?)")->execute([$pid,$carId]);
 }
 function inventoryPartRows(PDO $db): array {
-    $rows=$db->query("SELECT p.*,c.reg_plate,c.nickname,c.make,c.model,c.owner,cu.name current_customer_name FROM parts p JOIN cars c ON c.id=p.car_id LEFT JOIN customers cu ON cu.id=c.current_customer_id")->fetchAll();
-    foreach($rows as &$r){$compat=partCompatibilityCars($db,(int)$r['id']);$ids=[];$labels=[];$search=[];foreach($compat as $c){$ids[]=(int)$c['id'];$base=trim((string)($c['reg_plate']?:$c['nickname']));$model=trim((string)$c['make'].' '.(string)$c['model']);$labels[]=trim($base.($base!==''&&$model!==''?' · ':'').$model);$search[]=implode(' ',[$base,$c['make'],$c['model'],$c['current_customer_name']??'',$c['owner']??'']);}$r['compat_car_ids']=implode(',',$ids);$r['compat_labels']=implode(' / ',array_filter($labels));$r['compat_search']=implode(' ',$search);$r['open_car_id']=$ids[0]??(int)$r['car_id'];}unset($r);return $rows;
+    $rows=$db->query("SELECT p.*,c.reg_plate,c.nickname,c.make,c.model,cu.name current_customer_name FROM parts p JOIN cars c ON c.id=p.car_id LEFT JOIN customers cu ON cu.id=c.current_customer_id")->fetchAll();
+    foreach($rows as &$r){$compat=partCompatibilityCars($db,(int)$r['id']);$ids=[];$labels=[];$search=[];foreach($compat as $c){$ids[]=(int)$c['id'];$base=trim((string)($c['reg_plate']?:$c['nickname']));$model=trim((string)$c['make'].' '.(string)$c['model']);$labels[]=trim($base.($base!==''&&$model!==''?' · ':'').$model);$search[]=implode(' ',[$base,$c['make'],$c['model'],$c['current_customer_name']??'']);}$r['compat_car_ids']=implode(',',$ids);$r['compat_labels']=implode(' / ',array_filter($labels));$r['compat_search']=implode(' ',$search);$r['open_car_id']=$ids[0]??(int)$r['car_id'];}unset($r);return $rows;
 }
 function stockPartsForCarItem(PDO $db,int $carId,string $itemKey): array {
     $st=$db->prepare("SELECT p.* FROM parts p WHERE p.item_key=? AND EXISTS (SELECT 1 FROM part_car_compatibility pc WHERE pc.part_id=p.id AND pc.car_id=?) ORDER BY CASE WHEN p.stock_qty>0 THEN 0 ELSE 1 END,p.part_name,p.brand,p.id");

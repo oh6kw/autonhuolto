@@ -50,7 +50,7 @@ function carExportSheets(PDO $db,int $carId): array {
     $summary=[
         [t('export.col_field'),t('export.col_value')],
         [t('export.col_program_shop'),$exportAppName],
-        [t('export.col_reg'),(string)$car['reg_plate']],[t('export.col_nickname'),(string)$car['nickname']],[t('export.col_customer'),$exportCustomer?(string)$exportCustomer['name']:(string)$car['owner']],[t('export.col_customer_number'),$exportCustomer?(string)$exportCustomer['customer_number']:''],[t('export.col_owner_legacy'),(string)$car['owner']],
+        [t('export.col_reg'),(string)$car['reg_plate']],[t('export.col_nickname'),(string)$car['nickname']],[t('export.col_customer'),$exportCustomer?(string)$exportCustomer['name']:''],[t('export.col_customer_number'),$exportCustomer?(string)$exportCustomer['customer_number']:''],
         [t('export.col_make'),(string)$car['make']],[t('export.col_model'),(string)$car['model']],[t('export.col_year'),(string)$car['year']],[t('export.col_first_reg'),fiDate((string)($car['first_registration_date']??''))],
         [t('export.col_vin'),(string)$car['vin']],[t('export.col_engine'),(string)$car['engine']],[t('export.col_current_km'),(int)$car['current_km']],
         [t('export.col_engine_oil_cap'),$car['engine_oil_capacity']!==null?(float)$car['engine_oil_capacity']:''],[t('export.col_engine_oil_spec'),(string)($car['engine_oil_spec']??'')],
@@ -116,14 +116,14 @@ function exportInventoryXlsx(PDO $db): never {
     $sheets=inventoryExportSheets($db,$rows,t('export.inventory_title'),$filters);$app=appSettings($db);$name=trim((string)($app['shop_name']??DEFAULT_APP_NAME))?:DEFAULT_APP_NAME;$ascii=@iconv('UTF-8','ASCII//TRANSLIT',$name);$ascii=$ascii!==false?$ascii:$name;$base=trim((string)(preg_replace('/[^A-Za-z0-9_-]+/','-',$ascii)??''),'-_')?:'Autonhuolto';outputXlsx(t('export.file_inventory',['base'=>$base,'date'=>date('Y-m-d')]),$sheets,$sheets[t('export.sheet_parts')]??[]);
 }
 function exportAllCarsXlsx(PDO $db): never {
-    $cars=$db->query("SELECT c.*,cu.name current_customer_name,cu.customer_number current_customer_number FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id ORDER BY COALESCE(NULLIF(cu.name,''),NULLIF(c.owner,''),'~'),COALESCE(NULLIF(c.nickname,''),c.reg_plate),c.id")->fetchAll();
-    $carRows=[[t('export.col_reg'),t('export.col_nickname'),t('export.col_customer'),t('export.col_customer_number'),t('export.col_owner_legacy'),t('export.col_make'),t('export.col_model'),t('export.col_year'),t('export.col_first_reg'),t('export.col_vin'),t('export.col_engine'),t('export.col_current_km'),t('export.col_services_count'),t('export.col_latest_service_short')]];
+    $cars=$db->query("SELECT c.*,cu.name current_customer_name,cu.customer_number current_customer_number FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id ORDER BY COALESCE(NULLIF(cu.name,''),'~'),COALESCE(NULLIF(c.nickname,''),c.reg_plate),c.id")->fetchAll();
+    $carRows=[[t('export.col_reg'),t('export.col_nickname'),t('export.col_customer'),t('export.col_customer_number'),t('export.col_make'),t('export.col_model'),t('export.col_year'),t('export.col_first_reg'),t('export.col_vin'),t('export.col_engine'),t('export.col_current_km'),t('export.col_services_count'),t('export.col_latest_service_short')]];
     $sheets=[];
     foreach($cars as $car){
         $cid=(int)$car['id'];
         $st=$db->prepare("SELECT * FROM services WHERE car_id=? ORDER BY service_date DESC,id DESC");$st->execute([$cid]);$servicesDesc=$st->fetchAll();$latest=$servicesDesc[0]??null;
         $services=array_reverse($servicesDesc);
-        $carRows[]=[(string)$car['reg_plate'],(string)$car['nickname'],(string)($car['current_customer_name']?:$car['owner']),(string)($car['current_customer_number']??''),(string)$car['owner'],(string)$car['make'],(string)$car['model'],(string)$car['year'],fiDate((string)($car['first_registration_date']??'')),(string)$car['vin'],(string)$car['engine'],(int)$car['current_km'],count($servicesDesc),$latest?fiDate((string)$latest['service_date']):''];
+        $carRows[]=[(string)$car['reg_plate'],(string)$car['nickname'],(string)($car['current_customer_name']??''),(string)($car['current_customer_number']??''),(string)$car['make'],(string)$car['model'],(string)$car['year'],fiDate((string)($car['first_registration_date']??'')),(string)$car['vin'],(string)$car['engine'],(int)$car['current_km'],count($servicesDesc),$latest?fiDate((string)$latest['service_date']):''];
         $carSheet=[[t('export.col_date'),t('export.col_km'),t('export.col_type'),t('export.col_service_name'),t('export.col_works'),t('export.col_mechanic'),t('export.col_actual_time'),t('export.col_remarks_alt')]];
         foreach($services as $svc){
             $acts=getServiceActions($db,(int)$svc['id']);$custom=getCustomActions($db,(int)$svc['id']);$work=array_map(fn($a)=>(string)$a['label'],$acts);foreach($custom as $a)$work[]=(string)$a['description'];
@@ -133,14 +133,14 @@ function exportAllCarsXlsx(PDO $db): never {
     }
 
     // Yhteiset huolto- ja huoltorivivälilehdet ovat aidosti kronologisia kaikkien autojen kesken.
-    $allHistory=[[t('export.col_reg'),t('export.col_car'),t('export.col_customer_snapshot'),t('export.col_owner_legacy'),t('export.col_date'),t('export.col_km'),t('export.col_event_type'),t('export.col_service_name'),t('export.col_works'),t('export.col_workshop'),t('export.col_mechanic'),t('export.col_actual_time'),t('export.col_remarks'),t('export.col_costs')]];
+    $allHistory=[[t('export.col_reg'),t('export.col_car'),t('export.col_customer_snapshot'),t('export.col_date'),t('export.col_km'),t('export.col_event_type'),t('export.col_service_name'),t('export.col_works'),t('export.col_workshop'),t('export.col_mechanic'),t('export.col_actual_time'),t('export.col_remarks'),t('export.col_costs')]];
     $allLines=[[t('export.col_reg'),t('export.col_car'),t('export.col_date'),t('export.col_km'),t('export.col_service_item'),t('export.col_action'),t('export.col_qty'),t('export.col_unit'),t('export.col_make'),t('export.col_part_number'),t('export.col_oem'),t('export.col_remark'),t('export.col_item_interval')]];
-    $q=$db->query("SELECT s.*,c.reg_plate,c.nickname,c.owner,c.make,c.model FROM services s JOIN cars c ON c.id=s.car_id ORDER BY s.service_date ASC,s.id ASC");
+    $q=$db->query("SELECT s.*,c.reg_plate,c.nickname,c.make,c.model FROM services s JOIN cars c ON c.id=s.car_id ORDER BY s.service_date ASC,s.id ASC");
     $exportAllServices=$q->fetchAll();foreach($exportAllServices as &$svc)$svc['actions']=getServiceActions($db,(int)$svc['id']);unset($svc);attachServiceIntervals($db,$exportAllServices);
     foreach($exportAllServices as $svc){
         $acts=$svc['actions'];$custom=getCustomActions($db,(int)$svc['id']);$work=array_map(fn($a)=>(string)$a['label'],$acts);foreach($custom as $a)$work[]=(string)$a['description'];
         $auto=trim((string)($svc['nickname']?:$svc['reg_plate']));$mm=trim((string)$svc['make'].' '.(string)$svc['model']);if($mm!=='')$auto=$auto!==''?$auto.' · '.$mm:$mm;
-        $allHistory[]=[(string)$svc['reg_plate'],$auto,(string)($svc['customer_name_snapshot']??''),(string)$svc['owner'],fiDate((string)$svc['service_date']),(int)$svc['odometer'],serviceTypeLabel((string)$svc['service_type']),(string)$svc['title'],implode(', ',$work),(string)$svc['workshop'],mechanicLabel((string)($svc['mechanic_name_snapshot']??'')),(int)($svc['actual_work_seconds']??0)>0?formatDuration((int)$svc['actual_work_seconds']):'',(string)$svc['notes'],$svc['total_cost']!==null?(float)$svc['total_cost']:''];
+        $allHistory[]=[(string)$svc['reg_plate'],$auto,(string)($svc['customer_name_snapshot']??''),fiDate((string)$svc['service_date']),(int)$svc['odometer'],serviceTypeLabel((string)$svc['service_type']),(string)$svc['title'],implode(', ',$work),(string)$svc['workshop'],mechanicLabel((string)($svc['mechanic_name_snapshot']??'')),(int)($svc['actual_work_seconds']??0)>0?formatDuration((int)$svc['actual_work_seconds']):'',(string)$svc['notes'],$svc['total_cost']!==null?(float)$svc['total_cost']:''];
         foreach($acts as $a)$allLines[]=[(string)$svc['reg_plate'],$auto,fiDate((string)$svc['service_date']),(int)$svc['odometer'],(string)$a['label'],actionLabel((string)$a['action']),$a['quantity']!==null?(float)$a['quantity']:'',($a['unit']===''?'':unitLabel((string)$a['unit'])),(string)$a['brand'],(string)$a['supplier_sku'],(string)$a['oem_number'],(string)$a['notes'],actionIntervalText($a)];
     }
     $allOdometer=[[t('export.col_reg'),t('export.col_car'),t('export.col_datetime'),t('export.col_km'),t('export.col_source'),t('export.col_event_note'),t('export.col_deviation')]];$odoRows=[];

@@ -321,4 +321,9 @@ return [
 'car.tab_overview'=>"📊 Översikt",
 'car.tab_customer'=>"👤 Kund",
 'car.tabs_aria'=>"Bilsidans vyer",
+/* --- 1.2.7 --- */
+'car.service_mail_summary'=>"Skicka servicesidan med e-post",
+'car.service_mail_note'=>"Servicesidan (utfört arbete, delar, intervall, arbetstid och anmärkningar) läggs till efter meddelandet. Priser och egna kostnader skickas inte.",
+'car.service_mail_confirm'=>"Ska servicesidan skickas med e-post?",
+'car.service_mail_send'=>"Skicka servicesidan",
 ];
