@@ -179,38 +179,48 @@ if(serviceForm&&!(serviceForm.querySelector('[name="service_id"]'))){
  }
 })();
 
-/* asetusten välilehdet, kelluvan tallennuspalkin muutosmerkki, salasanan näyttö */
+/* välilehdet (asetukset ja autosivu), kelluvan tallennuspalkin muutosmerkki, salasanan näyttö */
 (function(){
-  var nav=document.getElementById('settingsTabs'),wrap=document.getElementById('settingsPanels');
-  if(nav&&wrap){
+  /* Kiinteän yläpalkin korkeus CSS-muuttujaan, jotta kiinteä välilehtipalkki jää sen alle */
+  var topbar=document.querySelector('.top');
+  var setTop=function(){var st=topbar?getComputedStyle(topbar).position:'';var h=topbar&&(st==='sticky'||st==='fixed')?topbar.offsetHeight:0;document.documentElement.style.setProperty('--topbar-h',h+'px');};
+  setTop();window.addEventListener('resize',setTop);
+  var initTabs=function(navId,wrapId,storeKey){
+    var nav=document.getElementById(navId),wrap=document.getElementById(wrapId);
+    if(!nav||!wrap)return;
     var secs=[].slice.call(wrap.querySelectorAll('[data-tab]')),links=[].slice.call(nav.querySelectorAll('[data-tab-link]'));
     var keys=links.map(function(a){return a.getAttribute('data-tab-link');});
+    var def=nav.getAttribute('data-default');if(keys.indexOf(def)<0)def=keys[0];
     var show=function(k,store){
-      if(keys.indexOf(k)<0)k=keys[0];
+      if(keys.indexOf(k)<0)k=def;
       secs.forEach(function(s){s.hidden=s.getAttribute('data-tab')!==k;});
-      links.forEach(function(a){var on=a.getAttribute('data-tab-link')===k;a.classList.toggle('is-active',on);a.setAttribute('aria-current',on?'page':'false');});
-      if(store){try{sessionStorage.setItem('settingsTab',k);}catch(e){}}
+      links.forEach(function(a){var on=a.getAttribute('data-tab-link')===k;a.classList.toggle('is-active',on);a.setAttribute('aria-current',on?'page':'false');if(on&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=a.offsetLeft-(nav.clientWidth-a.offsetWidth)/2;});
+      if(store&&storeKey){try{sessionStorage.setItem(storeKey,k);}catch(e){}}
     };
     var target=function(){
       var id='';try{id=decodeURIComponent((location.hash||'').slice(1));}catch(e){}
       var el=id?document.getElementById(id):null,s=el?el.closest('[data-tab]'):null;
-      return s?{key:s.getAttribute('data-tab'),el:el}:null;
+      return s&&wrap.contains(s)?{key:s.getAttribute('data-tab'),el:el}:null;
     };
     var openParents=function(el){for(var p=el;p&&p!==wrap;p=p.parentElement){if(p.tagName==='DETAILS')p.open=true;}};
     var init=function(){
       var t=target();
       if(t){show(t.key,true);openParents(t.el);setTimeout(function(){t.el.scrollIntoView({block:'start'});},30);return;}
-      var k=null;try{k=sessionStorage.getItem('settingsTab');}catch(e){}
-      show(k||keys[0],false);
+      var k=null;if(storeKey){try{k=sessionStorage.getItem(storeKey);}catch(e){}}
+      show(k||def,false);
     };
     links.forEach(function(a){a.addEventListener('click',function(ev){
       ev.preventDefault();show(a.getAttribute('data-tab-link'),true);
       try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
-      if(nav.getBoundingClientRect().top<0)nav.scrollIntoView({block:'start'});
+      if(getComputedStyle(nav).position==='sticky'){
+        if(wrap.getBoundingClientRect().top<nav.getBoundingClientRect().bottom)wrap.scrollIntoView({block:'start'});
+      }else if(nav.getBoundingClientRect().top<0)nav.scrollIntoView({block:'start'});
     });});
     window.addEventListener('hashchange',init);
     init();
-  }
+  };
+  initTabs('settingsTabs','settingsPanels','settingsTab');
+  initTabs('carTabs','carPanels',null);
   /* Tallentamattomien muutosten merkki kelluvassa palkissa */
   [].forEach.call(document.querySelectorAll('form[data-savebar]'),function(f){
     var note=f.querySelector('.savebar-note');if(!note)return;
@@ -297,13 +307,4 @@ if(serviceForm&&!(serviceForm.querySelector('[name="service_id"]'))){
   });
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
-})();
-
-/* Autosivun kiinteä pikavalikko: näkyy, kun yläosan pikavalikko on vierittynyt pois näkyvistä. */
-(()=>{
- var src=document.querySelector('.car-quicknav');if(!src||!('IntersectionObserver' in window))return;
- var bar=document.createElement('nav');bar.className='car-sticky-nav';bar.setAttribute('aria-label',src.getAttribute('aria-label')||'');bar.hidden=true;
- [].forEach.call(src.querySelectorAll('a'),function(a){var c=document.createElement('a');c.href=a.getAttribute('href');c.textContent=a.textContent;bar.appendChild(c);});
- document.body.appendChild(bar);
- new IntersectionObserver(function(es){var e=es[0];bar.hidden=e.isIntersecting||e.boundingClientRect.top>0;},{threshold:0}).observe(src);
 })();

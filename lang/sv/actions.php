@@ -177,4 +177,8 @@ return [
 'act.test_mail_sent'=>"Testmeddelandet skickades till {to}.",
 'act.invoice_mailed'=>"Fakturan skickades till {to}.",
 'act.backup_reminder_snoozed'=>"Påminnelsen om säkerhetskopia är dold i en månad.",
+/* --- 1.2.5 --- */
+'act.err_invoice_status_invalid'=>"Ogiltig fakturastatus.",
+'act.invoice_back_to_draft'=>"Fakturan har återställts till utkast. Du kan nu redigera den och skicka den korrigerade fakturan.",
+'act.invoice_status_moved_back'=>"Fakturans status har återställts. Tidsstämplarna för senare statusar nollställdes.",
 ];

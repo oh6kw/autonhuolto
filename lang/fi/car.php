@@ -317,4 +317,8 @@ return [
     'car.delete_car_summary'=>'🗑 Poista auto',
     'car.delete_car_warning'=>'Auton poistaminen poistaa pysyvästi sen huoltohistorian, vain tähän autoon kuuluvat varaosat ja huoltokuvat. Myös muille autoille sopivat yhteiset varaosat säilyvät. Toiminto varmistetaan kahdesti.',
     'car.delete_car_button'=>'Poista auto ja kaikki tiedot',
+/* --- 1.2.5 --- */
+'car.tab_overview'=>"📊 Yleiskatsaus",
+'car.tab_customer'=>"👤 Asiakas",
+'car.tabs_aria'=>"Auton sivun näkymät",
 ];

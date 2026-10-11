@@ -317,4 +317,8 @@ return [
     'car.delete_car_summary'=>'🗑 Radera bilen',
     'car.delete_car_warning'=>'Att radera bilen raderar permanent dess servicehistorik, reservdelar som hör enbart till den här bilen och servicebilder. Gemensamma reservdelar som passar också andra bilar bevaras. Åtgärden bekräftas två gånger.',
     'car.delete_car_button'=>'Radera bilen och alla uppgifter',
+/* --- 1.2.5 --- */
+'car.tab_overview'=>"📊 Översikt",
+'car.tab_customer'=>"👤 Kund",
+'car.tabs_aria'=>"Bilsidans vyer",
 ];

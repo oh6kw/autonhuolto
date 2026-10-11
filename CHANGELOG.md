@@ -4,6 +4,17 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 14.
 
+## 1.2.5
+
+Laskujen korjaaminen ja autosivun välilehdet. Ei tietokantamuutoksia (skeema 14).
+
+- **Lasku takaisin luonnostilaan:** lähetetyn, maksetun tai hyvitetyn laskun voi palauttaa luonnokseksi laskun sivun painikkeella **↩ Palauta luonnokseksi (korjausta varten)** tai Tila-valinnasta. Luonnosta voi muokata (rivit, päivämäärät, asiakas, lisätieto) ja sen voi lähettää uudelleen. Laskunumero ja viitenumero säilyvät. Aiemmin tilaa ei voinut palauttaa taaksepäin.
+- **Tilan vaihto vapaasti myös taaksepäin:** esim. virheellinen "maksettu" voidaan palauttaa tilaan "lähetetty". Taaksepäin mentäessä ohjelma kysyy varmistuksen ja nollaa myöhempien tilojen aikaleimat (luonnos nollaa lähetys-, maksu- ja hyvitysajan); eteenpäin mentäessä puuttuvat aikaleimat täytetään.
+- **Korjattu lasku sähköpostilla:** jos aiemmin sähköpostilla lähetetty lasku on palautettu luonnokseksi, lähetyslomakkeen otsikoksi ja viestiksi ehdotetaan "Korjattu lasku …" -tekstiä, jossa kerrotaan, että lasku korvaa aiemmin lähetetyn. Otsikkoa ja viestiä voi muokata ennen lähetystä.
+- **Autosivun välilehdet:** autosivu on jaettu välilehtiin samaan tapaan kuin Asetukset: **Yleiskatsaus** (kilometrit ja huoltotilanne), **Kirjaa huolto**, **Huoltohistoria**, **Huolto-ohjelma**, **Varaosat**, **Asiakas** (jos asiakasosio on käytössä) ja **Auton tiedot** (myös auton poisto). Vain valittu välilehti näytetään, joten sivu ei ole enää kymmeniä näyttöjä pitkä. Välilehtipalkki pysyy näkyvissä vieritettäessä. Huollon muokkaus avaa suoraan **Kirjaa huolto** -välilehden, ja osoitteet muotoa `?car=N#historia` avaavat oikean välilehden. Aiempi pikanapit-palkki korvautui välilehtipalkilla.
+- **Laskuluonnoksen ilmoitus:** luonnoksen vihjeteksti kertoo nyt myös, että luonnosta voi muokata suoraan.
+- **Ohje:** SETUP.md päivitetty (laskun korjaus, autosivun välilehdet).
+
 ## 1.2.4
 
 Laaja versio: laskun muokkaus ja sähköpostitus, PDF-lasku, haku, favicon, varmuuskopiomuistutus sekä joukko korjauksia ja käytettävyysparannuksia. **Tietokannan skeema päivittyy 13 → 14** ensimmäisellä avauksella (ohjelma ottaa ensin turvakopion `.pre-migration-13-to-14-<aika>.sqlite3`). Ota oma varmuuskopio ennen päivitystä. Kirjautumisen lukitus on ennallaan.

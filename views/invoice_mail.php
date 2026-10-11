@@ -7,14 +7,15 @@ $emailedAt=trim((string)($invoice['emailed_at']??''));
 $defaultTo=trim((string)($invoice['customer_email']??''));
 $gross=$net+$vat;
 $shopName=trim((string)($invoice['seller_name']??''))?:$appName;
-$defaultSubject=t('mail.invoice_subject',['number'=>(string)$invoice['invoice_number'],'shop'=>$shopName]);
+$isCorrection=$emailedAt!==''&&(string)$invoice['status']==='draft'; /* aiemmin sähköpostilla lähetetty lasku palautettu luonnokseksi ja korjattu */
+$defaultSubject=t($isCorrection?'mail.invoice_subject_corrected':'mail.invoice_subject',['number'=>(string)$invoice['invoice_number'],'shop'=>$shopName]);
 $ref=invoiceRef($invoice);
 $payLines=[];
 if(invoiceShowsPaymentForm($invoice)&&trim((string)$invoice['seller_iban'])!==''){
     $payLines[]=t('mail.invoice_pay_iban',['iban'=>trim(chunk_split(strtoupper((string)preg_replace('/\s+/','',(string)$invoice['seller_iban'])),4,' '))]);
     $payLines[]=$ref!==''?t('mail.invoice_pay_reference',['ref'=>invoiceReferenceFormatted($ref)]):t('mail.invoice_pay_message',['number'=>(string)$invoice['invoice_number']]);
 }
-$defaultBody=t('mail.invoice_body',['number'=>(string)$invoice['invoice_number'],'amount'=>money($gross),'due'=>fiDate((string)$invoice['due_date']),'shop'=>$shopName,'pay'=>implode("\n",$payLines)]);
+$defaultBody=t($isCorrection?'mail.invoice_body_corrected':'mail.invoice_body',['number'=>(string)$invoice['invoice_number'],'amount'=>money($gross),'due'=>fiDate((string)$invoice['due_date']),'shop'=>$shopName,'pay'=>implode("\n",$payLines)]);
 ?>
 <details class="clean invoice-mail" id="sahkoposti"><summary class="btn2">✉ <?=t('invoice.mail_summary')?><?php if($emailedAt!==''):?> <span class="badge okbadge"><?=t('invoice.mail_sent_badge')?></span><?php endif;?></summary><div class="inside">
 <?php if($emailedAt!==''):?><p class="tiny"><?=t('invoice.mail_last',['time'=>h(date('d.m.Y H:i',strtotime($emailedAt))),'to'=>h((string)$invoice['emailed_to'])])?></p><?php endif;?>

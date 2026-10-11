@@ -8,7 +8,7 @@ return [
     'invoice.back_to_list'=>'← Laskut',
     'invoice.back_to_car'=>'Takaisin autoon',
     'invoice.delete_draft'=>'Poista laskuluonnos',
-    'invoice.draft_notice'=>'Laskuluonnos on muodostamishetken snapshot huollosta. Huollon myöhemmät muutokset eivät päivitä jo muodostettua laskua automaattisesti. Jos hinnat tai työt muuttuivat, poista luonnos ja muodosta huollosta uusi lasku.',
+    'invoice.draft_notice'=>'Laskuluonnos on muodostamishetken snapshot huollosta. Huollon myöhemmät muutokset eivät päivitä jo muodostettua laskua automaattisesti. Jos hinnat tai työt muuttuivat, muokkaa luonnosta suoraan (Muokkaa laskua) tai poista luonnos ja muodosta huollosta uusi lasku.',
     'invoice.issue_date'=>'Päiväys',
     'invoice.due_date'=>'Eräpäivä',
     'invoice.payable'=>'Maksettavaa',
@@ -72,7 +72,7 @@ return [
 'invoice.download_pdf'=>"Lataa PDF",
 'invoice.export_xlsx'=>"Vie Exceliin",
 'invoice.edit_summary'=>"Muokkaa laskua",
-'invoice.edit_help'=>"Luonnoksen rivejä, päivämääriä, asiakastietoja ja lisätietoja voi muokata, kunnes lasku merkitään lähetetyksi. Laskunumero ja viitenumero eivät muutu.",
+'invoice.edit_help'=>"Luonnoksen rivejä, päivämääriä, asiakastietoja ja lisätietoja voi muokata. Lähetetyn laskun voi palauttaa luonnokseksi Tila-valinnasta tai painikkeella, jolloin sitä voi korjata ja lähettää uudelleen. Laskunumero ja viitenumero eivät muutu.",
 'invoice.edit_unit'=>"Yksikkö",
 'invoice.edit_delete_line'=>"Poista rivi",
 'invoice.edit_customer_name'=>"Nimi",
@@ -100,4 +100,9 @@ return [
 'invoice.mail_confirm'=>"Lähetetäänkö lasku sähköpostilla?",
 'invoice.mail_send'=>"Lähetä lasku",
 'invoice.mail_note'=>"Viesti lähetetään asetuksissa valitulla lähetystavalla. Jos lähetys epäonnistuu, virheilmoitus kertoo syyn eikä lasku muutu.",
+/* --- 1.2.5 --- */
+'invoice.unlock_button'=>"Palauta luonnokseksi (korjausta varten)",
+'invoice.unlock_help'=>"Lähetetty, maksettu tai hyvitetty lasku on lukittu. Kun palautat sen luonnokseksi, voit muokata sitä ja lähettää korjatun laskun. Laskunumero ja viitenumero säilyvät.",
+'invoice.unlock_confirm'=>"Palautetaanko lasku luonnokseksi? Lähetys-, maksu- ja hyvitysajat nollataan, ja lasku pitää merkitä uudelleen lähetetyksi.",
+'invoice.status_back_confirm'=>"Palautetaanko laskun tila taaksepäin? Myöhempien tilojen aikaleimat nollataan.",
 ];

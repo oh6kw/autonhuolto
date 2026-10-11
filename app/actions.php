@@ -462,7 +462,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
         if($action==='update_invoice'){
             $iid=intpost('invoice_id');$st=$db->prepare('SELECT * FROM invoices WHERE id=?');$st->execute([$iid]);$invoiceRow=$st->fetch();
             if(!$invoiceRow)throw new RuntimeException(t('act.err_invoice_not_found'));
-            if(!invoiceCanDelete($invoiceRow))throw new RuntimeException(t('act.err_invoice_edit_only_draft'));
+            if(!invoiceCanEdit($invoiceRow))throw new RuntimeException(t('act.err_invoice_edit_only_draft'));
             $issue=post('issue_date');$due=post('due_date');
             if($issue===''||!validOptionalIsoDate($issue)||$due===''||!validOptionalIsoDate($due))throw new RuntimeException(t('act.err_invoice_dates_invalid'));
             if($due<$issue)throw new RuntimeException(t('act.err_invoice_due_before_issue'));
@@ -545,10 +545,14 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
         if($action==='update_invoice_status'){
             $iid=intpost('invoice_id');$status=vocabMatch('invstatus',post('status'))??'';$st=$db->prepare('SELECT * FROM invoices WHERE id=?');$st->execute([$iid]);$invoiceRow=$st->fetch();
             if(!$invoiceRow)throw new RuntimeException(t('act.err_invoice_not_found'));
-            if(!in_array($status,invoiceAllowedStatuses($invoiceRow),true))throw new RuntimeException(t('act.err_invoice_status_backward'));
-            $now=date('Y-m-d H:i:s');
-            $db->prepare("UPDATE invoices SET status=?,sent_at=CASE WHEN sent_at='' AND status='draft' AND ? IN ('sent','paid') THEN ? ELSE sent_at END,paid_at=CASE WHEN paid_at='' AND ?='paid' THEN ? ELSE paid_at END,credited_at=CASE WHEN credited_at='' AND ?='credited' THEN ? ELSE credited_at END WHERE id=?")->execute([$status,$status,$now,$status,$now,$status,$now,$iid]);
-            flash(t('act.invoice_status_updated'));redirect('?invoice='.$iid);
+            if(!in_array($status,invoiceAllowedStatuses($invoiceRow),true))throw new RuntimeException(t('act.err_invoice_status_invalid'));
+            $now=date('Y-m-d H:i:s');$rank=invoiceStatusRank($status);$oldStatus=(string)$invoiceRow['status'];
+            /* Aikaleimat noudattavat tilaa: taaksepäin mentäessä myöhemmät aikaleimat nollataan (luonnos: kaikki), eteenpäin mentäessä puuttuvat täytetään. */
+            $sentAt=$rank===0?'':((string)$invoiceRow['sent_at']!==''?(string)$invoiceRow['sent_at']:$now);
+            $paidAt=$rank<2?'':((string)$invoiceRow['paid_at']!==''?(string)$invoiceRow['paid_at']:($status==='paid'?$now:''));
+            $creditedAt=$rank<3?'':((string)$invoiceRow['credited_at']!==''?(string)$invoiceRow['credited_at']:$now);
+            $db->prepare('UPDATE invoices SET status=?,sent_at=?,paid_at=?,credited_at=? WHERE id=?')->execute([$status,$sentAt,$paidAt,$creditedAt,$iid]);
+            flash(t($rank<invoiceStatusRank($oldStatus)?($status==='draft'?'act.invoice_back_to_draft':'act.invoice_status_moved_back'):'act.invoice_status_updated'),$rank<invoiceStatusRank($oldStatus)?'warn':'ok');redirect('?invoice='.$iid.($status==='draft'?'#muokkaa':''));
         }
         if($action==='delete_invoice'){
             $iid=intpost('invoice_id');

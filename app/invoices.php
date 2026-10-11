@@ -119,12 +119,12 @@ function invoicePeriodSummary(PDO $db,string $from,string $to): array {
 function invoiceCanDelete(array $invoice): bool {
     return ($invoice['status']??'')==='draft'&&empty($invoice['sent_at'])&&empty($invoice['paid_at'])&&empty($invoice['credited_at']);
 }
-function invoiceAllowedStatuses(array $invoice): array {
-    if(!empty($invoice['credited_at'])||($invoice['status']??'')==='credited')return ['credited'];
-    if(!empty($invoice['paid_at'])||($invoice['status']??'')==='paid')return ['paid','credited'];
-    if(!empty($invoice['sent_at'])||($invoice['status']??'')==='sent')return ['sent','paid','credited'];
-    return ['draft','sent','paid','credited'];
-}
+/** Laskun tilat järjestyksessä. Tilan voi vaihtaa vapaasti myös taaksepäin (esim. lähetetty → luonnos korjausta varten). */
+function invoiceStatusOrder(): array { return ['draft','sent','paid','credited']; }
+function invoiceStatusRank(string $status): int { $i=array_search($status,invoiceStatusOrder(),true);return $i===false?0:(int)$i; }
+function invoiceAllowedStatuses(array $invoice): array { return invoiceStatusOrder(); }
+/** Laskua saa muokata vain luonnostilassa. */
+function invoiceCanEdit(array $invoice): bool { return ($invoice['status']??'')==='draft'; }
 /** Code 128 C -viivakoodin palkit moduuleina: lista [x, leveys] ja kokonaisleveys (sis. 10 moduulin hiljaiset alueet). Tyhjä lista, jos syöte ei kelpaa. */
 function code128cBars(string $digits): array {
     if($digits===''||strlen($digits)%2!==0||!ctype_digit($digits))return ['bars'=>[],'total'=>0];

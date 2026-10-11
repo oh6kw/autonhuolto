@@ -177,4 +177,8 @@ return [
 'act.test_mail_sent'=>"Testiviesti lähetetty osoitteeseen {to}.",
 'act.invoice_mailed'=>"Lasku lähetetty osoitteeseen {to}.",
 'act.backup_reminder_snoozed'=>"Varmuuskopiomuistutus piilotettu kuukaudeksi.",
+/* --- 1.2.5 --- */
+'act.err_invoice_status_invalid'=>"Virheellinen laskun tila.",
+'act.invoice_back_to_draft'=>"Lasku on palautettu luonnokseksi. Voit nyt muokata sitä ja lähettää korjatun laskun.",
+'act.invoice_status_moved_back'=>"Laskun tila palautettu. Myöhempien tilojen aikaleimat nollattiin.",
 ];

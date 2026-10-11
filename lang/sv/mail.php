@@ -25,4 +25,7 @@ return [
 'mail.err_no_auth'=>"Servern erbjuder ingen inloggningsmetod som stöds (PLAIN eller LOGIN).",
 'mail.err_php_mail_missing'=>"PHP:s mail()-funktion finns inte på servern. Använd SMTP.",
 'mail.err_php_mail_failed'=>"Servern godtog inte meddelandet för sändning (mail() misslyckades). Troligen saknar servern e-postsändning; använd SMTP.",
+/* --- 1.2.5 --- */
+'mail.invoice_subject_corrected'=>"Korrigerad faktura {number} – {shop}",
+'mail.invoice_body_corrected'=>"Hej,\n\nbifogat finns den korrigerade fakturan {number}. Den ersätter den faktura vi skickade tidigare, så betala bara denna korrigerade faktura.\n\nBelopp att betala: {amount}\nFörfallodag: {due}\n{pay}\n\nMed vänliga hälsningar\n{shop}",
 ];

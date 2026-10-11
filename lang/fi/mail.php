@@ -25,4 +25,7 @@ return [
 'mail.err_no_auth'=>"Palvelin ei tarjoa tuettua kirjautumistapaa (PLAIN tai LOGIN).",
 'mail.err_php_mail_missing'=>"PHP:n mail()-funktio ei ole käytettävissä tällä palvelimella. Käytä SMTP:tä.",
 'mail.err_php_mail_failed'=>"Palvelin ei hyväksynyt viestiä lähetettäväksi (mail() epäonnistui). Todennäköisesti palvelimella ei ole sähköpostilähetystä; käytä SMTP:tä.",
+/* --- 1.2.5 --- */
+'mail.invoice_subject_corrected'=>"Korjattu lasku {number} – {shop}",
+'mail.invoice_body_corrected'=>"Hei,\n\nliitteenä korjattu lasku {number}. Tämä lasku korvaa aiemmin lähettämämme laskun, joten maksathan vain tämän korjatun laskun.\n\nMaksettava summa: {amount}\nEräpäivä: {due}\n{pay}\n\nYstävällisin terveisin\n{shop}",
 ];

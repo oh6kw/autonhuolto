@@ -8,7 +8,7 @@ return [
     'invoice.back_to_list'=>'← Fakturor',
     'invoice.back_to_car'=>'Tillbaka till bilen',
     'invoice.delete_draft'=>'Radera fakturautkastet',
-    'invoice.draft_notice'=>'Fakturautkastet är en ögonblicksbild av servicetillfället vid den tidpunkt då det skapades. Senare ändringar i servicetillfället uppdaterar inte en redan skapad faktura automatiskt. Om priserna eller arbetena ändrades, radera utkastet och skapa en ny faktura utifrån servicetillfället.',
+    'invoice.draft_notice'=>'Fakturautkastet är en ögonblicksbild av servicetillfället vid den tidpunkt då det skapades. Senare ändringar i servicetillfället uppdaterar inte en redan skapad faktura automatiskt. Om priserna eller arbetena ändrades, redigera utkastet direkt (Redigera faktura) eller radera utkastet och skapa en ny faktura utifrån servicetillfället.',
     'invoice.issue_date'=>'Datum',
     'invoice.due_date'=>'Förfallodag',
     'invoice.payable'=>'Att betala',
@@ -72,7 +72,7 @@ return [
 'invoice.download_pdf'=>"Hämta PDF",
 'invoice.export_xlsx'=>"Exportera till Excel",
 'invoice.edit_summary'=>"Redigera fakturan",
-'invoice.edit_help'=>"Utkastets rader, datum, kunduppgifter och tilläggsinformation kan redigeras tills fakturan markeras som skickad. Fakturanummer och referensnummer ändras inte.",
+'invoice.edit_help'=>"Utkastets rader, datum, kunduppgifter och tilläggsinformation kan redigeras. En skickad faktura kan återställas till utkast via Status-valet eller knappen, så att den kan korrigeras och skickas på nytt. Fakturanummer och referensnummer ändras inte.",
 'invoice.edit_unit'=>"Enhet",
 'invoice.edit_delete_line'=>"Ta bort rad",
 'invoice.edit_customer_name'=>"Namn",
@@ -100,4 +100,9 @@ return [
 'invoice.mail_confirm'=>"Skicka fakturan med e-post?",
 'invoice.mail_send'=>"Skicka fakturan",
 'invoice.mail_note'=>"Meddelandet skickas med det sändningssätt som valts i inställningarna. Om sändningen misslyckas visas orsaken och fakturan ändras inte.",
+/* --- 1.2.5 --- */
+'invoice.unlock_button'=>"Återställ till utkast (för korrigering)",
+'invoice.unlock_help'=>"En skickad, betald eller krediterad faktura är låst. När du återställer den till utkast kan du redigera den och skicka en korrigerad faktura. Fakturanumret och referensnumret bevaras.",
+'invoice.unlock_confirm'=>"Ska fakturan återställas till utkast? Tidpunkterna för skickande, betalning och kreditering nollställs och fakturan måste markeras som skickad på nytt.",
+'invoice.status_back_confirm'=>"Ska fakturans status återställas bakåt? Tidsstämplarna för senare statusar nollställs.",
 ];

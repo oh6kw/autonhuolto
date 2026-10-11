@@ -1,7 +1,10 @@
 <?php
 declare(strict_types=1);
 /* Luonnoslaskun muokkaus: päivämäärät, asiakas, huomautus ja rivit. Vain luonnokselle, jota ei ole lähetetty (invoiceCanDelete). Ladataan views/invoice.php:stä. */
-if(!invoiceCanDelete($invoice)||!canAction('update_invoice'))return;
+if(!canAction('update_invoice'))return;
+if(!invoiceCanEdit($invoice)){ /* Lähetetty / maksettu / hyvitetty lasku on lukittu: tarjotaan palautus luonnokseksi. */ ?>
+<div class="invoice-unlock"><form method="post" class="form-actions"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="action" value="update_invoice_status"><input type="hidden" name="status" value="draft"><input type="hidden" name="invoice_id" value="<?=(int)$invoiceId?>"><?php editField($db,'invoice',$invoiceId);?><button class="btn2" onclick="return confirm('<?=h(addcslashes(t('invoice.unlock_confirm'),"'\\"))?>')">↩ <?=t('invoice.unlock_button')?></button><span class="tiny"><?=t('invoice.unlock_help')?></span></form></div>
+<?php return; }
 $unitOpts=vocabOptions('unit');
 $rowHtml=function(string $i,array $l) use ($unitOpts,$app): string {
     $unit=(string)($l['unit']??'pcs');$opts=$unitOpts;if($unit!==''&&!isset($opts[$unit]))$opts[$unit]=$unit;

@@ -68,7 +68,7 @@ autonhuolto/
 │   ├── customers.php    Asiakaslista ja asiakkaan tiedot (?view=customers)
 │   ├── invoices.php     Laskulista ja yhteenvedot (?view=invoices)
 │   ├── invoice.php      Yksittäinen lasku (?invoice=N)
-│   ├── invoice_edit.php Luonnoslaskun muokkauslomake (ladataan invoice.php:stä)
+│   ├── invoice_edit.php Luonnoslaskun muokkauslomake ja lukitun laskun palautus luonnokseksi (ladataan invoice.php:stä)
 │   ├── invoice_mail.php Laskun sähköpostilähetys (ladataan invoice.php:stä)
 │   ├── search.php       Hakutulokset (?view=search)
 │   ├── inventory.php    Varaosavarasto ja varastotapahtumat (?view=inventory)
@@ -286,6 +286,8 @@ Yläpalkin valikosta pääsee näihin sivuihin: **Autot** (etusivu), **Kaikki hu
 
 ### 4.3 Auton lisääminen ja kilometrit
 
+Auton sivu on jaettu välilehtiin, jotta se ei ole liian pitkä: **Yleiskatsaus** (kilometrit ja huoltotilanne), **Kirjaa huolto**, **Huoltohistoria**, **Huolto-ohjelma**, **Varaosat**, **Asiakas** ja **Auton tiedot**. Välilehtipalkki pysyy näkyvissä vieritettäessä. Mikä tahansa linkki muotoa `?car=N#historia` avaa suoraan oikean välilehden.
+
 1. Etusivulla **＋ Lisää auto**: täytä rekisterinumero, merkki, malli ja vuosimalli sekä nykyinen mittarilukema.
 2. Auton sivulla **Päivitä km** kirjaa uusi mittarilukema aina kun tiedät sen. Jos löydät vanhan lukeman (esim. valokuvasta tai paperista), käytä **＋ Lisää vanha mittarilukema**: anna päivä ja lukema, jolloin se tallentuu historiaan omalle päivälleen eikä muuta nykyistä lukemaa. Lukeman pitää sopia ympäröiviin lukemiin ja huoltoihin. Ohjelma pitää kilometrihistoriaa ja laskee sen perusteella ajomäärän vuodessa, jota se käyttää huoltoennusteissa.
 3. **Auton tiedot** -osiossa voi muokata auton tietoja, öljymääriä ja varoitusrajaa ("Ennakkovaroitus": kuinka monta kilometriä ennen eräpäivää huomautus tulee näkyviin).
@@ -321,7 +323,7 @@ Huollosta voi muodostaa laskun (**🧾 Muodosta lasku**). Laskut numeroidaan aut
 
 **Tilisiirtolomake ja viivakoodi.** Laskutulosteen alareunassa on suomalainen tilisiirtolomake (kaksikielinen suomi / ruotsi), kun laskuttajan tiedoissa on IBAN. Viite johdetaan laskunumerosta tarkistusnumeroineen. Lomakkeen alla ja laskun näytöllä on pankkiviivakoodi (versio 4), jos IBAN on suomalainen (FI) ja summa on 0,01–999 999,99 €. Viivakoodin voi ottaa pois käytöstä Asetukset → Yleiset → laskuttajan tiedot → Pankkiviivakoodi laskulla. Koodi tehdään laskun tiedoista, joten se tulee myös vanhoille laskuille. Tulosta lasku A4-paperille (selaimen tulostusasetuksissa mittakaava 100 %), niin viivakoodi pysyy oikeankokoisena ja pankkisovellus tai tilisiirtolomakkeen lukija pystyy lukemaan sen.
 
-**Laskun muokkaus.** Luonnoslaskun voi muokata laskun sivun kohdasta **Muokkaa laskua**: rivit, päivämäärät, asiakkaan tiedot ja lisätieto. Kun lasku on merkitty lähetetyksi, se lukitaan; laskunumero ja viitenumero eivät muutu koskaan.
+**Laskun muokkaus.** Luonnoslaskun voi muokata laskun sivun kohdasta **Muokkaa laskua**: rivit, päivämäärät, asiakkaan tiedot ja lisätieto. Kun lasku on merkitty lähetetyksi, se lukitaan. Jos laskua pitää korjata, paina laskun sivulla **↩ Palauta luonnokseksi** (tai vaihda Tila-valinnasta tilaksi Luonnos): lasku muuttuu muokattavaksi, ja korjatun laskun voi lähettää uudelleen (sähköpostin otsikoksi ehdotetaan silloin "Korjattu lasku …"). Tilan voi vaihtaa myös muihin suuntiin, esim. virheellinen "maksettu" takaisin tilaan "lähetetty"; taaksepäin mentäessä myöhempien tilojen aikaleimat nollataan. Laskunumero ja viitenumero eivät muutu koskaan.
 
 **Lasku PDF:nä ja sähköpostilla.** **Lataa PDF** tekee laskusta PDF-tiedoston palvelimella. **✉ Lähetä sähköpostilla** lähettää laskun asiakkaalle (PDF-liitteenä, jos valitset); ensin sähköposti pitää määrittää Asetukset → Sähköposti. Vaihtoehdot:
 
