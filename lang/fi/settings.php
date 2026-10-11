@@ -291,4 +291,5 @@ return [
 'set.exposure_list_label'=>"Suojaamattomat tiedostot:",
 'set.exposure_list_more'=>"(+{n} muuta)",
 'set.exposure_docs'=>"Huom: nämä ohjetiedostot latautuvat selaimella (ei salaista tietoa, mutta paljastavat ohjelmaversion; voit poistaa .md-tiedostot palvelimelta, ohjelma ei tarvitse niitä):",
+'set.exposure_full_btn'=>"Tarkista kaikki tiedostot ({n} pyyntöä, hidas testi)",
 ];

@@ -138,15 +138,15 @@ function bicValid(string $bic): bool { return (bool)preg_match('/^[A-Z]{6}[A-Z0-
  */
 function exposureTargets(): array {
     try{
-        $out=[];$add=function(string $rel,string $type) use (&$out){if($rel!==''&&!isset($out[$rel]))$out[$rel]=[$rel,$type];};
+        $out=[];$add=function(string $rel,string $type,bool $quick=false) use (&$out){if($rel!==''&&!isset($out[$rel]))$out[$rel]=[$rel,$type,$quick?1:0];};
         $dir=APP_DIR;
         $dbName=basename(DB_FILE);$dbInside=realpath(dirname(DB_FILE))===realpath($dir);
-        $add('autohuolto.sqlite3','db');
-        if($dbInside){$add($dbName,'db');foreach(['-wal','-shm'] as $x)if(is_file(DB_FILE.$x))$add($dbName.$x,'file');}
+        $add('autohuolto.sqlite3','db',true);
+        if($dbInside){$add($dbName,'db',true);foreach(['-wal','-shm'] as $x)if(is_file(DB_FILE.$x))$add($dbName.$x,'file');}
         $pre=glob($dir.'/.pre-*')?:[];rsort($pre);
         foreach(array_slice($pre,0,6) as $f)if(is_file($f))$add(basename($f),'db');
         /* Palvelinsäännöt koskevat kansioita, joten kustakin kansiosta riittää yksi edustava tiedosto (pyyntöjä pidetään vähäisinä, ettei palvelimen kuormitussuoja lukitse sivua). */
-        foreach(['app/db.php','views/car.php','lang/fi/mail.php'] as $f)if(is_file($dir.'/'.$f))$add($f,'file');
+        foreach(['app/db.php','views/car.php','lang/fi/mail.php'] as $f)if(is_file($dir.'/'.$f))$add($f,'file',$f==='app/db.php');
         if(is_file($dir.'/CHANGELOG.md'))$add('CHANGELOG.md','doc');
         if(is_file($dir.'/.htaccess'))$add('.htaccess','doc');
         foreach(glob($dir.'/kuvat/*/*')?:[] as $f)if(is_file($f)&&!str_contains(basename($f),'.thumb.')&&!str_contains(basename($f),'.web.')){$add('kuvat/'.basename(dirname($f)).'/'.basename($f),'file');break;}

@@ -291,4 +291,5 @@ return [
 'set.exposure_list_label'=>"Oskyddade filer:",
 'set.exposure_list_more'=>"(+{n} till)",
 'set.exposure_docs'=>"Obs: dessa hjälpfiler går att hämta i webbläsaren (inget hemligt, men de avslöjar programversionen; du kan ta bort .md-filerna från servern, programmet behöver dem inte):",
+'set.exposure_full_btn'=>"Kontrollera alla filer ({n} förfrågningar, långsamt test)",
 ];
