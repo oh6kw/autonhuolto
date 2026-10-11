@@ -333,7 +333,7 @@ Huollosta voi muodostaa laskun (**🧾 Muodosta lasku**). Laskut numeroidaan aut
 
 Testiviesti-painike (Asetukset → Sähköposti) kertoo heti, toimiiko lähetys.
 
-**Huoltosivu sähköpostilla.** Jokaisen huollon kohdalla autosivun Huoltohistoriassa on **✉ Lähetä huoltosivu sähköpostilla**. Viestin perään liitetään huoltosivu (tehdyt työt, osat, vaihtovälit, työaika, mekaanikko ja huomautukset), jotta asiakas näkee tarkasti, mitä tehtiin. Vastaanottajaksi ehdotetaan huollon asiakaskopion sähköpostia; otsikko ja viesti ovat muokattavissa. Hintoja ei lähetetä. Vaatii samat sähköpostiasetukset kuin laskun lähetys.
+**Huoltosivu sähköpostilla.** Jokaisen huollon kohdalla autosivun Huoltohistoriassa on **✉ Lähetä huoltosivu sähköpostilla**. Viestin perään liitetään huoltosivu (tehdyt työt, osat, vaihtovälit, työaika, mekaanikko ja huomautukset), jotta asiakas näkee tarkasti, mitä tehtiin. Vastaanottajaksi ehdotetaan huollon asiakaskopion sähköpostia; otsikko ja viesti ovat muokattavissa. Hintoja ei lähetetä. Huoltokuvat voi liittää viestiin (upotettuina kuvina, yhteensä noin 6 Mt asti). Vaatii samat sähköpostiasetukset kuin laskun lähetys.
 
 **Haku.** Valikon hakukenttä hakee autoista, asiakkaista, laskuista, huolloista ja varaosista (vähintään kaksi merkkiä).
 

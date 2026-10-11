@@ -31,4 +31,6 @@ return [
 /* --- 1.2.7 --- */
 'mail.service_subject'=>"Servicesida: {title} – {car} ({shop})",
 'mail.service_body'=>"Hej,\n\nnedan finns servicesidan för bilen {car}, service {date}. Där ser du exakt vad som gjordes.\n\nMed vänliga hälsningar\n{shop}",
+/* --- 1.2.8 --- */
+'mail.service_photos_text'=>"Servicebilderna visas i meddelandet ({n} st). Om bilderna inte syns, öppna meddelandet i HTML-format eller kontrollera bilagorna.",
 ];

@@ -4,6 +4,14 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 15.
 
+## 1.2.8
+
+Huoltosivun sähköpostiin voi liittää huoltokuvat. Ei tietokantamuutoksia (skeema 15).
+
+- **Huoltokuvat huoltosivun sähköpostissa:** huoltosivun lähetyslomakkeessa on valinta **Liitä huoltokuvat viestiin**, kun huollolla on kuvia (oletuksena päällä). Kuvat upotetaan viestiin kuvateksteineen (HTML-viesti, `multipart/related`). Kuvista käytetään web-kokoista versiota; jos kuvien yhteiskoko ylittää noin 6 Mt, loput lähetetään pienempinä pikkukuvina, jotta viesti ei kasva liian suureksi.
+- **Sähköpostin rakenne:** sähköpostin rakentaja (`mailBuild`) tukee nyt upotettuja kuvia (`cid:`).
+- **Dokumentaatio:** SETUP.md päivitetty.
+
 ## 1.2.7
 
 Vanhojen omistajatietojen poisto ja tietokannan siivous. **Tietokannan skeema päivittyy 14 → 15** ensimmäisellä avauksella (ohjelma ottaa ensin turvakopion `.pre-migration-14-to-15-<aika>.sqlite3` tietokannan viereen). Ota silti oma varmuuskopio ennen päivitystä.

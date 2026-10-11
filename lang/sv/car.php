@@ -323,7 +323,9 @@ return [
 'car.tabs_aria'=>"Bilsidans vyer",
 /* --- 1.2.7 --- */
 'car.service_mail_summary'=>"Skicka servicesidan med e-post",
-'car.service_mail_note'=>"Servicesidan (utfört arbete, delar, intervall, arbetstid och anmärkningar) läggs till efter meddelandet. Priser och egna kostnader skickas inte.",
+'car.service_mail_note'=>"Servicesidan (utfört arbete, delar, intervall, arbetstid och anmärkningar) läggs till efter meddelandet. Priser och egna kostnader skickas inte. Servicebilderna kan bifogas i meddelandet.",
 'car.service_mail_confirm'=>"Ska servicesidan skickas med e-post?",
 'car.service_mail_send'=>"Skicka servicesidan",
+/* --- 1.2.8 --- */
+'car.service_mail_photos'=>"Bifoga servicebilderna i meddelandet ({n} st)",
 ];

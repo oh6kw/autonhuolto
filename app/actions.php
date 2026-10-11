@@ -535,8 +535,8 @@ if($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')!=='login'){
             if(count($recipients)>5)throw new RuntimeException(t('mail.err_too_many_recipients'));
             foreach($recipients as $r)if(!mailValidAddress($r))throw new RuntimeException(t('mail.err_bad_recipient',['address'=>$r]));
             $subject=post('mail_subject');$body=(string)($_POST['mail_message']??'');if($subject==='')throw new RuntimeException(t('mail.err_no_subject'));if(mb_strlen($body)>5000)throw new RuntimeException(t('mail.err_message_long'));
-            $sheet=serviceMailContent($db,$sid);
-            $msg=['to'=>$recipients,'subject'=>$subject,'text'=>$body."\n\n".str_repeat('-',32)."\n".$sheet['text'],'html'=>'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5">'.nl2br(h($body)).'</div><br>'.$sheet['html']];
+            $sheet=serviceMailContent($db,$sid,isset($_POST['mail_with_photos']));
+            $msg=['to'=>$recipients,'subject'=>$subject,'text'=>$body."\n\n".str_repeat('-',32)."\n".$sheet['text'],'html'=>'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5">'.nl2br(h($body)).'</div><br>'.$sheet['html'],'inline'=>$sheet['inline']];
             $shopMail=trim((string)($appNow['shop_email']??''));if(trim((string)($appNow['mail_reply_to']??''))===''&&mailValidAddress($shopMail))$msg['reply_to']=$shopMail;
             mailSend($appNow,$msg);
             flash(t('act.service_mailed',['to'=>implode(', ',$recipients)]));redirect('?car='.(int)$svcRow['car_id'].'#historia');

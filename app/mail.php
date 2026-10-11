@@ -52,7 +52,19 @@ function mailBuild(array $app,array $msg): array {
     $text=str_replace(["\r\n","\r"],"\n",(string)$msg['text']);$text=str_replace("\n","\r\n",$text);
     $alt='--'.$boundaryAlt."\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n".$b64($text);
     $html=trim((string)($msg['html']??''));
-    if($html!=='')$alt.='--'.$boundaryAlt."\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n".$b64($html);
+    $inline=(array)($msg['inline']??[]);
+    if($html!==''&&!$inline)$alt.='--'.$boundaryAlt."\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n".$b64($html);
+    elseif($html!==''){
+        /* HTML + upotetut kuvat (cid:) -> multipart/related */
+        $boundaryRel='=_r_'.bin2hex(random_bytes(12));
+        $rel='--'.$boundaryRel."\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n".$b64($html);
+        foreach($inline as [$cid,$name,$mime,$data]){
+            $safe=preg_replace('/[^A-Za-z0-9._-]+/','_',(string)$name)?:'kuva';
+            $rel.='--'.$boundaryRel."\r\nContent-Type: ".mailHeaderValue((string)$mime).'; name="'.$safe."\"\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <".preg_replace('/[^A-Za-z0-9@._-]+/','',(string)$cid).">\r\nContent-Disposition: inline; filename=\"".$safe."\"\r\n\r\n".$b64((string)$data);
+        }
+        $rel.='--'.$boundaryRel."--\r\n";
+        $alt.='--'.$boundaryAlt."\r\nContent-Type: multipart/related; boundary=\"".$boundaryRel."\"\r\n\r\n".$rel;
+    }
     $alt.='--'.$boundaryAlt."--\r\n";
     if(!$att){
         $h[]='Content-Type: multipart/alternative; boundary="'.$boundaryAlt.'"';
@@ -152,7 +164,7 @@ function mailSend(array $app,array $msg): void {
  * Huoltosivun sisältö sähköpostiin (versio 1.2.7): [teksti, html]. Sisältää tehdyt työt, osat, vaihtovälit, työajan ja huomautukset;
  * hintoja ja omia kustannuksia ei lähetetä (ne kuuluvat laskulle).
  */
-function serviceMailContent(PDO $db,int $sid): array {
+function serviceMailContent(PDO $db,int $sid,bool $withPhotos=false): array {
     $s=serviceWithDetails($db,$sid);if(!$s)throw new RuntimeException(t('print.err_service_not_found'));
     $car=trim(trim((string)($s['reg_plate']?:$s['nickname'])).' · '.trim($s['make'].' '.$s['model']),' ·');
     $head=implode(' · ',array_filter([serviceTypeLabel((string)($s['service_type']??'scheduled')),fiDate((string)$s['service_date']),recordedKm((int)$s['odometer'])]));
@@ -176,6 +188,22 @@ function serviceMailContent(PDO $db,int $sid): array {
     if((float)($s['labor_hours']??0)>0)$times[]=[strip_tags(t('print.billable_time',['hours'=>dec((float)$s['labor_hours'],2)])),'',[]];
     if($times)$blocks[]=[t('print.work_time'),$times];
     if(trim((string)$s['notes'])!=='')$blocks[]=[t('print.notes_heading'),[[trim((string)$s['notes']),'',[]]]];
+    /* Kuvat: web-versiot upotetaan viestiin (cid); kokonaiskoon ylittyessä käytetään pienempiä pikkukuvia */
+    $inline=[];$photoNotes=[];
+    if($withPhotos&&!empty($s['photos'])){
+        $budget=6*1024*1024;$used=0;$n=0;
+        foreach($s['photos'] as $ph){
+            $rel=(string)$ph['file_path'];$data=null;$mime='';
+            foreach(['web','thumb'] as $variant){
+                $abs=photoAbsolutePath(photoDisplayRelative($rel,$variant));
+                if($abs&&is_file($abs)){$size=(int)filesize($abs);if($used+$size<=$budget||$variant==='thumb'){$info=@getimagesize($abs);$mime=(string)($info['mime']??'');$data=(string)file_get_contents($abs);break;}}
+            }
+            if($data===null||!in_array($mime,['image/jpeg','image/png','image/webp'],true)||$used+strlen($data)>$budget+1024*1024)continue;
+            $used+=strlen($data);$n++;
+            $inline[]=['foto'.$n.'-'.bin2hex(random_bytes(6)).'@autonhuolto','kuva'.$n.'.'.['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'][$mime],$mime,$data];
+            $photoNotes[]=trim((string)($ph['caption']??''));
+        }
+    }
     $title=(string)$s['title'];
     $text=$title."\n".$head."\n".implode("\n",$meta)."\n";
     foreach($blocks as [$bt,$rs]){$text.="\n".$bt."\n";foreach($rs as [$ti,$main,$sub]){$text.='- '.$ti.($main!==''?' ('.$main.')':'')."\n";foreach($sub as $x)$text.='    '.$x."\n";}}
@@ -193,6 +221,14 @@ function serviceMailContent(PDO $db,int $sid): array {
             $html.='</div>';
         }
     }
+    if($inline){
+        $text.="\n".t('print.photos_heading')."\n".t('mail.service_photos_text',['n'=>count($inline)])."\n";
+        $html.='<div style="margin-top:14px;padding-bottom:3px;border-bottom:2px solid #d5dbe1;font-weight:bold">'.h(t('print.photos_heading')).'</div>';
+        foreach($inline as $i=>$im){
+            $html.='<div style="margin-top:10px"><img src="cid:'.h($im[0]).'" alt="'.h(t('print.photo_alt')).'" style="max-width:100%;height:auto;border-radius:4px;border:1px solid #d5dbe1">'
+                .($photoNotes[$i]!==''?'<div style="color:#52606d;font-size:12px">'.h($photoNotes[$i]).'</div>':'').'</div>';
+        }
+    }
     $html.='</div>';
-    return ['text'=>$text,'html'=>$html];
+    return ['text'=>$text,'html'=>$html,'inline'=>$inline];
 }

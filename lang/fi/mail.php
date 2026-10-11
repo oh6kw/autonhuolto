@@ -31,4 +31,6 @@ return [
 /* --- 1.2.7 --- */
 'mail.service_subject'=>"Huoltosivu: {title} – {car} ({shop})",
 'mail.service_body'=>"Hei,\n\nalla huoltosivu auton {car} huollosta {date}. Siitä näet tarkasti, mitä huollossa tehtiin.\n\nYstävällisin terveisin\n{shop}",
+/* --- 1.2.8 --- */
+'mail.service_photos_text'=>"Huoltokuvat näkyvät viestissä ({n} kpl). Jos kuvat eivät näy, avaa viesti HTML-muodossa tai tarkista liitteet.",
 ];

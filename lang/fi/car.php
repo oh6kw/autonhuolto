@@ -323,7 +323,9 @@ return [
 'car.tabs_aria'=>"Auton sivun näkymät",
 /* --- 1.2.7 --- */
 'car.service_mail_summary'=>"Lähetä huoltosivu sähköpostilla",
-'car.service_mail_note'=>"Huoltosivu (tehdyt työt, osat, vaihtovälit, työaika ja huomautukset) liitetään viestin perään. Hintoja ja omia kustannuksia ei lähetetä.",
+'car.service_mail_note'=>"Huoltosivu (tehdyt työt, osat, vaihtovälit, työaika ja huomautukset) liitetään viestin perään. Hintoja ja omia kustannuksia ei lähetetä. Huoltokuvat voi halutessaan liittää viestiin.",
 'car.service_mail_confirm'=>"Lähetetäänkö huoltosivu sähköpostilla?",
 'car.service_mail_send'=>"Lähetä huoltosivu",
+/* --- 1.2.8 --- */
+'car.service_mail_photos'=>"Liitä huoltokuvat viestiin ({n} kpl)",
 ];
