@@ -217,7 +217,7 @@ RewriteEngine On
 RewriteRule ^(app|views|lang|kuvat)/ - [F]
 ```
 
-Asetuksissa (välilehti Varmuuskopiot ja suojaus) on lisäksi automaattinen testi, joka yrittää selaimella ladata tietokannan, turvakopiot (`.pre-…`), lukitustiedoston, kaikki `app/`- ja `views/`-kansion tiedostot, kielitiedostot, `.md`-ohjetiedostot, `.htaccess`-tiedoston ja yhden kuvan `kuvat/`-kansiosta. Se varoittaa ja luettelee nimeltä ne tiedostot, jotka latautuvat.
+Asetuksissa (välilehti Varmuuskopiot ja suojaus) on lisäksi automaattinen testi. Sivun avautuessa se tarkistaa vain kriittisimmät tiedostot (tietokanta ja `app/db.php`) yksi pyyntö kerrallaan, jotta palvelimen tunkeutumisesto ei lukitse omaa IP-osoitettasi. Painike "Tarkista kaikki tiedostot" ajaa laajan, hitaan testin (noin sekunti per tiedosto): tietokanta, turvakopiot (`.pre-…`), lukitustiedosto, edustavat `app/`-, `views/`- ja `lang/`-tiedostot, `.md`-ohjetiedostot, `.htaccess` ja yksi kuva `kuvat/`-kansiosta. Testi luettelee nimeltä ne tiedostot, jotka latautuvat selaimella, ja pysähtyy, jos palvelin alkaa vastata 429 tai 503.
 
 Apachen sivuston asetuksessa pitää olla `AllowOverride All` (tai vähintään `FileInfo AuthConfig Limit`) ohjelman kansiolle, muuten `.htaccess` ei vaikuta.
 

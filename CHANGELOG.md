@@ -6,6 +6,7 @@ Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi om
 
 ## 1.2.9
 
+- **Dokumentaatio:** README:n laskukuvat (lasku ja PDF-lasku) kuvattu uudelleen, koska niissä näkyi vielä MobilePay (nyt Vipps). SETUP.md:n suojaustestin kuvaus päivitetty vastaamaan uutta kahden tason testiä.
 - **Korjaus: Asetukset-sivu jäi tyhjäksi (kehitysversio):** suojaustestin selainkoodissa oli kirjaimellinen `<?php`-merkkijono, jonka PHP tulkitsi uuden PHP-lohkon alkuksi ja sivu katkesi jäsennysvirheeseen (`unexpected single-quoted string`) heti otsakkeen jälkeen. Merkkijono muodostetaan nyt koodista (`String.fromCharCode(60)`), eikä yhdessäkään näkymässä ole enää `<?`-merkintää skriptin merkkijonoissa.
 - **Suojaustesti kevyemmäksi:** sivun avaus tarkistaa automaattisesti vain 2–3 kriittistä tiedostoa (tietokanta ja `app/db.php`), pyynnöt kulkevat yksi kerrallaan sekunnin välein ja testi pysähtyy heti, jos palvelin vastaa 429/503/509. Laaja tarkistus (turvakopiot, `app/`, `views/`, `lang/`, `.md`) ajetaan vasta painikkeesta, jotta palvelimen tunkeutumisesto ei estä käyttäjän IP-osoitetta.
 - **MobilePay → Vipps:** MobilePayn uusi nimi Vipps näkyy nyt asetuksissa, laskun näytöllä, tulosteessa ja PDF-laskussa sekä README:ssa. Vain näkyvät tekstit vaihtuivat; tietokannan kentät ja vanhojen laskujen tiedot ovat ennallaan, eikä tietokantamuutosta tarvita.
