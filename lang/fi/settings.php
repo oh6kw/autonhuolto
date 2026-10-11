@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Suomi – Asetukset (views/settings.php). Katso app/i18n.php. */
 return [
     /* --- otsikko ja välilehdet --- */
@@ -289,4 +290,5 @@ return [
 /* --- 1.2.8+ --- */
 'set.exposure_list_label'=>"Suojaamattomat tiedostot:",
 'set.exposure_list_more'=>"(+{n} muuta)",
+'set.exposure_docs'=>"Huom: nämä ohjetiedostot latautuvat selaimella (ei salaista tietoa, mutta paljastavat ohjelmaversion; voit poistaa .md-tiedostot palvelimelta, ohjelma ei tarvitse niitä):",
 ];

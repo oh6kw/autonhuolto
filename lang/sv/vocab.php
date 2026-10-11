@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /**
  * Svenska – värden som lagras som språkoberoende koder i databasen (t.ex. 'replaced', 'pcs', 'paid') och deras visningsnamn.
  * Namnen på färdiga serviceobjekt är nycklar item.<item_key>. Namn, grupper och enheter som användaren själv skrivit visas som de är.

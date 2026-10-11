@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 $ownMechanicId=(int)($currentUser['mechanic_id']??0);
 ?>
 <section class="hero panel"><div><div class="eyebrow"><?=h(roleLabel($currentUser['role']))?></div><h1><?=t('acct.title')?></h1><p><strong><?=h($currentUser['display_name'])?></strong><?=$currentUser['display_name']!==$currentUser['username']?' · '.t('acct.username_line',['username'=>h($currentUser['username'])]):''?></p><div class="sub"><?=h(roleLabel($currentUser['role']))?><?=!empty($currentUser['last_login_at'])?' · '.t('acct.last_login',['date'=>h(date('d.m.Y H:i',strtotime((string)$currentUser['last_login_at'])))]):''?></div></div></section>

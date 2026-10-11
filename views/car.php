@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 
 $activeItems=array_values(array_filter($items,fn($it)=>!isset($settings[$it['item_key']]['enabled'])||(int)$settings[$it['item_key']]['enabled']===1));
 $formItems=$activeItems;if($editService){foreach($editActionMap as $k=>$a){if(!isset($itemMap[$k]))continue;$exists=false;foreach($formItems as $it)if($it['item_key']===$k)$exists=true;if(!$exists)$formItems[]=$itemMap[$k];}}

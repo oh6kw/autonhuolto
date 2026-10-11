@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 $searchQ=trim((string)($_GET['q']??''));$sr=globalSearch($db,$searchQ,$app);$srTotal=array_sum(array_map('count',$sr));
 ?>
 <section class="hero panel"><div><div class="eyebrow"><?=t('search.eyebrow')?></div><h1><?=t('search.title')?></h1><form method="get" class="search-page-form" role="search"><input type="hidden" name="view" value="search"><label for="sq" class="sr-only"><?=t('search.label')?></label><input id="sq" type="search" name="q" value="<?=h($searchQ)?>" placeholder="<?=h(t('search.placeholder'))?>" autofocus><button class="btn"><?=t('search.button')?></button></form></div></section>

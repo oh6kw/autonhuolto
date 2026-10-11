@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Svenska – kunder (views/customers.php, app/customers.php). Se app/i18n.php. */
 return [
     /* --- kundtyper och status --- */

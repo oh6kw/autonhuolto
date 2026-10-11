@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
  ?>
 <section class="hero panel"><div><div class="eyebrow"><?=t('invoice.list_eyebrow')?></div><h1><?=t('invoice.list_title')?></h1><div class="sub"><?=t('invoice.list_intro')?></div></div><div class="form-actions"><a class="btn2" href="?view=invoices"><?=t('invoice.this_year')?></a></div></section>
 <section class="section panel"><div class="sectionhead"><div><h2><?=t('invoice.summary_title')?></h2><div class="tiny"><?=t('invoice.summary_note')?></div></div></div>

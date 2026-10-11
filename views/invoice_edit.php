@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Luonnoslaskun muokkaus: päivämäärät, asiakas, huomautus ja rivit. Vain luonnostilan laskulle (invoiceCanEdit); muille tiloille tarjotaan palautus luonnokseksi. Ladataan views/invoice.php:stä. */
 if(!canAction('update_invoice'))return;
 if(!invoiceCanEdit($invoice)){ /* Lähetetty / maksettu / hyvitetty lasku on lukittu: tarjotaan palautus luonnokseksi. */ ?>

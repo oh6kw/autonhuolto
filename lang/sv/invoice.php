@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Svenska – fakturor (views/invoice.php, views/invoices.php). Se app/i18n.php. */
 return [
     /* --- enskild faktura (views/invoice.php) --- */

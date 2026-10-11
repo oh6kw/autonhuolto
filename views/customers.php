@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
  ?>
 <?php if($customer): ?>
 <section class="hero panel"><div><div class="eyebrow"><?=t('cust.customer_eyebrow',['num'=>h($customer['customer_number']?:('#'.$customerId))])?></div><h1><?=h($customer['name'])?></h1><div class="sub"><?=h(customerTypeLabel((string)$customer['customer_type']))?><?=trim((string)$customer['phone'])!==''?' · '.h($customer['phone']):''?><?=trim((string)$customer['email'])!==''?' · '.h($customer['email']):''?></div></div><div class="form-actions"><a class="btn2" href="?view=customers"><?=t('cust.back_to_list')?></a></div></section>

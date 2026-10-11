@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Suomi – kirjautuminen, käyttäjähallinta ja tapahtumaloki (app/auth.php). Katso app/i18n.php. */
 return [
     /* --- roolien nimet (roleLabel) --- */

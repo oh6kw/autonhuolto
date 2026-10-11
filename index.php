@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+/* Merkki, jonka perusteella app/-, views/- ja lang/-tiedostot tietävät, että ne ladataan index.php:n kautta eikä suoraan selaimella. */
+const AUTOHUOLTO = true;
+
 /**
  * AUTONHUOLTO – kevyt korjaamojärjestelmä
  * PHP 8.2+ / PDO_SQLITE · tietokannan skeema 15 (ohjelmaversio: vakio APP_VERSION alempana, muutokset: CHANGELOG.md)

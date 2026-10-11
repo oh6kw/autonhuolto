@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Svenska – Inställningar (views/settings.php). Se app/i18n.php. */
 return [
     /* --- rubrik och flikar --- */
@@ -289,4 +290,5 @@ return [
 /* --- 1.2.8+ --- */
 'set.exposure_list_label'=>"Oskyddade filer:",
 'set.exposure_list_more'=>"(+{n} till)",
+'set.exposure_docs'=>"Obs: dessa hjälpfiler går att hämta i webbläsaren (inget hemligt, men de avslöjar programversionen; du kan ta bort .md-filerna från servern, programmet behöver dem inte):",
 ];

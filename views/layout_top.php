@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 ?><!doctype html><html lang="<?=h(i18nLang())?>" data-theme="<?=h($theme)?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=h($appName)?><?= $car?' – '.h(carName($car)):($showInvoices?' – '.t('layout.invoices'):($showInventory?' – '.t('layout.inventory_title'):($showCustomers?' – '.t('layout.customers'):($showSettings?' – '.t('layout.settings'):'')))) ?></title>
 <?php
 $assetBase=rtrim(str_replace('\\','/',dirname((string)($_SERVER['SCRIPT_NAME']??''))),'/');

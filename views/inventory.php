@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 $inventoryEditable=canAction('bulk_update_inventory');
 $canMove=canAction('adjust_part_stock');$canAddPart=canAction('add_part');
 $inventoryCars=[];foreach($cars as $ic){$iid=(int)$ic['id'];$inventoryCars[$iid]=trim((string)($ic['reg_plate']?:$ic['nickname']).' · '.trim((string)$ic['make'].' '.(string)$ic['model']));}asort($inventoryCars,SORT_NATURAL|SORT_FLAG_CASE);

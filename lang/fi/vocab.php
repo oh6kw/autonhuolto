@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /**
  * Tietokannassa olevat valmiit arvot tallennetaan kielineutraaleina koodeina (esim. 'replaced', 'pcs', 'paid').
  * Tässä tiedostossa ovat niiden näkyvät nimet. Valmiiden huoltokohteiden nimet ovat avaimia item.<item_key>.

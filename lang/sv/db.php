@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Svenska – databasens felmeddelanden till användaren (app/db.php). Se app/i18n.php. */
 return [
     /* --- användningslås --- */

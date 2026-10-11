@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Huoltosivun lähetys sähköpostilla (versio 1.2.7). Ladataan views/car.php:n huoltohistoriasta; muuttujat $s (huolto), $carId, $app, $appName ovat käytössä. */
 if(!canAction('send_service_email'))return;
 $smReady=mailConfigured($app);

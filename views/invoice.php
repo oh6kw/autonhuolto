@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 
 $net=$vat=0.0;foreach($invoiceLines as $l){$n=(float)$l['qty']*(float)$l['unit_price_net'];$net+=$n;$vat+=$n*(float)$l['vat_rate']/100;}
 ?>

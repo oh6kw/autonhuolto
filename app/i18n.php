@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /**
  * Kielituki. Kaikki käyttäjälle näkyvät tekstit ovat kielitiedostoissa: lang/<kieli>/<alue>.php,
  * joista jokainen palauttaa taulukon avain => teksti. Avaimet ovat muotoa "alue.nimi" (esim. "car.log_service").

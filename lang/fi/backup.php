@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 return [
 /* --- sovelluspuun läpikäynti --- */
 'backup.err_app_dir_missing'=>'Sovellushakemistoa ei löydy.',

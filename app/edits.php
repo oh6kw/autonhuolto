@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 
 /**
  * app/edits.php – lomakkeen muokkausristiriidat: tilannekuva, allekirjoitettu versio ja ristiriitojen tunnistus.

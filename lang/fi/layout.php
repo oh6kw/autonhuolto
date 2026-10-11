@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Suomi – asettelu. Katso app/i18n.php. */
 return [
 /* --- views/layout_top.php: otsikko ja valikko --- */

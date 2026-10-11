@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Svenska – search. Katso app/i18n.php. */
 return [
 /* --- 1.2.4 --- */

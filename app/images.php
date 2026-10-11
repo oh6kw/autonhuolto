@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 
 /**
  * app/images.php – huoltokuvat ja logo: tiedostopolut, pienennetyt versiot, tallennus ja poisto.

@@ -8,6 +8,8 @@ Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi om
 
 - **MobilePay → Vipps:** MobilePayn uusi nimi Vipps näkyy nyt asetuksissa, laskun näytöllä, tulosteessa ja PDF-laskussa sekä README:ssa. Vain näkyvät tekstit vaihtuivat; tietokannan kentät ja vanhojen laskujen tiedot ovat ennallaan, eikä tietokantamuutosta tarvita.
 - **Laajempi suojaustesti:** Asetusten automaattinen testi tarkistaa nyt tietokannan lisäksi turvakopiot (`.pre-…`), lukitustiedoston, kaikki `app/`- ja `views/`-tiedostot, kielitiedostot, `.md`-ohjetiedostot, `.htaccess`-tiedoston ja yhden kuvan `kuvat/`-kansiosta, ja luettelee nimeltä ne tiedostot, jotka latautuvat selaimella. PHP-tiedosto katsotaan paljastuneeksi, jos vastauksessa on `<?php` tai vastaus ei ole HTML-sivu. Onnistuneessa testissä näytetään tarkistettujen tiedostojen määrä.
+- **Sisäiset tiedostot eivät aukea suoraan selaimella:** jokainen `app/`-, `views/`- ja `lang/`-tiedosto vastaa nyt HTTP 403, jos sen avaa suoraan osoitteella (esim. `/app/db.php`), ja vain `index.php`:n kautta ladattuna se toimii. Suoja toimii millä tahansa palvelimella ilman Nginx- tai `.htaccess`-sääntöjä. Tietokannan, turvakopioiden ja `.md`-tiedostojen suoraan latautuminen pitää edelleen estää palvelimen säännöillä tai siirtämällä tietokanta web-juuren ulkopuolelle.
+- **Suojaustesti:** lukitustiedosto ei enää aiheuta varoitusta (se on tyhjä). Ohje- ja asetustiedostot (`.md`, `.htaccess`) eivät enää tee varoitusta, vaan testi mainitsee ne huomautuksena: ne eivät sisällä salaista tietoa, mutta paljastavat ohjelmaversion, ja `.md`-tiedostot voi poistaa palvelimelta.
 - **Ohje:** SETUP.md:n Nginx-säännöt saivat rivin `location ~ /\.ht { deny all; }`, ja suojaustestin kuvaus päivitettiin.
 
 ## 1.2.8

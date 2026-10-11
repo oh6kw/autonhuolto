@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
  ?>
 <?php $homeTitle=homeTitleText($app);$homeSubtitle=homeSubtitleText($app);?>
 <section class="hero panel"><div><div class="eyebrow"><?=t('home.eyebrow')?></div><h1><?=h($homeTitle)?></h1><?php if($homeSubtitle!==''):?><div class="sub"><?=h($homeSubtitle)?></div><?php endif;?></div><div class="form-actions"><a class="btn2" href="?view=all"><?=t('home.all_services')?></a><a class="btn2" target="_blank" href="?print=all_history"><?=t('home.print_history')?></a><a class="btn2" target="_blank" href="?print=all_history&photos=1"><?=t('home.history_with_photos')?></a><a class="btn2" href="?export=all_xlsx"><?=t('home.export_all_excel')?></a></div></section>
