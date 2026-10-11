@@ -17,8 +17,8 @@ Käyttöliittymä mukautuu automaattisesti näytön kokoon, joten samaa ohjelmaa
 - Mobiilikäyttöinen: kirjaus onnistuu työn ohessa puhelimella
 - Varaosamuistio, moniautosopivuus ja varasto saldoineen sekä varastotapahtumat
 - Asiakkaat ja auton omistushistoria
-- Laskut (tilisiirtolomake ja pankkiviivakoodi, myös MobilePay-tiedot), luonnoksen muokkaus, PDF-lasku, lähetys sähköpostilla (oma SMTP tai palvelimen posti), tulosteet ja Excel-viennit
-- Huoltosivun lähetys sähköpostilla asiakkaalle (tehdyt työt, osat ja vaihtovälit)
+- Laskut (tilisiirtolomake ja pankkiviivakoodi, myös MobilePay-tiedot), luonnoksen muokkaus, PDF-lasku, lähetys sähköpostilla PDF-liitteenä (oma SMTP tai palvelimen posti), tulosteet ja Excel-viennit
+- Huoltosivun lähetys sähköpostilla asiakkaalle: tehdyt työt, osat, vaihtovälit ja halutessa huoltokuvat (ilman hintoja)
 - Yleishaku, favicon yrityksen logosta ja muistutus varmuuskopiosta
 - Käyttäjät ja roolit (ylläpitäjä, tallentaja, katselija), tapahtumaloki
 - Verottomat tai verolliset hinnat valittavissa, ALV-muunnos varastossa
