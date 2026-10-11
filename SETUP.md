@@ -217,7 +217,7 @@ RewriteEngine On
 RewriteRule ^(app|views|lang|kuvat)/ - [F]
 ```
 
-Asetuksissa (välilehti Varmuuskopiot ja suojaus) on lisäksi automaattinen testi, joka yrittää ladata tietokannan selaimella ja varoittaa, jos se onnistuu.
+Asetuksissa (välilehti Varmuuskopiot ja suojaus) on lisäksi automaattinen testi, joka yrittää selaimella ladata tietokannan, turvakopiot (`.pre-…`), lukitustiedoston, kaikki `app/`- ja `views/`-kansion tiedostot, kielitiedostot, `.md`-ohjetiedostot, `.htaccess`-tiedoston ja yhden kuvan `kuvat/`-kansiosta. Se varoittaa ja luettelee nimeltä ne tiedostot, jotka latautuvat.
 
 Apachen sivuston asetuksessa pitää olla `AllowOverride All` (tai vähintään `FileInfo AuthConfig Limit`) ohjelman kansiolle, muuten `.htaccess` ei vaikuta.
 
@@ -227,6 +227,7 @@ Apachen sivuston asetuksessa pitää olla `AllowOverride All` (tai vähintään 
 location ~ ^/autonhuolto/(app|views|lang|kuvat)/ { deny all; }
 location ~ ^/autonhuolto/.*\.(sqlite3|lock|md)(-wal|-shm)?$ { deny all; }
 location ~ ^/autonhuolto/\.(pre-restore|pre-migration|autohuolto) { deny all; }
+location ~ /\.ht { deny all; }
 ```
 
 Tarkista Nginx-asetus komennolla `sudo nginx -t` ja lataa se: `sudo systemctl reload nginx`.

@@ -4,6 +4,12 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 15.
 
+## Julkaisematta (seuraava versio; versionumero ei vielä muutu)
+
+- **MobilePay → Vipps:** MobilePayn uusi nimi Vipps näkyy nyt asetuksissa, laskun näytöllä, tulosteessa ja PDF-laskussa sekä README:ssa. Vain näkyvät tekstit vaihtuivat; tietokannan kentät ja vanhojen laskujen tiedot ovat ennallaan, eikä tietokantamuutosta tarvita.
+- **Laajempi suojaustesti:** Asetusten automaattinen testi tarkistaa nyt tietokannan lisäksi turvakopiot (`.pre-…`), lukitustiedoston, kaikki `app/`- ja `views/`-tiedostot, kielitiedostot, `.md`-ohjetiedostot, `.htaccess`-tiedoston ja yhden kuvan `kuvat/`-kansiosta, ja luettelee nimeltä ne tiedostot, jotka latautuvat selaimella. PHP-tiedosto katsotaan paljastuneeksi, jos vastauksessa on `<?php` tai vastaus ei ole HTML-sivu. Onnistuneessa testissä näytetään tarkistettujen tiedostojen määrä.
+- **Ohje:** SETUP.md:n Nginx-säännöt saivat rivin `location ~ /\.ht { deny all; }`, ja suojaustestin kuvaus päivitettiin.
+
 ## 1.2.8
 
 Huoltosivun sähköpostiin voi liittää huoltokuvat. Ei tietokantamuutoksia (skeema 15).

@@ -130,3 +130,23 @@ function ibanValid(string $iban): bool {
 }
 /** BIC/SWIFT: 8 tai 11 merkkiä. */
 function bicValid(string $bic): bool { return (bool)preg_match('/^[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?$/D',strtoupper(trim($bic))); }
+
+/**
+ * Suojaustestin kohteet (versio 1.2.8+): selain yrittää ladata nämä; jos jokin latautuu, se pitää estää palvelimen säännöillä.
+ * Palauttaa [polku ohjelman kansioon nähden, tyyppi 'db' (SQLite-tiedoston alkutavut tarkistetaan) tai 'file'].
+ */
+function exposureTargets(): array {
+    $out=[];$seenLang=[];$add=function(string $rel,string $type) use (&$out){if($rel!==''&&!isset($out[$rel]))$out[$rel]=[$rel,$type];};
+    $dir=APP_DIR;
+    $dbName=basename(DB_FILE);$dbInside=realpath(dirname(DB_FILE))===realpath($dir);
+    $add('autohuolto.sqlite3','db');
+    if($dbInside){$add($dbName,'db');foreach(['-wal','-shm'] as $x)if(is_file(DB_FILE.$x))$add($dbName.$x,'file');}
+    foreach(glob($dir.'/.pre-*')?:[] as $f)if(is_file($f))$add(basename($f),'db');
+    foreach(glob($dir.'/.autohuolto-*')?:[] as $f)if(is_file($f))$add(basename($f),'file');
+    foreach(['app','views'] as $d)foreach(glob($dir.'/'.$d.'/*.php')?:[] as $f)$add($d.'/'.basename($f),'file');
+    foreach(glob($dir.'/lang/*/*.php')?:[] as $f){$l=basename(dirname($f));if(!isset($seenLang[$l])){$seenLang[$l]=1;$add('lang/'.$l.'/'.basename($f),'file');}}
+    foreach(glob($dir.'/*.md')?:[] as $f)$add(basename($f),'file');
+    if(is_file($dir.'/.htaccess'))$add('.htaccess','file');
+    foreach(glob($dir.'/kuvat/*/*')?:[] as $f)if(is_file($f)&&!str_contains(basename($f),'.thumb.')&&!str_contains(basename($f),'.web.')){$add('kuvat/'.basename(dirname($f)).'/'.basename($f),'file');break;}
+    return array_values($out);
+}

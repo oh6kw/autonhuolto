@@ -16,7 +16,7 @@ declare(strict_types=1);
  *
  * Ominaisuudet: autot, mittarilukemahistoria, kohdekohtaiset huoltovälit ja ennusteet,
  * huoltohistoria, kuvat ja kuvatekstit, varaosat ja moniautosopivuus, varasto,
- * asiakkaat ja omistushistoria, mekaanikot, työajastin, laskutus, MobilePay,
+ * asiakkaat ja omistushistoria, mekaanikot, työajastin, laskutus, Vipps (ent. MobilePay),
  * logot, teemat, tulosteet/PDF, Excel-viennit, tietojen tarkistus ja poikkeamien hyväksyntä.
  */
 

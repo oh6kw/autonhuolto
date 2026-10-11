@@ -196,7 +196,7 @@ function invoicePdf(PDO $db,array $app,int $invoiceId): string {
     }
     $y+=5;
 
-    /* --- Yhteenveto ja MobilePay --- */
+    /* --- Yhteenveto ja Vipps --- */
     $sumRows=[[t('print.inv_total_net'),$mon($net),false]];foreach($vatGroups as $vr=>$vv)$sumRows[]=[t('print.vat_row',['rate'=>$dec((float)$vr,1)]),$mon($vv),false];
     $sumH=count($sumRows)*5.2+10.0;
     $hasMobilePay=(int)($inv['seller_mobilepay_enabled']??0)===1&&trim((string)($inv['seller_mobilepay_number']??''))!=='';
@@ -206,7 +206,7 @@ function invoicePdf(PDO $db,array $app,int $invoiceId): string {
     $pdf->line($sx,$sy+0.6,$R,$sy+0.6,0.8,[40,40,40]);$sy+=2.6;
     $pdf->text($sx,$sy,t('print.inv_payable'),12,true);$pdf->text($R,$sy,$mon($gross),12,true,'r');$sy+=7.5;
     if($hasMobilePay){
-        $mp=['MobilePay '.(string)$inv['seller_mobilepay_number'].(trim((string)($inv['seller_mobilepay_name']??''))!==''?' · '.$inv['seller_mobilepay_name']:''),t('print.mobilepay_message',['number'=>(string)$inv['invoice_number']]).' · '.t('print.mobilepay_amount',['amount'=>$mon($gross)])];
+        $mp=['Vipps '.(string)$inv['seller_mobilepay_number'].(trim((string)($inv['seller_mobilepay_name']??''))!==''?' · '.$inv['seller_mobilepay_name']:''),t('print.mobilepay_message',['number'=>(string)$inv['invoice_number']]).' · '.t('print.mobilepay_amount',['amount'=>$mon($gross)])];
         $pdf->rect($L,$y,92.0,12.0,[246,246,246],[200,200,200],0.4);
         $pdf->text($L+2.5,$y+1.8,$mp[0],9,true);
         $pdf->text($L+2.5,$y+6.6,$mp[1],8);
