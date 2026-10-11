@@ -133,7 +133,7 @@ function ibanValid(string $iban): bool {
 function bicValid(string $bic): bool { return (bool)preg_match('/^[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?$/D',strtoupper(trim($bic))); }
 
 /**
- * Suojaustestin kohteet (versio 1.2.8+): selain yrittää ladata nämä; jos jokin latautuu, se pitää estää palvelimen säännöillä.
+ * Suojaustestin kohteet (versio 1.2.9+): selain yrittää ladata nämä; jos jokin latautuu, se pitää estää palvelimen säännöillä.
  * Palauttaa [polku ohjelman kansioon nähden, tyyppi 'db' (SQLite-tiedoston alkutavut tarkistetaan), 'file' (ohjelman sisäinen tiedosto) tai 'doc' (ohje-/asetustiedosto: ei salaista, mutta paljastaa ohjelmaversion)].
  */
 function exposureTargets(): array {

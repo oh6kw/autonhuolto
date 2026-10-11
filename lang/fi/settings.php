@@ -287,7 +287,7 @@ return [
 'set.exposure_files'=>"⚠ Joitakin ohjelman sisäisiä tiedostoja on ladattavissa suoraan selaimella. Tietokanta ei ollut ladattavissa, mutta lisää suoja (.htaccess tai Nginx-säännöt, ks. SETUP.md kohta 3.4).",
 'set.exposure_unknown'=>"Suojaustestiä ei voitu tehdä (selain esti pyynnöt).",
 'set.exposure_checking'=>"Tarkistetaan, onko tietokanta ladattavissa selaimella…",
-/* --- 1.2.8+ --- */
+/* --- 1.2.9+ --- */
 'set.exposure_list_label'=>"Suojaamattomat tiedostot:",
 'set.exposure_list_more'=>"(+{n} muuta)",
 'set.exposure_docs'=>"Huom: nämä ohjetiedostot latautuvat selaimella (ei salaista tietoa, mutta paljastavat ohjelmaversion; voit poistaa .md-tiedostot palvelimelta, ohjelma ei tarvitse niitä):",

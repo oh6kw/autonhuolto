@@ -287,7 +287,7 @@ return [
 'set.exposure_files'=>"⚠ Vissa interna filer går att hämta direkt i webbläsaren. Databasen kunde inte hämtas, men lägg till skydd (.htaccess eller Nginx-regler, se SETUP.md avsnitt 3.4).",
 'set.exposure_unknown'=>"Skyddstestet kunde inte utföras (webbläsaren blockerade förfrågningarna).",
 'set.exposure_checking'=>"Kontrollerar om databasen kan hämtas med webbläsaren…",
-/* --- 1.2.8+ --- */
+/* --- 1.2.9+ --- */
 'set.exposure_list_label'=>"Oskyddade filer:",
 'set.exposure_list_more'=>"(+{n} till)",
 'set.exposure_docs'=>"Obs: dessa hjälpfiler går att hämta i webbläsaren (inget hemligt, men de avslöjar programversionen; du kan ta bort .md-filerna från servern, programmet behöver dem inte):",

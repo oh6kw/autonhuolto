@@ -4,7 +4,7 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 15.
 
-## Julkaisematta (seuraava versio; versionumero ei vielä muutu)
+## 1.2.9
 
 - **Korjaus: Asetukset-sivu jäi tyhjäksi (kehitysversio):** suojaustestin selainkoodissa oli kirjaimellinen `<?php`-merkkijono, jonka PHP tulkitsi uuden PHP-lohkon alkuksi ja sivu katkesi jäsennysvirheeseen (`unexpected single-quoted string`) heti otsakkeen jälkeen. Merkkijono muodostetaan nyt koodista (`String.fromCharCode(60)`), eikä yhdessäkään näkymässä ole enää `<?`-merkintää skriptin merkkijonoissa.
 - **Suojaustesti kevyemmäksi:** sivun avaus tarkistaa automaattisesti vain 2–3 kriittistä tiedostoa (tietokanta ja `app/db.php`), pyynnöt kulkevat yksi kerrallaan sekunnin välein ja testi pysähtyy heti, jos palvelin vastaa 429/503/509. Laaja tarkistus (turvakopiot, `app/`, `views/`, `lang/`, `.md`) ajetaan vasta painikkeesta, jotta palvelimen tunkeutumisesto ei estä käyttäjän IP-osoitetta.
