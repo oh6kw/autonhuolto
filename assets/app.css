@@ -211,3 +211,5 @@ section[id],details[id]{scroll-margin-top:62px}
 .car-tabs{position:sticky;top:var(--topbar-h,70px);z-index:15;box-shadow:0 6px 16px var(--shadow)}
 .car-panels [id]{scroll-margin-top:calc(var(--topbar-h,70px) + 76px)}
 .invoice-unlock{margin:10px 0}.invoice-unlock .form-actions{align-items:center}
+/* 1.2.5: taulukkojen valintaruudut pysyvät ruudun kokoisina myös mobiilin korttinäkymässä */
+td input[type=checkbox],td input[type=radio]{width:24px!important;height:24px!important;min-width:0!important;min-height:0!important;padding:0;flex:none}

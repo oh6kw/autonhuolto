@@ -4,6 +4,16 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 14.
 
+## 1.2.6
+
+Autosivun avautumisasetusten ja mobiilinäkymän hienosäätö. Ei tietokantamuutoksia (skeema 14).
+
+- **Huoltohistoria:** viimeisin huolto ei enää avaudu oletuksena isoksi; kaikki huollot ovat aluksi suljettuina ja avautuvat napauttamalla.
+- **Huolto-ohjelma ja vaihtovälit:** osio avautuu nyt heti kokonaan auki (aiemmin se oli suljettuna).
+- **Asiakas-välilehti:** Auton omistushistoria avautuu suoraan auki.
+- **Auton tiedot -välilehti:** auton tiedot ja "Vanhan auton sisäiset asiakastiedot" -osio avautuvat suoraan auki. Auton poisto jätettiin tarkoituksella suljetuksi, ettei sitä paineta vahingossa.
+- **Korjaus (mobiili):** Huolto-ohjelman "Käytössä"-valintaruutu oli puhelimen korttinäkymässä valtavan kokoinen. Taulukoiden valintaruudut (myös laskun muokkauksen "Poista rivi") pysyvät nyt normaalikokoisina.
+
 ## 1.2.5
 
 Laskujen korjaaminen ja autosivun välilehdet. Ei tietokantamuutoksia (skeema 14).
