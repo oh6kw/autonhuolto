@@ -4,6 +4,16 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 16.
 
+## 1.2.13
+
+Asetukset → Yleiset selkeämmäksi profiilien kanssa ja pieniä korjauksia. Ei tietokantamuutoksia (skeema 16).
+
+- **Yleiset-sivu jaettu kahteen osaan:** "Yhteiset asetukset" (kieli, aikavyöhyke, teema, hintojen syöttötapa, ALV, pääsivun tekstit, ominaisuudet) ja "Profiilin [nimi] tiedot" (laskuttajan nimi ja logo, tuntihinta, maksuehto, laskuttajan ja maksutapojen tiedot, varaosakate). Lomake on edelleen yksi, ja yksi Tallenna-palkki tallentaa kaiken. Aiemmin yhteiset ja profiilikohtaiset kentät olivat sekaisin.
+- **Sanasto yhtenäistetty:** "firma", "yritys" ja "korjaamo" korvattu sanalla "laskuttaja" kohdissa, joissa tarkoitetaan laskun lähettäjää (kenttien nimet, profiilien tekstit, sähköpostin vastausosoitteen ohje, virheilmoitus, asennuksen kenttä). Ruotsissa vastaavasti "fakturautställare".
+- **Ruotsinkielinen yhteenveto README:hen** englanninkielisen viereen.
+- **Korjaus (julkaisuzip):** GitHubin julkaisun asennuspaketti ei sisältänyt `.htaccess`-tiedostoa, vaikka se on repossa. Workflow ottaa sen nyt mukaan.
+- **Tekstit:** uudet avaimet suomeksi ja ruotsiksi (1983 avainta molemmissa, 0 puutetta). SETUP.md:n Asetukset-taulukko päivitetty.
+
 ## 1.2.12
 
 Pieni käytettävyyskorjaus profiileihin. Ei tietokantamuutoksia (skeema 16).

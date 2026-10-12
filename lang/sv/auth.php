@@ -40,7 +40,7 @@ return [
     'auth.flash_admin_created'=>'Administratörskontot skapades. Skapa ännu en administratör (Inställningar → Användare) ifall lösenordet glöms bort.',
     'auth.setup_title'=>'Första installationen',
     'auth.setup_intro'=>'Skapa det första administratörskontot. Någon separat installationskod behövs inte.',
-    'auth.setup_shop_name'=>'Företagets / verkstadens namn',
+    'auth.setup_shop_name'=>'Fakturautställarens / verkstadens namn',
     'auth.setup_display_name'=>'Ditt namn',
     'auth.setup_password'=>'Nytt lösenord (minst 12 tecken)',
     'auth.setup_password_again'=>'Nytt lösenord igen',

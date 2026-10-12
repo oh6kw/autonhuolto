@@ -155,7 +155,7 @@ return [
 /* --- 1.2.4 --- */
 'act.err_iban_invalid'=>"IBAN ei kelpaa. Tarkista tilinumero (tarkistussumma ei täsmää).",
 'act.err_bic_invalid'=>"BIC ei kelpaa (8 tai 11 merkkiä, esim. NDEAFIHH).",
-'act.err_shop_email_invalid'=>"Yrityksen sähköpostiosoite ei kelpaa.",
+'act.err_shop_email_invalid'=>"Laskuttajan sähköpostiosoite ei kelpaa.",
 'act.err_invoice_reference_taken'=>"Viitenumero {ref} on jo toisella laskulla. Laskua ei luotu.",
 'act.err_invoice_edit_only_draft'=>"Vain lähettämätöntä luonnoslaskua voi muokata.",
 'act.err_invoice_dates_invalid'=>"Laskun päiväys ja eräpäivä ovat pakollisia ja niiden pitää olla kelvollisia päivämääriä.",

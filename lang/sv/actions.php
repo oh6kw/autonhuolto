@@ -155,7 +155,7 @@ return [
 /* --- 1.2.4 --- */
 'act.err_iban_invalid'=>"IBAN är ogiltigt. Kontrollera kontonumret (kontrollsumman stämmer inte).",
 'act.err_bic_invalid'=>"BIC är ogiltig (8 eller 11 tecken, t.ex. NDEAFIHH).",
-'act.err_shop_email_invalid'=>"Företagets e-postadress är ogiltig.",
+'act.err_shop_email_invalid'=>"Fakturautställarens e-postadress är ogiltig.",
 'act.err_invoice_reference_taken'=>"Referensnumret {ref} finns redan på en annan faktura. Fakturan skapades inte.",
 'act.err_invoice_edit_only_draft'=>"Endast ett oskickat fakturautkast kan redigeras.",
 'act.err_invoice_dates_invalid'=>"Fakturadatum och förfallodag är obligatoriska och måste vara giltiga datum.",

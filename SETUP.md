@@ -350,7 +350,7 @@ Auton sivulta ja Varasto-sivulta löytyvät 🖨-napit (huoltotilanne, koko huol
 
 | Välilehti | Sisältö |
 |---|---|
-| Yleiset | Aktiivisen profiilin korjaamon nimi ja logo (logosta tehdään myös selaimen välilehden kuvake), aikavyöhyke, järjestelmän oletuskieli (suomi / ruotsi), teema (tumma / hämärä / vaalea), hintojen syöttötapa ja ALV-prosentti, korjaamon ja laskuttajan tiedot |
+| Yleiset | Kaksi osaa. **Yhteiset asetukset** (kaikille profiileille): järjestelmän oletuskieli (suomi / ruotsi), aikavyöhyke, teema (tumma / hämärä / vaalea), hintojen syöttötapa ja ALV-prosentti, pääsivun tekstit ja ominaisuuskytkimet. **Profiilin tiedot** (vain aktiiviselle profiilille): laskuttajan / korjaamon nimi ja logo (logosta tehdään myös selaimen välilehden kuvake), oletustuntihinta, maksuehto, laskuttajan ja maksutapojen tiedot sekä varaosakate |
 | Profiilit | Profiilien (oletuksena Profiili A, B …) lisäys, nimeäminen, poisto ja aktiivisen profiilin valinta |
 | Sähköposti | Lähetystapa (SMTP tai palvelimen oma), lähettäjä, vastausosoite, testiviesti (profiilikohtaiset) |
 | Mekaanikot | Mekaanikkojen lisäys ja käytöstä poisto. Poistettu mekaanikko säilyy vanhoissa huolloissa |

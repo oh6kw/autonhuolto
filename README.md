@@ -6,6 +6,8 @@ Kevyt, itse ajettava **huoltokirja- ja pienkorjaamo-ohjelma** autoille. Sopii ha
 
 *English summary: Autonhuolto is a lightweight, self-hosted car maintenance log and small-workshop tool (PHP 8.2+, SQLite, no external dependencies). Works in any browser on phone, tablet and desktop, so a mechanic can log a service and take photos on the spot. The user interface is in Finnish. Licensed under AGPL v3.*
 
+*Svensk sammanfattning: Autonhuolto är ett lättviktigt servicehäfte och verktyg för små verkstäder och bilentusiaster som du kör själv (PHP 8.2+, SQLite, inga externa bibliotek). Du för servicehistorik, reservdelar, kunder och fakturor på ett ställe, och programmet fungerar i vilken webbläsare som helst på mobil, surfplatta och dator. Gränssnittet finns på **svenska och finska**: språket väljs vid installationen och kan ändras i Inställningar, och varje användare kan välja eget språk. Flera profiler (t.ex. Profil A / B) kan ha egna fakturauppgifter, logotyp och e-postinställningar på samma bildatabas. Licens: AGPL v3.*
+
 ## Toimii puhelimella ja tietokoneella
 
 Käyttöliittymä mukautuu automaattisesti näytön kokoon, joten samaa ohjelmaa voi käyttää kännykällä, tabletilla ja tietokoneella ilman erillistä sovellusta (riittää selain). Mekaanikko voi kirjata huollon heti työn ohessa puhelimella: rastittaa tehdyt työt, ottaa kuvat suoraan puhelimen kameralla tai valita ne galleriasta, käynnistää työajastimen ja tarkistaa varaston saldon. Toimisto- ja laskutustyöt (laskut, tulosteet, Excel-viennit, asetukset) sujuvat luontevimmin tietokoneella.

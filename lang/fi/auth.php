@@ -40,7 +40,7 @@ return [
     'auth.flash_admin_created'=>'Ylläpitäjätunnus luotu. Luo vielä toinen ylläpitäjä (Asetukset → Käyttäjät), jos salasana unohtuu.',
     'auth.setup_title'=>'Ensimmäinen käyttöönotto',
     'auth.setup_intro'=>'Luo ensimmäinen ylläpitäjätunnus. Erillistä käyttöönottokoodia ei tarvita.',
-    'auth.setup_shop_name'=>'Yrityksen / korjaamon nimi',
+    'auth.setup_shop_name'=>'Laskuttajan / korjaamon nimi',
     'auth.setup_display_name'=>'Oma nimi',
     'auth.setup_password'=>'Uusi salasana (vähintään 12 merkkiä)',
     'auth.setup_password_again'=>'Uusi salasana uudelleen',
