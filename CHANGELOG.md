@@ -4,6 +4,13 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 16.
 
+## 1.2.12
+
+Pieni käytettävyyskorjaus profiileihin. Ei tietokantamuutoksia (skeema 16).
+
+- **Profiilin valitsin pois ylätunnisteesta:** aktiivinen profiili vaihdetaan vain kohdassa Asetukset → Profiilit (ylin ruutu). Ylätunniste näyttää edelleen aktiivisen profiilin nimen ja logon. Poistettu käyttämätön valitsimen teksti ja tyyli (`layout.profile_aria`, `.profile-switch`).
+- **Tekstit:** profiilien ohjetekstit ja SETUP.md/README.md päivitetty vastaamaan tätä (suomi ja ruotsi).
+
 ## 1.2.11
 
 Profiilit ja yhtenäinen kelluva Tallenna-palkki. **Tietokannan skeema päivittyy 15 → 16** ensimmäisellä avauksella (ohjelma ottaa ensin turvakopion `.pre-migration-15-to-16-<aika>.sqlite3`). Ota oma varmuuskopio ennen päivitystä; päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla.

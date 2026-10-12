@@ -102,7 +102,6 @@ dialog.app-dialog form{padding:16px}
 
 /* kelluva tallennuspalkki myös työpöydälle, asetusten välilehdet ja tiiviit rivit */
 .inventory-savebar{position:sticky;bottom:8px;z-index:9;box-shadow:0 8px 28px var(--shadow);margin-top:18px}.inventory-savebar .btn{min-height:44px}.savebar.form-actions{margin-bottom:0}
-.profile-switch select{min-height:36px;max-width:150px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);font-weight:700;font-size:14px}
 .profile-card.is-active,.profile-now.is-active{border-color:var(--accent,#f5a623)}.profile-now{padding:16px 18px;border:1px solid var(--line,#444);border-radius:14px}.profile-now select{min-width:220px}.profile-note{margin:6px 0 14px}
 .savebar{position:sticky;bottom:8px;z-index:9;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);box-shadow:0 8px 28px var(--shadow)}
 .savebar-note{font-size:13px;font-weight:700;color:var(--warn,#b45309)}

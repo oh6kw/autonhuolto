@@ -28,5 +28,4 @@ return [
 'layout.backup_nag_snooze'=>"Älä muistuta kuukauteen",
 'layout.backup_nag_hide'=>"Piilota kuukaudeksi",
 /* --- 1.2.11 --- */
-'layout.profile_aria'=>"Profiili",
 ];

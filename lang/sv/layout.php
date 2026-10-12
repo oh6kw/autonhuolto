@@ -28,5 +28,4 @@ return [
 'layout.backup_nag_snooze'=>"Påminn inte på en månad",
 'layout.backup_nag_hide'=>"Dölj i en månad",
 /* --- 1.2.11 --- */
-'layout.profile_aria'=>"Profil",
 ];
