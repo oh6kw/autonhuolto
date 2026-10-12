@@ -297,7 +297,7 @@ return [
 'set.tab_profiles'=>"Profiilit",
 'set.profiles_eyebrow'=>"Profiilit",
 'set.profiles_title'=>"Profiilit (laskuttajat)",
-'set.profiles_intro'=>"Jokaisella profiililla on omat firman tiedot, logo, tuntihinta, laskun asetukset ja sähköpostiasetukset. Autot, asiakkaat ja huoltohistoria ovat kaikille yhteisiä, ja kaikki profiilit näkevät toistensa laskut. Aktiivinen profiili valitaan selaimessa (valitsin sivun ylälaidassa), joten eri laitteilla voi olla eri profiili päällä. Uusi lasku tehdään aina sillä profiililla, joka on valittuna.",
+'set.profiles_intro'=>"Jokaisella profiililla on omat firman tiedot, logo, tuntihinta, laskun asetukset ja sähköpostiasetukset. Autot, asiakkaat ja huoltohistoria ovat kaikille yhteisiä, ja kaikki profiilit näkevät toistensa laskut. Aktiivinen profiili valitaan tämän välilehden ylälaidasta tai sivun ylätunnisteen valitsimesta ja se muistetaan selaimessa, joten eri laitteilla voi olla eri profiili päällä. Uusi lasku tehdään aina sillä profiililla, joka on valittuna.",
 'set.profile_active'=>"Käytössä tässä selaimessa",
 'set.profile_use'=>"Käytä tätä profiilia",
 'set.profile_switch'=>"Vaihda",
@@ -313,4 +313,7 @@ return [
 'set.profile_editing'=>"Muokataan profiilia: {name}",
 'set.profile_scope_note'=>"Profiilikohtaisia ovat firman tiedot, logo, tuntihinta, maksuaika, varaosakate ja sähköpostiasetukset. Kieli, aikavyöhyke, teema, ALV, hintojen syöttötapa ja ominaisuuskytkimet ovat yhteisiä kaikille profiileille. Vaihda profiilia sivun ylälaidan valitsimesta tai Profiilit-välilehdeltä.",
 'set.profile_mail_note'=>"Nämä sähköpostiasetukset kuuluvat profiilille {name}: jokaisella profiililla voi olla oma SMTP-tili ja oma lähettäjä. Lasku lähetetään aina sen profiilin asetuksilla, jolla se luotiin.",
+'set.profile_now'=>"Käytössä nyt",
+'set.profile_pick_label'=>"Vaihda käytettävää profiilia",
+'set.profile_manage_title'=>"Profiilien nimet ja poisto",
 ];
