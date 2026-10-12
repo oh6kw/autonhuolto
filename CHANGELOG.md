@@ -4,6 +4,12 @@ Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, a
 
 Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 15.
 
+## 1.2.10
+
+- **Täyden varmuuskopion manifesti otettu käyttöön:** täysi ZIP sisältää nyt `backup-manifest.json`-tiedoston (ohjelma- ja skeemaversio, tietokannan ja jokaisen tiedoston SHA-256). Palautus tarkistaa sen ennen kuin mitään korvataan ja hylkää rikkoutuneen tai muokatun paketin selkeällä virheellä. Aiemmin tiivisteet laskettiin, mutta manifestia ei koskaan kirjoitettu ZIPiin, joten tarkistus ei ollut käytössä. Vanhat manifestittomat ZIPit palautuvat edelleen. Testattu: ehjä ZIP, muokattu tiedosto, rikottu tietokanta, tuntematon manifest-versio, manifestiton ZIP ja vanha ZIP, jossa on `.htaccess`.
+- **Juuren `.htaccess` ei kuulu varmuuskopioon:** se on palvelinkohtainen (Apache), joten täysi ZIP ei enää ota sitä mukaan eikä palautus koske siihen. Aiemmin koodi otti sen mukaan, vaikka ohje kertoi toisin. Kansioiden omat `.htaccess`-tiedostot säilyvät.
+- **SETUP.md:** `app/db.php`:n kuvaus korjattu (hyväksyy skeemat 12–14 ja `migrate.php` päivittää ne versioon 15, ei "vain 12"). Backup-ohjeisiin lisätty manifest, `.htaccess`-käytäntö ja huomautus, että varmuuskopio sisältää SMTP-salasanan selkokielisenä (BACKUP.md:ssä sama).
+
 ## 1.2.9
 
 - **Dokumentaatio:** README:n laskukuvat (lasku ja PDF-lasku) kuvattu uudelleen, koska niissä näkyi vielä MobilePay (nyt Vipps). SETUP.md:n suojaustestin kuvaus päivitetty vastaamaan uutta kahden tason testiä.

@@ -16,6 +16,8 @@ function backupRelativeSafe(string $relative): bool {
 }
 function backupRuntimeExcluded(string $relative): bool {
     $relative=ltrim(str_replace('\\','/',$relative),'/');$base=basename($relative);$dbName=basename(DB_FILE);
+    /* Juuren .htaccess on palvelinkohtainen (ei kuulu varmuuskopioon eikä palautukseen); kansioiden omat .htaccess-tiedostot (esim. kuvat/) säilyvät. */
+    if($relative==='.htaccess')return true;
     if(in_array($base,[$dbName,BACKUP_DB_NAME,$dbName.'-wal',$dbName.'-shm',BACKUP_DB_NAME.'-wal',BACKUP_DB_NAME.'-shm','backup-manifest.json','.autohuolto-access-7f3c91.lock','.autohuolto-setup-7f3c91.php'],true))return true;
     foreach(explode('/',$relative) as $part)if(preg_match('/^\.(?:pre-restore|pre-migration|restore-stage|restore-old|restore-incoming|restore-tmp|failed-kuvat|pre-users|autohuolto-backup-tmp)-/',$part))return true;
     if(preg_match('/^autohuolto-(?:taysi-)?backup-.*\.(?:zip|sqlite3)$/i',$base)||preg_match('/^index\.php\.backup-/i',$base))return true;
@@ -129,6 +131,11 @@ function backupCreateFullZip(string $snapshot,string $download): void {
 
     try {
         if(!$zip->addFile($snapshot,BACKUP_DB_NAME))throw new RuntimeException(t('backup.err_zip_add_db'));
+        /* Manifesti: palautus tarkistaa sen avulla, että tietokanta ja jokainen tiedosto ovat ehjiä ja täsmäävät varmuuskopion ottohetkeen. */
+        $manifest=['format'=>'autohuolto-full-backup','format_version'=>4,'created_at'=>date('c'),'app_version'=>APP_VERSION,'schema_version'=>SCHEMA_VERSION,
+            'database'=>['path'=>BACKUP_DB_NAME,'size'=>(int)filesize($snapshot),'sha256'=>(string)hash_file('sha256',$snapshot)],
+            'files'=>array_map(fn($f)=>['path'=>$f['path'],'size'=>$f['size'],'sha256'=>$f['sha256']],$tree['files'])];
+        if(!$zip->addFromString('backup-manifest.json',json_encode($manifest,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR)))throw new RuntimeException(t('backup.err_zip_add_file',['path'=>'backup-manifest.json']));
         foreach($tree['files'] as $entry){
             $full=__DIR__.'/../'.$entry['path'];
             if(!is_file($full))throw new RuntimeException(t('backup.err_file_vanished',['path'=>$entry['path']]));
