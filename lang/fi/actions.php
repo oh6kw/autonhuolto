@@ -184,4 +184,11 @@ return [
 'act.invoice_status_moved_back'=>"Laskun tila palautettu. Myöhempien tilojen aikaleimat nollattiin.",
 /* --- 1.2.7 --- */
 'act.service_mailed'=>"Huoltosivu lähetetty: {to}",
+/* --- 1.2.11 --- */
+'act.err_profile_not_found'=>"Profiilia ei löytynyt.",
+'act.err_profile_name_required'=>"Anna profiilille nimi.",
+'act.profile_added'=>"Profiili {name} luotu ja otettu käyttöön tässä selaimessa. Täytä sen tiedot alla.",
+'act.profile_renamed'=>"Profiilin nimi tallennettu.",
+'act.err_profile_last'=>"Viimeistä profiilia ei voi poistaa.",
+'act.profile_deleted'=>"Profiili {name} poistettu.",
 ];

@@ -20,6 +20,8 @@ Käyttöliittymä mukautuu automaattisesti näytön kokoon, joten samaa ohjelmaa
 - Laskut (tilisiirtolomake ja pankkiviivakoodi, myös Vipps-maksutiedot; ent. MobilePay), luonnoksen muokkaus, PDF-lasku, lähetys sähköpostilla PDF-liitteenä (oma SMTP tai palvelimen posti), tulosteet ja Excel-viennit
 - Huoltosivun lähetys sähköpostilla asiakkaalle: tehdyt työt, osat, vaihtovälit ja halutessa huoltokuvat (ilman hintoja)
 - Yleishaku, favicon yrityksen logosta ja muistutus varmuuskopiosta
+- Profiilit (esim. Profiili A / B): jokaisella oma yritysnimi, logo, laskutus- ja sähköpostiasetukset; sama autokanta, yhteinen laskunumerosarja, valinta ylätunnisteessa
+- Kelluva Tallenna-palkki ja varoitus tallentamattomista muutoksista kaikissa pitkissä lomakkeissa
 - Käyttäjät ja roolit (ylläpitäjä, tallentaja, katselija), tapahtumaloki
 - Verottomat tai verolliset hinnat valittavissa, ALV-muunnos varastossa
 - Suomi ja ruotsi (svenska): kieli valitaan asennuksessa, oletuskieli Asetuksissa ja halutessa käyttäjäkohtaisesti Oma tili -sivulla

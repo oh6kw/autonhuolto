@@ -224,9 +224,13 @@ if(serviceForm&&!(serviceForm.querySelector('[name="service_id"]'))){
   /* Tallentamattomien muutosten merkki kelluvassa palkissa */
   [].forEach.call(document.querySelectorAll('form[data-savebar]'),function(f){
     var note=f.querySelector('.savebar-note');if(!note)return;
-    var mark=function(){note.hidden=false;f.setAttribute('data-dirty','1');};
+    var mark=function(ev){if(ev&&ev.isTrusted===false)return;note.hidden=false;f.setAttribute('data-dirty','1');}; /* vain käyttäjän omat muutokset: ohjelman esitäyttö ei merkitse lomaketta muutetuksi */
     f.addEventListener('input',mark);f.addEventListener('change',mark);
-    f.addEventListener('submit',function(){f.removeAttribute('data-dirty');});
+    f.addEventListener('submit',function(){f.removeAttribute('data-dirty');note.hidden=true;});
+  });
+  /* Varoitus, jos sivulta poistutaan tallentamatta (selain näyttää oman vahvistusikkunansa) */
+  window.addEventListener('beforeunload',function(e){
+    if(document.querySelector('form[data-savebar][data-dirty="1"]')){e.preventDefault();e.returnValue='';return '';}
   });
   /* Näytä salasanat -valinta */
   [].forEach.call(document.querySelectorAll('[data-show-passwords]'),function(cb){

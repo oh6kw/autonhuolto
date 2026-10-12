@@ -134,6 +134,7 @@ function pdfLogoData(string $logoRel): ?array {
 function invoicePdf(PDO $db,array $app,int $invoiceId): string {
     $st=$db->prepare("SELECT i.*,s.title,s.service_date,s.odometer,c.reg_plate,c.nickname,c.make,c.model FROM invoices i JOIN services s ON s.id=i.service_id JOIN cars c ON c.id=s.car_id WHERE i.id=?");$st->execute([$invoiceId]);$inv=$st->fetch();
     if(!$inv)throw new RuntimeException(t('print.err_invoice_not_found'));
+    $app=invoiceApp($db,$app,$inv);
     $st=$db->prepare("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY sort_order,id");$st->execute([$invoiceId]);$lines=$st->fetchAll();
     $net=$vat=0.0;$vatGroups=[];foreach($lines as $l){$n=(float)$l['qty']*(float)$l['unit_price_net'];$v=$n*(float)$l['vat_rate']/100;$net+=$n;$vat+=$v;$vk=number_format((float)$l['vat_rate'],3,'.','');$vatGroups[$vk]=($vatGroups[$vk]??0)+$v;}ksort($vatGroups,SORT_NUMERIC);
     $gross=$net+$vat;$ref=invoiceRef($inv);

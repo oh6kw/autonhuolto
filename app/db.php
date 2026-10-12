@@ -5,7 +5,7 @@ if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaime
 /**
  * app/db.php – tietokanta.
  * Tiedoston valinta, käyttölukko ja yhteys; skeema ja sen tarkistus; uuden kannan alustus; sovellusasetukset.
- * Tietokannan skeemaversio on 15 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemoista 12, 13 ja 14 päivitetään automaattisesti
+ * Tietokannan skeemaversio on 16 (SCHEMA_VERSION). Uudempaa kantaa ei avata; skeemoista 12, 13, 14 ja 15 päivitetään automaattisesti
  * (app/migrate.php, turvakopio otetaan ensin). Tätä vanhempaa kantaa ei avata (requireCurrentDatabaseVersion).
  * Jos skeema tai tallennettujen arvojen muoto muuttuu, lisää migraatio app/migrate.php:hen ja nosta SCHEMA_VERSION.
  * Ladataan index.php:n alussa.
@@ -43,8 +43,11 @@ function initialAppName(): string {
         $pdo=new PDO('sqlite:'.DB_FILE,null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
         $exists=(int)$pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='app_settings'")->fetchColumn();
         if(!$exists) return DEFAULT_APP_NAME;
-        $st=$pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='shop_name'");
-        $st->execute(); $v=trim((string)($st->fetchColumn() ?: ''));
+        $v='';
+        if((int)$pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='profile_settings'")->fetchColumn()){
+            $v=trim((string)($pdo->query("SELECT setting_value FROM profile_settings WHERE setting_key='shop_name' AND profile_id=(SELECT id FROM profiles ORDER BY sort_order,id LIMIT 1)")->fetchColumn() ?: ''));
+        }
+        if($v===''){$st=$pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='shop_name'");$st->execute(); $v=trim((string)($st->fetchColumn() ?: ''));}
         return $v!==''?$v:DEFAULT_APP_NAME;
     } catch(Throwable) { return DEFAULT_APP_NAME; }
 }
@@ -70,6 +73,19 @@ function currentDatabaseSql(): string {
 CREATE TABLE app_settings (
     setting_key TEXT PRIMARY KEY,
     setting_value TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE profile_settings (
+    profile_id INTEGER NOT NULL,
+    setting_key TEXT NOT NULL,
+    setting_value TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY(profile_id,setting_key),
+    FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 CREATE TABLE customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -190,6 +206,7 @@ CREATE TABLE invoices (
     sent_at TEXT NOT NULL DEFAULT '', paid_at TEXT NOT NULL DEFAULT '', credited_at TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reference TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '', emailed_at TEXT NOT NULL DEFAULT '', emailed_to TEXT NOT NULL DEFAULT '',
+    profile_id INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(service_id) REFERENCES services(id) ON DELETE RESTRICT
 );
 CREATE TABLE invoice_lines (
@@ -271,15 +288,16 @@ function currentDatabaseDefinition(): array {
     }
     return $definition;
 }
-/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanhat tuetut skeemat (12, 13, 14) hyväksytään ilman päivitystä. */
+/** Tarkistaa skeemaversion. $migrate=false (palautuksen tarkistus, kanta vain luettavissa): vanhat tuetut skeemat (12, 13, 14, 15) hyväksytään ilman päivitystä. */
 function requireCurrentDatabaseVersion(PDO $db,bool $migrate=true): void {
     if(!(int)$db->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='app_settings'")->fetchColumn())throw new RuntimeException(t('db.err_settings_table_missing'));
     $raw=$db->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
     if($raw===false||!preg_match('/^[0-9]+$/D',(string)$raw))throw new RuntimeException(t('db.err_schema_invalid'));
     $version=(int)$raw;
-    if($version===12){if($migrate){migrateSchema12To13($db);migrateSchema13To14($db);migrateSchema14To15($db);}}
-    elseif($version===13){if($migrate){migrateSchema13To14($db);migrateSchema14To15($db);}}
-    elseif($version===14){if($migrate)migrateSchema14To15($db);}
+    if($version===12){if($migrate){migrateSchema12To13($db);migrateSchema13To14($db);migrateSchema14To15($db);migrateSchema15To16($db);}}
+    elseif($version===13){if($migrate){migrateSchema13To14($db);migrateSchema14To15($db);migrateSchema15To16($db);}}
+    elseif($version===14){if($migrate){migrateSchema14To15($db);migrateSchema15To16($db);}}
+    elseif($version===15){if($migrate)migrateSchema15To16($db);}
     elseif($version<SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_old',['version'=>$version,'supported'=>SCHEMA_VERSION]));
     if($version>SCHEMA_VERSION)throw new RuntimeException(t('db.err_schema_too_new'));
 }
@@ -378,15 +396,61 @@ function initializeFreshDatabase(PDO $db): void {
     try{
         $db->exec(currentDatabaseSql());
         $setting=$db->prepare('INSERT INTO app_settings(setting_key,setting_value) VALUES(?,?)');
-        foreach(defaultAppSettings()+['schema_version'=>(string)SCHEMA_VERSION] as $key=>$value)$setting->execute([$key,$value]);
+        $profileKeys=array_flip(PROFILE_SETTING_KEYS);
+        foreach(defaultAppSettings()+['schema_version'=>(string)SCHEMA_VERSION] as $key=>$value)if(!isset($profileKeys[$key]))$setting->execute([$key,$value]);
+        createProfile($db,t('set.profile_default_name',['letter'=>'A']),profileDefaultSettings());
         insertStandardItems($db,true);
         $db->commit();
     }catch(Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
 }
 
 /* ------------------------------ Asetukset ja ominaisuuskytkimet ------------------------------ */
-function appSettings(PDO $db): array { $a=[]; foreach($db->query("SELECT setting_key,setting_value FROM app_settings")->fetchAll() as $r)$a[$r['setting_key']]=$r['setting_value']; return $a; }
-function appSet(PDO $db,string $key,string $value): void { $db->prepare("INSERT INTO app_settings(setting_key,setting_value) VALUES(?,?) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value")->execute([$key,$value]); }
+/**
+ * Profiilit (versio 1.2.11): profiilikohtaiset asetukset (firman tiedot, logo, laskun ja sähköpostin asetukset, tuntihinta) ovat taulussa
+ * profile_settings, muut (kieli, teema, ominaisuuskytkimet, ALV ja hintojen syöttötapa jne.) taulussa app_settings. appSettings() palauttaa
+ * ne yhtenä taulukkona (profiilin arvot päällimmäisenä), joten koodi lukee asetuksia kuten ennenkin. appSet() ohjaa profiiliavaimet
+ * aktiivisen profiilin riville. Aktiivinen profiili on selaimen evästeessä (PROFILE_COOKIE), ei kannassa: eri laitteilla voi olla eri profiili.
+ */
+const PROFILE_COOKIE='ah_profile';
+const PROFILE_SETTING_KEYS=['shop_name','business_id','shop_address','shop_email','shop_phone','iban','bic','mobilepay_enabled','mobilepay_number','mobilepay_name','logo_path',
+    'show_logo_invoice','show_logo_service_print','show_logo_car_history','show_logo_all_history','show_logo_header','invoice_barcode','hourly_rate','payment_days','parts_markup_enabled','parts_markup_percent',
+    'mail_method','smtp_host','smtp_port','smtp_security','smtp_user','smtp_pass','smtp_verify','mail_from','mail_from_name','mail_reply_to','mail_copy_self'];
+function profileDefaultSettings(): array { return array_intersect_key(defaultAppSettings(),array_flip(PROFILE_SETTING_KEYS)); }
+function profilesList(PDO $db): array { return $db->query('SELECT id,name,sort_order FROM profiles ORDER BY sort_order,id')->fetchAll(); }
+/** Aktiivisen profiilin tunnus: selaimen eväste, jos se osoittaa olemassa olevaan profiiliin, muuten ensimmäinen profiili. 0 = profiileja ei ole. */
+function activeProfileId(PDO $db): int {
+    if(isset($GLOBALS['ah_profile_id']))return (int)$GLOBALS['ah_profile_id'];
+    try{$ids=array_map('intval',$db->query('SELECT id FROM profiles ORDER BY sort_order,id')->fetchAll(PDO::FETCH_COLUMN));}catch(Throwable){return 0;}
+    if(!$ids)return 0;
+    $want=(int)($_COOKIE[PROFILE_COOKIE]??0);
+    return $GLOBALS['ah_profile_id']=in_array($want,$ids,true)?$want:$ids[0];
+}
+/** Vaihtaa aktiivisen profiilin tässä selaimessa (eväste kuten istuntoeväste: HTTPS-ajossa secure, ei JavaScriptin luettavissa). */
+function setActiveProfile(PDO $db,int $id): void {
+    $st=$db->prepare('SELECT COUNT(*) FROM profiles WHERE id=?');$st->execute([$id]);if(!(int)$st->fetchColumn())throw new RuntimeException(t('act.err_profile_not_found'));
+    $GLOBALS['ah_profile_id']=$id;$_COOKIE[PROFILE_COOKIE]=(string)$id;
+    if(!headers_sent())setcookie(PROFILE_COOKIE,(string)$id,['expires'=>time()+365*86400,'path'=>'/','secure'=>authHttps(),'httponly'=>true,'samesite'=>'Lax']);
+}
+function profileById(PDO $db,int $id): ?array { $st=$db->prepare('SELECT id,name,sort_order FROM profiles WHERE id=?');$st->execute([$id]);$r=$st->fetch();return $r?:null; }
+/** Luo profiilin annetuilla asetuksilla (puuttuvat avaimet oletuksista). Palauttaa uuden profiilin tunnuksen. */
+function createProfile(PDO $db,string $name,array $settings): int {
+    $order=(int)$db->query('SELECT COALESCE(MAX(sort_order),0)+10 FROM profiles')->fetchColumn();
+    $db->prepare('INSERT INTO profiles(name,sort_order,created_at) VALUES(?,?,?)')->execute([$name,$order,date('Y-m-d H:i:s')]);$id=(int)$db->lastInsertId();
+    $ins=$db->prepare('INSERT INTO profile_settings(profile_id,setting_key,setting_value) VALUES(?,?,?)');
+    foreach($settings+profileDefaultSettings() as $k=>$v)if(in_array($k,PROFILE_SETTING_KEYS,true))$ins->execute([$id,$k,(string)$v]);
+    return $id;
+}
+function appSettings(PDO $db,?int $profileId=null): array {
+    $a=[];foreach($db->query("SELECT setting_key,setting_value FROM app_settings")->fetchAll() as $r)$a[$r['setting_key']]=$r['setting_value'];
+    $pid=$profileId??activeProfileId($db);
+    if($pid>0){$st=$db->prepare('SELECT setting_key,setting_value FROM profile_settings WHERE profile_id=?');$st->execute([$pid]);foreach($st->fetchAll() as $r)$a[$r['setting_key']]=$r['setting_value'];}
+    return $a;
+}
+function appSet(PDO $db,string $key,string $value,?int $profileId=null): void {
+    $pid=in_array($key,PROFILE_SETTING_KEYS,true)?($profileId??activeProfileId($db)):0;
+    if($pid>0){$db->prepare("INSERT INTO profile_settings(profile_id,setting_key,setting_value) VALUES(?,?,?) ON CONFLICT(profile_id,setting_key) DO UPDATE SET setting_value=excluded.setting_value")->execute([$pid,$key,$value]);return;}
+    $db->prepare("INSERT INTO app_settings(setting_key,setting_value) VALUES(?,?) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value")->execute([$key,$value]);
+}
 function featureEnabled(array $app,string $key): bool { return (string)($app[$key]??'0')==='1'; }
 /** Varaosakate prosentteina, tai null jos kate ei ole käytössä (vaatii laskutuksen ja varaston). */
 function partsMarkupPercent(array $app): ?float {

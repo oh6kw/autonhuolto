@@ -20,7 +20,7 @@ $rowHtml=function(string $i,array $l) use ($unitOpts,$app): string {
 };
 ?>
 <details class="clean invoice-edit" id="muokkaa"><summary class="btn2"><?=t('invoice.edit_summary')?></summary><div class="inside">
-<form method="post" id="invoiceEditForm"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="action" value="update_invoice"><input type="hidden" name="invoice_id" value="<?=$invoiceId?>"><?php editField($db,'invoice',$invoiceId);?>
+<form method="post" id="invoiceEditForm" data-savebar><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="action" value="update_invoice"><input type="hidden" name="invoice_id" value="<?=$invoiceId?>"><?php editField($db,'invoice',$invoiceId);?>
 <p class="tiny"><?=t('invoice.edit_help')?></p>
 <div class="grid grid4"><div><label for="ie_issue"><?=t('invoice.issue_date')?></label><input id="ie_issue" type="date" name="issue_date" value="<?=h($invoice['issue_date'])?>" required></div><div><label for="ie_due"><?=t('invoice.due_date')?></label><input id="ie_due" type="date" name="due_date" value="<?=h($invoice['due_date'])?>" required></div></div>
 <h3 class="set-h"><?=t('invoice.customer')?></h3>
@@ -33,7 +33,7 @@ $rowHtml=function(string $i,array $l) use ($unitOpts,$app): string {
 <div class="form-actions"><button type="button" class="btn2" id="invAddRow" data-next="<?=$ri?>"><?=t('invoice.edit_add_line')?></button></div>
 <h3 class="set-h"><?=t('invoice.edit_note')?></h3>
 <div><label for="ie_note" class="sr-only"><?=t('invoice.edit_note')?></label><textarea id="ie_note" name="invoice_note" rows="3" maxlength="1500" placeholder="<?=h(t('invoice.edit_note_placeholder'))?>"><?=h($invoice['note']??'')?></textarea><div class="tiny"><?=t('invoice.edit_note_help')?></div></div>
-<div class="form-actions"><button class="btn"><?=t('invoice.edit_save')?></button></div>
+<div class="form-actions savebar"><span class="savebar-note" hidden><?=t('set.unsaved_changes')?></span><button class="btn"><?=t('invoice.edit_save')?></button></div>
 </form>
 <script>(function(){var b=document.getElementById('invAddRow'),t=document.getElementById('invRowTpl'),body=document.getElementById('invEditRows');if(!b||!t||!body)return;b.addEventListener('click',function(){var n=parseInt(b.dataset.next,10)||0;b.dataset.next=String(n+1);var tmp=document.createElement('tbody');tmp.innerHTML=t.innerHTML.replace(/__I__/g,String(n));var row=tmp.firstElementChild;if(row){body.appendChild(row);var f=row.querySelector('input[name^="line_desc"]');if(f)f.focus();}});})();</script>
 </div></details>

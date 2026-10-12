@@ -100,9 +100,11 @@ function validateRestoreDatabase(string $file,?string $images=null): void {
     /* Vanhemmassa skeemassa (12, 13) ei ole skeemassa 14 lisättyjä sarakkeita; ne lisätään päivityksessä, kun kanta avataan ensimmäisen kerran. */
     $schemaVersion=(int)$check->query("SELECT setting_value FROM app_settings WHERE setting_key='schema_version'")->fetchColumn();
     $addedLater=$schemaVersion<14?['invoices'=>['reference','note','emailed_at','emailed_to']]:[];
+    $tablesAddedLater=[];
+    if($schemaVersion<16){$addedLater['invoices']=array_merge($addedLater['invoices']??[],['profile_id']);$tablesAddedLater=['profiles','profile_settings'];} /* profiilit tulivat skeemassa 16; ne luodaan päivityksessä */
     $tables=$check->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
     foreach(currentDatabaseDefinition() as $table=>$definition){
-        if(!in_array($table,$tables,true))throw new RuntimeException(t('backup.err_missing_table',['table'=>$table]));
+        if(!in_array($table,$tables,true)){if(in_array($table,$tablesAddedLater,true))continue;throw new RuntimeException(t('backup.err_missing_table',['table'=>$table]));}
         $columns=[];foreach($check->query('PRAGMA table_info("'.$table.'")')->fetchAll() as $col)$columns[$col['name']]=$col;
         foreach($definition['columns'] as $name=>$expected){if(!isset($columns[$name])&&in_array($name,$addedLater[$table]??[],true))continue;if(!isset($columns[$name]))throw new RuntimeException(t('backup.err_missing_column',['table'=>$table,'column'=>$name]));if(strtoupper((string)$columns[$name]['type'])!==$expected['type']||(int)$columns[$name]['pk']!==$expected['pk'])throw new RuntimeException(t('backup.err_bad_column',['table'=>$table,'column'=>$name]));}
         $declared=[];foreach($check->query('PRAGMA foreign_key_list("'.$table.'")')->fetchAll() as $fk)$declared[]=[(string)$fk['table'],(string)$fk['from'],(string)$fk['to']];
@@ -113,7 +115,8 @@ function validateRestoreDatabase(string $file,?string $images=null): void {
     if($check->query('PRAGMA foreign_key_check')->fetch())throw new RuntimeException(t('backup.err_broken_refs'));
     foreach([['cars','current_customer_id','customers'],['services','customer_id','customers'],['services','mechanic_id','mechanics']] as [$table,$column,$parent])if($check->query('SELECT COUNT(*) FROM "'.$table.'" c LEFT JOIN "'.$parent.'" p ON p.id=c."'.$column.'" WHERE c."'.$column.'">0 AND p.id IS NULL')->fetchColumn()>0)throw new RuntimeException(t('backup.err_missing_customer_mechanic'));
     if($images!==null){
-        $paths=$check->query("SELECT file_path FROM service_photos UNION SELECT setting_value FROM app_settings WHERE setting_key='logo_path' UNION SELECT seller_logo_path FROM invoices WHERE seller_logo_path<>''")->fetchAll(PDO::FETCH_COLUMN);
+        $profileLogos=in_array('profile_settings',$tables,true)?" UNION SELECT setting_value FROM profile_settings WHERE setting_key='logo_path'":'';
+        $paths=$check->query("SELECT file_path FROM service_photos UNION SELECT setting_value FROM app_settings WHERE setting_key='logo_path'".$profileLogos." UNION SELECT seller_logo_path FROM invoices WHERE seller_logo_path<>''")->fetchAll(PDO::FETCH_COLUMN);
         foreach($paths as $path){$path=trim((string)$path);if($path==='')continue;if(!preg_match('~^kuvat/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_.-]+\\.(?:jpe?g|png|webp)$~i',$path)||str_contains($path,'..')||!is_file($images.'/'.substr($path,6)))throw new RuntimeException(t('backup.err_missing_image',['path'=>$path]));}
     }
 }
@@ -177,7 +180,7 @@ function backupExtractZip(string $upload,string $stage): array {
 }
 function backupValidateManifest(array $manifest,string $root,string $db): void {
     if(($manifest['format']??'')!=='autohuolto-full-backup'||(int)($manifest['format_version']??0)!==4)throw new RuntimeException(t('backup.err_manifest_unknown'));
-    if(!in_array((int)($manifest['schema_version']??0),[12,13,14,SCHEMA_VERSION],true))throw new RuntimeException(t('backup.err_schema_version'));
+    if(!in_array((int)($manifest['schema_version']??0),[12,13,14,15,SCHEMA_VERSION],true))throw new RuntimeException(t('backup.err_schema_version'));
     $dbh=(string)($manifest['database']['sha256']??'');if($dbh===''||!hash_equals($dbh,(string)hash_file('sha256',$db)))throw new RuntimeException(t('backup.err_manifest_db'));
     foreach((array)($manifest['files']??[]) as $entry){$path=(string)($entry['path']??'');$full=$root.'/'.$path;if(!backupRelativeSafe($path)||!is_file($full)||!hash_equals((string)($entry['sha256']??''),(string)hash_file('sha256',$full)))throw new RuntimeException(t('backup.err_manifest_file',['path'=>$path]));}
 }

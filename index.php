@@ -56,10 +56,10 @@ date_default_timezone_set('Europe/Helsinki');
 const DEFAULT_APP_NAME      = 'Autonhuolto';
 const DEFAULT_HOME_TITLE    = 'Huoltokirja';
 const DEFAULT_HOME_SUBTITLE = 'Pidä omat, perheen ja tuttujen autot samassa huoltohistoriassa.';
-const APP_VERSION           = '1.2.10';
+const APP_VERSION           = '1.2.11';
 /* AGPL v3 §13: verkossa ajettavan ohjelman käyttäjille on tarjottava lähdekoodi. Aseta tähän julkisen koodivaraston osoite (esim. 'https://github.com/KÄYTTÄJÄ/autonhuolto'); tyhjänä linkkiä ei näytetä. */
 const APP_SOURCE_URL        = 'https://github.com/oh6kw/autonhuolto';
-const SCHEMA_VERSION   = 15;
+const SCHEMA_VERSION   = 16;
 /* Tietokanta on aina autohuolto.sqlite3 sovelluskansiossa. Ympäristömuuttuja AUTOHUOLTO_DB_PATH voi osoittaa sen muualle (esim. web-juuren ulkopuolelle). */
 if(trim((string)getenv('AUTOHUOLTO_DB_PATH'))!=='')define('DB_FILE',(string)getenv('AUTOHUOLTO_DB_PATH'));
 else define('DB_FILE',__DIR__.'/autohuolto.sqlite3');
@@ -130,7 +130,7 @@ require __DIR__ . '/app/printing.php';
 require __DIR__ . '/app/actions.php';
 
 /* ------------------------------ Sivun data ------------------------------ */
-$app=appSettings($db);$appName=trim((string)($app['shop_name']??DEFAULT_APP_NAME))?:DEFAULT_APP_NAME;$theme=$app['theme']??'dark';$mechanicsAll=mechanicsList($db,false);$activeMechanics=mechanicsList($db,true);$customerList=customersList($db,false);$activeCustomers=customersList($db,true);$items=allItems($db,true);$itemMap=itemMap($db);$carId=(int)($_GET['car']??0);$car=$carId?getCar($db,$carId):null;$view=(string)($_GET['view']??'');$showAll=$view==='all';$showSettings=$view==='settings';$showAccount=$view==='account';$showSearch=$view==='search';$showCustomers=$view==='customers'&&customersEnabled($app);$showInvoices=$view==='invoices'&&invoicingEnabled($app);$showInventory=$view==='inventory'&&inventoryEnabled($app);$customerId=$showCustomers?(int)($_GET['customer']??0):0;$customer=$customerId?getCustomer($db,$customerId):null;
+$app=appSettings($db);$appName=trim((string)($app['shop_name']??DEFAULT_APP_NAME))?:DEFAULT_APP_NAME;$profilesAll=profilesList($db);$activeProfileId=activeProfileId($db);$theme=$app['theme']??'dark';$mechanicsAll=mechanicsList($db,false);$activeMechanics=mechanicsList($db,true);$customerList=customersList($db,false);$activeCustomers=customersList($db,true);$items=allItems($db,true);$itemMap=itemMap($db);$carId=(int)($_GET['car']??0);$car=$carId?getCar($db,$carId):null;$view=(string)($_GET['view']??'');$showAll=$view==='all';$showSettings=$view==='settings';$showAccount=$view==='account';$showSearch=$view==='search';$showCustomers=$view==='customers'&&customersEnabled($app);$showInvoices=$view==='invoices'&&invoicingEnabled($app);$showInventory=$view==='inventory'&&inventoryEnabled($app);$customerId=$showCustomers?(int)($_GET['customer']??0):0;$customer=$customerId?getCustomer($db,$customerId):null;
 $flash=$_SESSION['flash']??null;unset($_SESSION['flash']);
 $cars=$db->query("SELECT c.*,cu.name current_customer_name,cu.customer_number current_customer_number,(SELECT MAX(service_date) FROM services s WHERE s.car_id=c.id) last_service_date,(SELECT odometer FROM services s WHERE s.car_id=c.id ORDER BY service_date DESC,id DESC LIMIT 1) last_service_km,(SELECT COUNT(*) FROM services s WHERE s.car_id=c.id) service_count FROM cars c LEFT JOIN customers cu ON cu.id=c.current_customer_id ORDER BY COALESCE(NULLIF(cu.name,''),'~'),COALESCE(NULLIF(c.nickname,''),c.reg_plate),c.id DESC")->fetchAll();
 $allServices=[];if($showAll){$allServices=$db->query("SELECT s.*,c.reg_plate,c.nickname,c.make,c.model FROM services s JOIN cars c ON c.id=s.car_id ORDER BY s.service_date DESC,s.id DESC")->fetchAll();foreach($allServices as &$r){$r['actions']=getServiceActions($db,(int)$r['id']);$r['custom_actions']=getCustomActions($db,(int)$r['id']);$r['photos']=getServicePhotos($db,(int)$r['id']);$r['inventory_usage']=serviceInventoryUsage($db,(int)$r['id']);}unset($r);attachServiceIntervals($db,$allServices);$per=[];foreach($allServices as $i=>$r)$per[(int)$r['car_id']][]=$i;foreach($per as $idxs)foreach($idxs as $p=>$idx)$allServices[$idx]['gap']=intervalInfo($allServices[$idx],isset($idxs[$p+1])?$allServices[$idxs[$p+1]]:null);}

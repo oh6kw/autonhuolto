@@ -3,7 +3,7 @@ declare(strict_types=1);
 if(!defined('AUTOHUOLTO')){http_response_code(403);exit;} /* suora avaus selaimella estetty */
 /* Laskun lähetys sähköpostilla (PDF-liitteenä). Ladataan views/invoice.php:stä. */
 if(!canAction('send_invoice_email'))return;
-$mailReady=mailConfigured($app);
+$mailReady=mailConfigured(invoiceApp($db,$app,$invoice)); /* laskun oman profiilin sähköpostiasetukset */
 $emailedAt=trim((string)($invoice['emailed_at']??''));
 $defaultTo=trim((string)($invoice['customer_email']??''));
 $gross=$net+$vat;

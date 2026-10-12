@@ -184,4 +184,11 @@ return [
 'act.invoice_status_moved_back'=>"Fakturans status har återställts. Tidsstämplarna för senare statusar nollställdes.",
 /* --- 1.2.7 --- */
 'act.service_mailed'=>"Servicesidan skickad: {to}",
+/* --- 1.2.11 --- */
+'act.err_profile_not_found'=>"Profilen hittades inte.",
+'act.err_profile_name_required'=>"Ange ett namn för profilen.",
+'act.profile_added'=>"Profilen {name} har skapats och används nu i den här webbläsaren. Fyll i dess uppgifter nedan.",
+'act.profile_renamed'=>"Profilens namn har sparats.",
+'act.err_profile_last'=>"Den sista profilen kan inte tas bort.",
+'act.profile_deleted'=>"Profilen {name} har tagits bort.",
 ];

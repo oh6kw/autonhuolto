@@ -185,7 +185,37 @@ function migrateSchema14To15(PDO $db): void {
             try{ $db->exec('ALTER TABLE cars DROP COLUMN "'.$col.'"'); }
             catch(Throwable $e){ /* vanha SQLite (alle 3.35): sarake jää käyttämättömänä, sillä on oletusarvo eikä se haittaa */ }
         }
-        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute([(string)SCHEMA_VERSION]);
+        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute(['15']);
+        $db->commit();
+    }catch(Throwable $e){
+        if($db->inTransaction())$db->rollBack();
+        throw new RuntimeException(t('db.err_migration_failed',['message'=>$e->getMessage(),'copy'=>basename($copy)]),0,$e);
+    }
+}
+
+/**
+ * Skeema 15 → 16 (versio 1.2.11): profiilit. Firman tiedot, logo, laskun ja sähköpostin asetukset ja tuntihinta (PROFILE_SETTING_KEYS)
+ * siirtyvät app_settings-taulusta ensimmäiseen profiiliin ("Profiili A"); laskuille tulee profile_id (nykyiset laskut kuuluvat siihen).
+ * Mitään asetusta ei kadoteta: arvot kopioidaan ensin, ja vasta sitten ne poistetaan app_settings-taulusta. Turvakopio otetaan ensin.
+ */
+function migrateSchema15To16(PDO $db): void {
+    $dir=dirname(DB_FILE);
+    $copy=$dir.'/.pre-migration-15-to-16-'.date('Ymd-His').'.sqlite3';
+    try{ consistentDatabaseCopy($db,$copy); }
+    catch(Throwable $e){ throw new RuntimeException(t('db.err_migration_backup',['message'=>$e->getMessage()]),0,$e); }
+    $db->beginTransaction();
+    try{
+        $db->exec("CREATE TABLE IF NOT EXISTS profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+        $db->exec("CREATE TABLE IF NOT EXISTS profile_settings (profile_id INTEGER NOT NULL, setting_key TEXT NOT NULL, setting_value TEXT NOT NULL DEFAULT '', PRIMARY KEY(profile_id,setting_key), FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE)");
+        $have=[];foreach($db->query('PRAGMA table_info("invoices")')->fetchAll() as $c)$have[(string)$c['name']]=true;
+        if(!isset($have['profile_id']))$db->exec("ALTER TABLE invoices ADD COLUMN profile_id INTEGER NOT NULL DEFAULT 0");
+        $existing=[];foreach($db->query('SELECT setting_key,setting_value FROM app_settings')->fetchAll() as $r)$existing[(string)$r['setting_key']]=(string)$r['setting_value'];
+        $values=[];foreach(PROFILE_SETTING_KEYS as $k)if(array_key_exists($k,$existing))$values[$k]=$existing[$k];
+        $pid=(int)$db->query('SELECT id FROM profiles ORDER BY sort_order,id LIMIT 1')->fetchColumn();
+        if(!$pid)$pid=createProfile($db,t('set.profile_default_name',['letter'=>'A']),$values);
+        $db->prepare('UPDATE invoices SET profile_id=? WHERE profile_id=0')->execute([$pid]);
+        $del=$db->prepare('DELETE FROM app_settings WHERE setting_key=?');foreach(PROFILE_SETTING_KEYS as $k)$del->execute([$k]);
+        $db->prepare("UPDATE app_settings SET setting_value=? WHERE setting_key='schema_version'")->execute(['16']);
         $db->commit();
     }catch(Throwable $e){
         if($db->inTransaction())$db->rollBack();

@@ -2,7 +2,23 @@
 
 Tämä tiedosto kertoo, mitä on muuttunut versiosta toiseen. Tiedostorakenne, asennus-, käyttö- ja varmuuskopio-ohje ovat tiedostossa `SETUP.md`; varmuuskopioinnin tekninen tiivistelmä on tiedostossa `BACKUP.md`.
 
-Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 15.
+Versiointi: `pääversio.toinen.korjaus` (esim. 1.0.1 = korjaus, 1.1.0 = uusi ominaisuus). Tietokannan skeemaversio on 16.
+
+## 1.2.11
+
+Profiilit ja yhtenäinen kelluva Tallenna-palkki. **Tietokannan skeema päivittyy 15 → 16** ensimmäisellä avauksella (ohjelma ottaa ensin turvakopion `.pre-migration-15-to-16-<aika>.sqlite3`). Ota oma varmuuskopio ennen päivitystä; päivityksen jälkeen kantaa ei voi käyttää vanhalla ohjelmaversiolla.
+
+- **Profiilit (uusi):** samalle autokannalle voi luoda useita laskuttajaprofiileja (oletusnimet "Profiili A", "Profiili B", nimen voi vaihtaa). Autot, asiakkaat ja huollot ovat yhteisiä. Jokaisella profiililla on oma yrityksen nimi, Y-tunnus, osoite, sähköposti, puhelin, logo, tilitiedot (IBAN, BIC, Vipps), tuntihinta, maksuaika, varaosien katelisä, laskun asetukset ja pankkiviivakoodi sekä omat sähköpostiasetukset (SMTP, lähettäjä, vastausosoite, kopio itselle).
+- **Aktiivisen profiilin valinta:** Asetukset → Profiilit ja ylätunnisteen valitsin (näkyy, kun profiileja on useita). Valinta muistetaan selaimessa/laitteessa evästeellä (`ah_profile`). Ylätunnisteen nimi ja logo seuraavat profiilia.
+- **Laskut:** numerosarja on yhteinen. Uusi lasku muistaa profiilin, jolla se luotiin, ja näyttää, tulostuu, PDF:nä ja sähköpostina aina oman profiilinsa tiedoilla (myös oman profiilin SMTP-tunnuksilla), vaikka toinen profiili olisi valittuna. Kaikki profiilit näkevät kaikki laskut; Laskut-listassa näkyy laskuttaja, kun profiileja on useita. Profiilin poisto ei poista laskuja (viimeistä profiilia ei voi poistaa).
+- **Y-tunnus ei ole pakollinen:** puuttuva Y-tunnus on vain neutraali huomautus eikä näy laskulla. ALV-rivit näkyvät kuten ennenkin.
+- **Yhteiset asetukset:** ALV-prosentti ja hintojen syöttötapa (verollinen/verraton) ovat edelleen kaikille profiileille yhteisiä, koska varaston hankintahinnat riippuvat niistä. Samoin kieli, aikavyöhyke, teema, ominaisuusvalinnat ja varmuuskopioasetukset.
+- **Migraatio 15 → 16:** nykyiset yritys-, logo-, lasku- ja sähköpostiasetukset siirtyvät ensimmäiseen profiiliin ("Profiili A") ja kaikki vanhat laskut liitetään siihen; ulkoasu ja laskut näyttävät ennallaan.
+- **Varmuuskopio ja palautus:** skeemojen 12–15 varmuuskopiot (SQLite ja täysi ZIP, myös 1.2.10:n manifestillinen ZIP) kelpaavat edelleen ja päivittyvät heti skeemaan 16. Täysi ZIP sisältää kaikkien profiilien logot, ja palautuksen kuvatarkistus kattaa ne.
+- **Kelluva Tallenna-palkki kaikkialla:** sama palkki (tallennusnappi ja teksti "Tallentamattomia muutoksia") on nyt Kirjaa huolto -lomakkeessa, huolto-ohjelman ja auton lomakkeissa, laskun muokkauksessa, asiakkaan muokkauksessa ja Asetuksissa. Teksti ilmestyy vasta, kun lomakkeella on tallentamattomia muutoksia; selain varoittaa sivulta poistumisesta, jos muutoksia on tallentamatta. Ohjelman omat (ei-käyttäjän) kenttäpäivitykset eivät merkitse lomaketta muuttuneeksi.
+- **Tekstit:** uudet avaimet suomeksi ja ruotsiksi (1978 avainta molemmissa, 0 puutetta).
+- **Dokumentit:** SETUP.md (skeema 16, profiilit-osio, asetusten välilehdet), BACKUP.md ja README.md päivitetty.
+- **Tarkistukset:** oikean tietokannan kopion migraatio 15 → 16, ketjupäivitys 12 → 16 (turvakopiot kaikista vaiheista), 1.2.10:n SQLite- ja ZIP-varmuuskopion palautus uuteen versioon, Playwright-kierros (profiilin lisäys, kaksi eri logoa, B-profiilin lasku, lasku näyttää ja lähtee B:n tiedoilla A:n ollessa aktiivinen, varmuuskopio + palautus, profiilin poisto), suomi- ja ruotsikierros ilman PHP-virheitä.
 
 ## 1.2.10
 

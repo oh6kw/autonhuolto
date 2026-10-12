@@ -140,3 +140,10 @@ function invoiceBarcodeDigitsFor(array $app,array $inv,float $gross): string {
     if(($app['invoice_barcode']??'1')!=='1'||!invoiceShowsPaymentForm($inv))return '';
     return invoiceBarcodeDigits((string)($inv['seller_iban']??''),$gross,invoiceRef($inv),(string)($inv['due_date']??''));
 }
+
+/** Asetukset laskun omalla profiililla (logo, viivakoodi, sähköpostin lähetystiedot): lasku käyttää aina sitä profiilia, jolla se luotiin, vaikka selaimessa olisi toinen profiili. */
+function invoiceApp(PDO $db,array $app,array $inv): array {
+    $pid=(int)($inv['profile_id']??0);
+    if($pid<=0||$pid===activeProfileId($db)||!profileById($db,$pid))return $app;
+    return appSettings($db,$pid)+$app;
+}
